@@ -35,13 +35,7 @@ define([
      * @type {string}
      */
     type: 'Root',
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.Views.Root',
+
     /**
      * Default templates.
      *

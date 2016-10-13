@@ -12,15 +12,15 @@
  */
 
 define([
+  '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/mustache',
-  '../baseevents/baseeventsView',
   '../../../Logger',
+  '../baseevents/baseeventsView',
   '../models/SelectionTree',
-  '../../../lib/jquery',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function (_, Mustache, BaseView, Logger, SelectionTree, $, ScrollBarFactory, HtmlUtils) {
+], function ($, _, Mustache, Logger, BaseView, SelectionTree, ScrollBarFactory, HtmlUtils) {
 
   /**
    * @class cdf.components.filter.views.Abstract
@@ -74,11 +74,11 @@ define([
         return renderer.call(this, viewModel);
       }, this);
     },
-    renderSlot: function (slot) {
-      return _.bind(function (viewModel) {
+    renderSlot: function(slot) {
+      return _.bind(function(viewModel) {
         if (this.template[slot]) {
           var html = Mustache.render(this.template[slot], viewModel);
-		  html = HtmlUtils.sanitizeHtml(html);
+          html = HtmlUtils.sanitizeHtml(html);
           this.$(this.config.view.slots[slot]).replaceWith(html);
         }
         this.injectContent(slot);

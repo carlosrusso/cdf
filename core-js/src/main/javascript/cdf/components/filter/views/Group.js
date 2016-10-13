@@ -31,13 +31,7 @@ define([
      * @type {string}
      */
     type: 'Group',
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.Views.Group',
+
     /**
      * Default templates.
      *
@@ -47,6 +41,7 @@ define([
       skeleton: templates['Group-skeleton'],
       selection: templates['Group-template']
     },
+
     /**
      * Default event mappings.
      *

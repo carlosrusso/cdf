@@ -19,15 +19,9 @@ define([
   '../models/SelectionTree'
 ], function ($, _, Base, Logger, SelectionTree) {
 
-  return  Base.extend(Logger).extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.AbstractSelect',
+  var SelectionStates = SelectionTree.SelectionStates;
 
+  return Base.extend(Logger).extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
     /**
      * @constructs
      * @extends {@link http://dean.edwards.name/weblog/2006/03/base/|Base}
@@ -41,7 +35,7 @@ define([
      * @ignore
      */
     constructor: function (options) {
-      return this.isLogicGlobal = true;
+      this.isLogicGlobal = true;
     },
 
     /**
@@ -52,35 +46,24 @@ define([
      */
     getNewState: function (oldState) {
       switch (oldState) {
-        case SelectionTree.SelectionStates.NONE:
-          return SelectionTree.SelectionStates.ALL;
-        case SelectionTree.SelectionStates.ALL:
-          return SelectionTree.SelectionStates.NONE;
-        case SelectionTree.SelectionStates.SOME:
-          return SelectionTree.SelectionStates.NONE;
+        case SelectionStates.NONE:
+          return SelectionStates.ALL;
+        case SelectionStates.ALL:
+          return SelectionStates.NONE;
+        case SelectionStates.SOME:
+          return SelectionStates.NONE;
       }
     },
 
     /**
-     * Infers the state of a node, based on the current state of its children.
+     * Gets the selected items. Default behaviour is do defer to the model's one.
      *
-     * @param {SelectionStates[]} childrenStates an array containing the state of each child
-     * @return {SelectionStates} Returns the inferred state
+     * @param {object} model The target model.
+     * @param {object} field
+     * @return {*} The return value of executing the model object _getSelectedItems_ function.
      */
-    inferSelectionFromChildren: function (childrenStates) {
-      var all = _.every(childrenStates, function (el) {
-        return el === SelectionStates.ALL;
-      });
-      var none = _.every(childrenStates, function (el) {
-        return el === SelectionStates.NONE;
-      });
-      if (all) {
-        return SelectionStates.ALL;
-      } else if (none) {
-        return SelectionStates.NONE;
-      } else {
-        return SelectionStates.SOME;
-      }
+    getSelectedItems: function (model, field) {
+      return model.getSelectedItems(field);
     },
 
     /**
@@ -93,6 +76,12 @@ define([
       throw new Error("NotImplemented");
     },
 
+    selectOnlyThis: function (model) {
+      model.root().setAndUpdateSelection(SelectionStates.NONE);
+      this.setSelection(SelectionStates.ALL, model);
+    },
+
+
     /**
      * Perform operations on the model, associated with the user clicking on an item.
      *
@@ -100,18 +89,12 @@ define([
      * @return {this}
      */
     changeSelection: function (model) {
-      var d = $.now();
       var newState = this.getNewState(model.getSelection());
-      newState = this.setSelection(newState, model);
-      var that = this;
-      _.delay(function () {
-        return that.debug("Switching " + (model.get('label')) + " to " + newState + " took " + ($.now() - d) + " ms ");
-      }, 0);
-      return this;
+      this.setSelection(newState, model);
     },
 
     /**
-     * Perform operations on the model, associated with commiting the current selection.
+     * Perform operations on the model, associated with committing the current selection.
      *
      * @param {object} model
      * @return {this}
@@ -119,18 +102,21 @@ define([
     applySelection: function (model) {
       model.updateSelectedItems();
       model.root().set('isCollapsed', true);
-      return this;
     },
 
     /**
-     * Gets the selected items. Default behaviour is do defer to the model's one.
+     * Resets the model to previous selection state.
      *
-     * @param {object} model The target model.
-     * @param {object} field
-     * @return {*} The return value of executing the model object _getSelectedItems_ function.
+     * @param {object} model
+     * @return {this}
      */
-    getSelectedItems: function (model, field) {
-      return model.getSelectedItems(field);
+    cancelSelection: function(model){
+      model.restoreSelectedItems();
+      model.root().set('isCollapsed', true);
+    },
+
+    clickOutside: function(model) {
+      model.root().set('isCollapsed', true);
     }
   });
 

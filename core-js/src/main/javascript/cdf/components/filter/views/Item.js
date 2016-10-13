@@ -31,13 +31,7 @@ define([
      * @type {string}
      */
     type: 'Item',
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.Views.Root',
+
     /**
      * Default templates.
      *
@@ -47,6 +41,7 @@ define([
       selection: templates['Item-template'],
       skeleton: templates['Item-template']
     },
+
     /**
      * Default event mappings.
      *
@@ -60,22 +55,20 @@ define([
     },
     /**
      * @param {object} model
-     * @return {*}
      */
     bindToModel: function (model) {
       this.base(model);
       this.onChange(model, 'isSelected', this.updateSelection);
-      return this.onChange(model, 'isVisible', this.updateVisibility);
+      this.onChange(model, 'isVisible', this.updateVisibility);
     },
     /**
      * Callback for click events on the _only-this_ button.
      *
      * @param {Event} event
-     * @return {*}
      */
     onClickOnlyThis: function (event) {
       event.stopPropagation();
-      return this.trigger('control:only-this', this.model);
+      this.trigger('control:only-this', this.model);
     }
   });
 

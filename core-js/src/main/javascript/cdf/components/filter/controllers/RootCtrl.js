@@ -14,12 +14,10 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  '../../../lib/BaseEvents',
-  '../../../Logger',
-  '../models/SelectionTree'
-], function($, _, BaseEvents,  Logger, SelectionTree) {
+  '../../../lib/BaseEvents'
+], function($, _, BaseEvents) {
 
-  return BaseEvents.extend(Logger).extend(/** @lends cdf.components.filter.controllers.RootCtl# */{
+  return BaseEvents.extend(/** @lends cdf.components.filter.controllers.RootCtl# */{
     /**
      * @constructs
      * @amd cdf/components/filter/controllers/RootCtl
@@ -33,12 +31,10 @@ define([
       if (this.view) {
         this.bindToView(this.view);
       }
-      this.loglevel = this.configuration.loglevel;
-      return this;
     },
+
     bindToView: function(view) {
-      var bindings, that;
-      bindings = {
+      var bindings = {
         'selected': this.onSelection,
         'toggleCollapse': this.onToggleCollapse,
         'control:only-this': this.onOnlyThis,
@@ -46,11 +42,10 @@ define([
         'control:cancel': this.onCancel,
         'click:outside': this.onClickOutside
       };
-      that = this;
+
       _.each(bindings, function(callback, event) {
-        return that.listenTo(view, event, callback);
-      });
-      return this;
+        this.listenTo(view, event, callback);
+      }, this);
     },
 
     /*
@@ -62,11 +57,9 @@ define([
      * Delegates work to the current selection strategy.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onSelection: function(model) {
       this.configuration.selectionStrategy.strategy.changeSelection(model);
-      return this;
     },
 
     /**
@@ -74,11 +67,9 @@ define([
      * Delegates work to the current selection strategy.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onApply: function(model) {
       this.configuration.selectionStrategy.strategy.applySelection(model);
-      return this;
     },
 
     /**
@@ -86,12 +77,9 @@ define([
      * Delegates work to the current selection strategy.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onCancel: function(model) {
-      model.restoreSelectedItems();
-      model.root().set('isCollapsed', true);
-      return this;
+      this.configuration.selectionStrategy.strategy.cancelSelection(model);
     },
 
     /**
@@ -100,7 +88,6 @@ define([
      * the filter (search pattern) is reset.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onToggleCollapse: function(model) {
       var newState, oldState;
@@ -111,38 +98,31 @@ define([
         oldState = model.get('isCollapsed');
         newState = !oldState;
       }
-      var hasVisibleNode = !!model.nodes() && _.some(model.nodes().models, function(model) {
-        return model.get('isVisible');
+      var hasVisibleNode = !!model.nodes() && _.some(model.nodes().models, function(m) {
+        return m.get('isVisible');
       });
       if (!hasVisibleNode && oldState) {
         this.view.onFilterClear();
       }
       model.set('isCollapsed', newState);
-      return this;
     },
 
     /**
      * Collapses the component when a mouse click happens outside the component.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onClickOutside: function(model) {
-      model.set('isCollapsed', true);
-      return this;
+      this.configuration.selectionStrategy.strategy.clickOutside(model);
     },
 
     /**
-     * UPdates the models selection state when the _only-this_ button is pressed.
+     * Updates the models selection state when the _only-this_ button is pressed.
      *
      * @param {object} model The target model.
-     * @return {this}
      */
     onOnlyThis: function(model) {
-      this.debug("Setting Only This");
-      this.model.root().setAndUpdateSelection(SelectionTree.SelectionStates.NONE);
-      this.configuration.selectionStrategy.strategy.setSelection(SelectionTree.SelectionStates.ALL, model);
-      return this;
+      this.configuration.selectionStrategy.strategy.selectOnlyThis(model);
     }
   });
 
