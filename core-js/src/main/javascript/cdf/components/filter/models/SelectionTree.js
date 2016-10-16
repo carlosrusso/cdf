@@ -41,7 +41,7 @@ define([
     defaults: {
       id: undefined,
       label: "",
-      isSelected: false,
+      isSelected: BaseSelectionTree.SelectionStates.NONE,
       isVisible: true,
       isCollapsed: true,
       numberOfSelectedItems: 0,
@@ -53,11 +53,9 @@ define([
      * Sets the isBusy parameter.
      *
      * @param {boolean} isBusy The new value to set.
-     * @return {this}
      */
     setBusy: function(isBusy) {
       this.root().set('isBusy', isBusy);
-      return this;
     },
 
     /**

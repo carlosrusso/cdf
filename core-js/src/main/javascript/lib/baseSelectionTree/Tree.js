@@ -33,22 +33,32 @@ define([
      * @param {function} combineCallback
      * @param {function} alwaysCallback
      */
-    walkDown: function (itemCallback, combineCallback, alwaysCallback) {
-      var result;
-      if (!combineCallback) {
-        combineCallback = function (x) {
-          return x;
-        };
+    walkDown: function(itemCallback, combineCallback, alwaysCallback) {
+      var _combine = combineCallback;
+      var _always = alwaysCallback;
+
+      if (!_.isFunction(combineCallback)) {
+        _combine = _.identity;
       }
-      if (this.children()) {
-        result = combineCallback(this.children().map(function (child) {
-          return child.walkDown(itemCallback, combineCallback, alwaysCallback);
+      if (!_.isFunction(alwaysCallback)) {
+        _always = null;
+      }
+      return this._walkDown(itemCallback, _combine, _always);
+    },
+
+    _walkDown: function (itemCb, combineCb, alwaysCb) {
+      var result;
+
+      var children = this.children();
+      if (children) {
+        result = combineCb(children.map(function (child) {
+          return child._walkDown(itemCb, combineCb, alwaysCb);
         }));
       } else {
-        result = itemCallback(this);
+        result = itemCb(this);
       }
-      if (_.isFunction(alwaysCallback)) {
-        result = alwaysCallback(this, result);
+      if (alwaysCb) {
+        result = alwaysCb(this, result);
       }
       return result;
     },
@@ -58,16 +68,12 @@ define([
      * @method flatten
      * @return {Underscore} Returns a wrapped Underscore object using _.chain()
      */
-    flatten: function () {
-      var list = [this];
-      if (this.children()) {
-        this.children().each(function (child) {
-          return child.flatten().each(function (el) {
-            return list.push(el);
-          });
-        });
-      }
-      return _.chain(list);
+    flatten: function() {
+      return _.chain([this])
+        .map(function(m) {
+          return m._walkDown(_.identity, _.identity);
+        })
+        .flatten();
     },
 
     /**
