@@ -41,7 +41,7 @@ define([
      *
      * @type {object}
      */
-    template: {
+    templates: {
       skeleton: templates['Root-skeleton'],
       overlay: templates['Root-overlay'],
       header: templates['Root-header'],
@@ -65,12 +65,14 @@ define([
       'click  .filter-filter-clear:eq(0)': 'onFilterClear',
       'click  .filter-overlay': 'onOverlayClick'
     },
+
     initialize: function (options) {
       this.renderOverlay = this.renderSlot('overlay');
       this.renderHeader = this.renderSlot('header');
       this.renderFooter = this.renderSlot('footer');
-      return this.base(options);
+      this.base(options);
     },
+
     bindToModel: function (model) {
       this.base(model);
       this.onChange(model, 'isCollapsed', this.updateCollapse);
@@ -79,6 +81,7 @@ define([
       this.onChange(model, 'reachedSelectionLimit isBusy', this.updateFooter);
       return this.onChange(model, 'isDisabled', _.bind(this.updateAvailability, this));
     },
+
     getViewModel: function () {
       var viewModel = this.base();
       $.extend(viewModel, {
@@ -92,6 +95,7 @@ define([
       });
       return viewModel;
     },
+
     render: function () {
       var viewModel = this.getViewModel();
       this.renderSkeleton(viewModel);
@@ -103,16 +107,19 @@ define([
       this.renderAvailability(viewModel);
       return this;
     },
+
     updateHeader: function () {
       var viewModel = this.getViewModel();
       this.renderHeader(viewModel);
       return this;
     },
+
     updateFooter: function () {
       var viewModel = this.getViewModel();
       this.renderFooter(viewModel);
       return this;
     },
+
     updateCollapse: function () {
       var viewModel = this.getViewModel();
       this.renderHeader(viewModel);
@@ -120,37 +127,56 @@ define([
       this.renderCollapse(viewModel);
       return this;
     },
+
     renderCollapse: function (viewModel) {
       if (viewModel.isDisabled === true) {
         var expand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
-        this.$('.filter-root-container').toggleClass('expanded', expand).toggleClass('collapsed', !expand).toggleClass('always-expanded', expand);
+        this.$('.filter-root-container')
+          .toggleClass('expanded', expand)
+          .toggleClass('collapsed', !expand)
+          .toggleClass('always-expanded', expand);
       } else if (viewModel.alwaysExpanded === true) {
-        this.$('.filter-root-container').toggleClass('expanded', false).toggleClass('collapsed', false).toggleClass('always-expanded', true);
+        this.$('.filter-root-container')
+          .toggleClass('expanded', false)
+          .toggleClass('collapsed', false)
+          .toggleClass('always-expanded', true);
       } else if (viewModel.isCollapsed === true) {
-        this.$('.filter-root-container').toggleClass('expanded', false).toggleClass('collapsed', true).toggleClass('always-expanded', false);
+        this.$('.filter-root-container')
+          .toggleClass('expanded', false)
+          .toggleClass('collapsed', true)
+          .toggleClass('always-expanded', false);
       } else {
-        this.$('.filter-root-container').toggleClass('expanded', true).toggleClass('collapsed', false).toggleClass('always-expanded', false);
+        this.$('.filter-root-container')
+          .toggleClass('expanded', true)
+          .toggleClass('collapsed', false)
+          .toggleClass('always-expanded', false);
       }
       return this;
     },
+
     updateAvailability: function () {
       var viewModel = this.getViewModel();
       this.renderAvailability(viewModel);
       return this;
     },
+
     renderAvailability: function (viewModel) {
       this.$('.filter-root-container').toggleClass('disabled', viewModel.isDisabled === true);
       return this;
     },
+
     onOverlayClick: function (event) {
       this.trigger("click:outside", this.model);
       if (this.config.view.overlaySimulateClick === true) {
         this.$('.filter-overlay').toggleClass('expanded', false).toggleClass('collapsed', true);
         _.delay(function () {
           var $element = $(document.elementFromPoint(event.clientX, event.clientY));
-          var item = _.chain($element.parents()).filter(function (m) {
-            return $(m).hasClass('filter-root-header');
-          }).first().value();
+          var item = _.chain($element.parents())
+            .filter(function(m) {
+              return $(m).hasClass('filter-root-header');
+            })
+            .first()
+            .value();
           if (item != null) {
             return $(item).click();
           }

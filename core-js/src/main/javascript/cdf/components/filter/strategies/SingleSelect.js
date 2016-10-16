@@ -32,6 +32,7 @@ define([
      * @type {string}
      */
     ID: 'BaseFilter.SelectionStrategies.SingleSelect',
+
     /**
      * Sets a new selection state.
      *
@@ -41,8 +42,10 @@ define([
      */
     setSelection: function (newState, model) {
       if (model.children()) {
+        // only leafs can be marked as (un)selected
         return;
       }
+
       if (this.isLogicGlobal === true) {
         model.root().setSelection(SelectionTree.SelectionStates.NONE);
       } else if (model.getSelection() !== SelectionTree.SelectionStates.ALL) {
@@ -53,6 +56,7 @@ define([
       model.setAndUpdateSelection(SelectionTree.SelectionStates.ALL);
       return newState;
     },
+
     /**
      * Changes the selection state.
      *
@@ -63,6 +67,7 @@ define([
       this.base(model);
       return this.applySelection(model);
     },
+
     /**
      * Gets the selected models.
      *
@@ -76,18 +81,20 @@ define([
        * strategy is ALL for both the child and the parent ( a.k.a root node); but in this case, we should
        * present the child as the selected one, and not the root node
        */
-      if (model && model.isRoot() && model.children() && model.countSelectedItems() == 1 && model.children().length == 1) {
+      var children = model.children();
+      if (model.isRoot() && children && model.countSelectedItems() == 1 && children.length == 1) {
 
-        return _.flatten(model.children().map(function (child) {
-          return child.getSelectedItems(field) || [];
-        }));
+        return children.chain()
+          .map(function(child) {
+            return child.getSelectedItems(field) || [];
+          })
+          .flatten()
+          .value();
 
-      } else {
-
-        // default behaviour
-        return model.getSelectedItems(field);
       }
 
+      // default behaviour
+      return model.getSelectedItems(field);
     }
   });
 

@@ -19,50 +19,7 @@ define([
   '../HtmlUtils'
 ], function($, _, BaseModel, Logger, HtmlUtils) {
 
-  var sanitizeInput = function(input) {
-    return _.isString(input) ?
-      HtmlUtils.sanitizeHtml(input) :
-      input;
-  };
-  var getPageData = function(queryInfo, pageSize) {
-    var pageData = {};
-    if ((queryInfo != null ? queryInfo.pageStart : void 0) != null) {
-      pageData = {
-        page: Math.floor(parseInt(queryInfo.pageStart) / pageSize)
-      };
-    }
-    return pageData;
-  };
-  var itemGenerator = function(idx, pageData) {
-    if (!_.isObject(pageData)) {
-      pageData = {};
-    }
-    var createItems = function(rows) {
-      return _.map(rows, function(row) {
-        var itemData = {
-          id: row[idx.id],
-          label: sanitizeInput(row[idx.label])
-        };
-        if (_.isFinite(idx.value) && idx.value >= 0) {
-          itemData.value = sanitizeInput(row[idx.value]);
-        }
-        itemData = $.extend(true, itemData, pageData);
-        return itemData;
-      });
-    };
-    return createItems;
-  };
-  var groupGenerator = function(idx, pageData) {
-    var createGroup = function(rows, group) {
-      var groupData = {
-        id: group != null ? rows[0][idx.parentId] : void 0,
-        label: rows[0][idx.parentLabel],
-        nodes: itemGenerator(idx, pageData)(rows)
-      };
-      return groupData;
-    };
-    return createGroup;
-  };
+  "use strict";
 
   /**
    * @class cdf.components.filter.data-handlers.InputDataHandler
@@ -71,16 +28,6 @@ define([
    * @classdesc Import data from multiple sources, populate the model.
    * @ignore
    */
-    /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.DataHandlers.Input',
-    getModel: function() {
-      return this.get('model');
-    },
   return BaseModel.extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
 
     /**
@@ -90,89 +37,176 @@ define([
      * @return {this}
      */
     updateModel: function(whatever) {
-      if (_.isArray(whatever)) {
-        this._updateModelFromBidimensionalArray(whatever);
-      } else if (this.isCdaJson(whatever)) {
+      if (this._isCdaJson(whatever)) {
         this._updateModelFromCdaJson(whatever);
+      } else if (_.isArray(whatever)) {
+        this._updateModelFromBidimensionalArray(whatever);
       } else {
         this._updateModelFromJson(whatever);
       }
+
       var model = this.get('model');
-      model.set('isBusy', false);
-      model.set('isDisabled', this.get('model').children() === null);
+      model.set('isDisabled', model.children() === null);
+
       var options = this.get('options');
       if (options.root && options.root.id) {
         model.set('id', options.root.id);
       }
+
       if (options.hooks && options.hooks.postUpdate) {
         _.each(options.hooks.postUpdate, function(hook) {
           return hook.call(null, null, model, options);
         });
       }
+
       this.trigger('postUpdate', model);
-      return this;
     },
+
     _updateModelFromCdaJson: function(json) {
-      var options = $.extend(true, {}, this.get('options'));
-      var pageData = getPageData(json.queryInfo, options.query.getOption('pageSize'));
+      var query = this.get('options').query;
+      var queryInfo = json.queryInfo;
+
+      var pageData = getPageData(queryInfo, query.getOption('pageSize'));
+
       this._addDataToModel(json.resultset, pageData);
-      var numberOfItems;
-      if (json.queryInfo && json.queryInfo.pageStart) {
-        numberOfItems = parseInt(json.queryInfo.totalRows);
+
+      if (queryInfo && queryInfo.pageStart) {
+        var numberOfItems = parseInt(queryInfo.totalRows);
+        var searchPattern = query.getOption('searchPattern');
+        if (_.isEmpty(searchPattern)) {
+          this.get('model').set('numberOfItemsAtServer', numberOfItems);
+        }
       }
-      var searchPattern = options.query.getOption('searchPattern');
-      if (_.isEmpty(searchPattern)) {
-        this.get('model').set('numberOfItemsAtServer', numberOfItems);
-      }
-      return this;
     },
+
     _updateModelFromJson: function(anyJsonObject) {
-      return this;
     },
+
     _updateModelFromBidimensionalArray: function(rows) {
       this._addDataToModel(rows, undefined);
-      return this;
     },
+
     _addDataToModel: function(rows, pageData) {
       if (rows.length === 0) {
-        return this;
+        return;
       }
-      var options = $.extend(true, {}, this.get('options'));
-      var parentIndexes = _.chain(options.indexes)
+
+      var indexes = this.get('options').indexes;
+      var parentIndexes = _.chain(indexes)
         .pick('parentId', 'parentLabel')
         .filter(_.isFinite)
         .max()
         .value();
-      var hasGroups = _.isFinite(parentIndexes) && parentIndexes < rows[0].length;
+
       var data;
+      var hasGroups = _.isFinite(parentIndexes) && parentIndexes < rows[0].length;
       if (hasGroups) {
-        data = _.chain(rows)
-          .groupBy(function(row) {
-            return row[options.indexes.parentId];
-          })
-          .map(groupGenerator(options.indexes, pageData))
-          .value();
+        var groupedRows = _.groupBy(rows, function(row) {
+            return row[indexes.parentId];
+          });
+
+        // Generate a flat map of groups
+        var root = {};
+        var createGroup = groupGenerator(indexes, pageData);
+        _.each(groupedRows, function(rows, groupId) {
+          root[groupId] = createGroup(rows, groupId);
+        });
+
+        // Assemble the tree by placing the groups in the correct place
+        _.each(_.values(root), function(group){
+          _.each(group.nodes, function(node){
+            var id = node.id;
+            if(_.has(root, id)){
+              $.extend(node, root[id]);
+              delete root[id];
+            }
+          });
+        });
+
+        data = _.values(root);
+
       } else {
-        data = itemGenerator(options.indexes, pageData)(rows);
+        data = itemGenerator(indexes, pageData)(rows);
       }
+
       this.get('model').add(data);
-      return this;
     },
-    isCdaJson: function(obj) {
-      return _.isObject(obj) && _.isArray(obj.resultset) && _.isArray(obj.metadata);
+
+    _isCdaJson: function(obj) {
+      return _.isObject(obj) && _.isArray(obj.resultset);
     },
 
     /**
      * Matches the items against a list and marks the matches as selected.
      *
      * @param {Array} selectedItems Array containing the ids of the selected items.
-     * @return {this}
      */
     setValue: function(selectedItems) {
       this.get('model').setSelectedItems(selectedItems);
       this.trigger('setValue', selectedItems);
-      return this;
     }
   });
+
+  function sanitizeInput(input) {
+    return _.isString(input) ?
+      HtmlUtils.sanitizeHtml(input) :
+      input;
+  }
+
+  function getPageData(queryInfo, pageSize) {
+    var pageData = {};
+    if ((queryInfo != null ? queryInfo.pageStart : void 0) != null) {
+      pageData = {
+        page: Math.floor(parseInt(queryInfo.pageStart) / pageSize)
+      };
+    }
+    return pageData;
+  }
+
+  function itemGenerator(idx, pageData) {
+    if (!_.isObject(pageData)) {
+      pageData = {};
+    }
+    var idxId = idx.id;
+    var idxLabel = idx.label;
+
+    var idxValue = idx.value;
+    var hasValue = _.isFinite(idxValue) && idxValue >= 0;
+
+    var createItems = function(rows) {
+      return _.map(rows, function(row) {
+        var itemData = {
+          id: row[idxId],
+          label: sanitizeInput(row[idxLabel])
+        };
+        if (hasValue) {
+          itemData.value = sanitizeInput(row[idxValue]);
+        }
+        itemData = $.extend(true, itemData, pageData);
+        return itemData;
+      });
+    };
+    return createItems;
+  };
+
+  function groupGenerator(idx, pageData) {
+    var createGroup = function(rows, group) {
+
+      var label = _.chain(rows)
+        .pluck(idx.parentLabel)
+        .compact()
+        .first()
+        .value();
+
+      var id = rows[0][idx.parentId];
+
+      return {
+        id: group != null ? id : void 0,
+        label: label || id,
+        nodes: itemGenerator(idx, pageData)(rows)
+      };
+    };
+    return createGroup;
+  };
 
 });

@@ -37,7 +37,7 @@ define([
      *
      * @type {object}
      */
-    template: {
+    templates: {
       skeleton: templates['Group-skeleton'],
       selection: templates['Group-template']
     },
@@ -63,14 +63,14 @@ define([
     bindToModel: function (model) {
       this.base(model);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems', this.updateSelection);
-      return this.onChange(model, 'isCollapsed', this.updateCollapse);
+      this.onChange(model, 'isCollapsed', this.updateCollapse);
     },
     /**
      * @return {*}
      */
     updateCollapse: function () {
       var viewModel = this.getViewModel();
-      return this.renderCollapse(viewModel);
+      this.renderCollapse(viewModel);
     },
     /**
      * @param {object} viewModel
@@ -78,11 +78,11 @@ define([
      */
     renderCollapse: function (viewModel) {
       this.renderSelection(viewModel);
-      var collapsable = ['.filter-group-body', '.filter-group-footer'].join(', ');
+      var $collapsable = this.$('.filter-group-body, .filter-group-footer');
       if (viewModel.isCollapsed) {
-        return this.$(collapsable).hide();
+        $collapsable.hide();
       } else {
-        return this.$(collapsable).show();
+        $collapsable.show();
       }
     }
   });

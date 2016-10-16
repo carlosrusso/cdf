@@ -90,18 +90,19 @@ define([
      * @param {object} model The target model.
      */
     onToggleCollapse: function(model) {
-      var newState, oldState;
+      var newState;
+
       if (model.get('isDisabled') === true) {
         newState = true;
       } else {
-        oldState = model.get('isCollapsed');
+        var oldState = model.get('isCollapsed');
         newState = !oldState;
-      }
-      var hasVisibleNode = !!model.nodes() && _.some(model.nodes().models, function(m) {
-        return m.get('isVisible');
-      });
-      if (!hasVisibleNode && oldState) {
-        this.view.onFilterClear();
+        var hasVisibleNode = !!model.children() && model.children().some(function(m) {
+            return m.getVisibility();
+          });
+        if (!hasVisibleNode && oldState) {
+          this.view.onFilterClear();
+        }
       }
       model.set('isCollapsed', newState);
     },

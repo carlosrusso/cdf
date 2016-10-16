@@ -109,7 +109,6 @@ define([
             options: {
               className: 'multi-select',
               showCommitButtons: true,
-              showSelectedItems: false,
               showNumberOfSelectedItems: true,
               showGroupSelection: true,
               label: 'All'
@@ -133,7 +132,6 @@ define([
             options: {
               className: 'multi-select',
               showCommitButtons: true,
-              showSelectedItems: false,
               showNumberOfSelectedItems: true,
               showGroupSelection: true,
               label: 'All'

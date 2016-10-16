@@ -80,12 +80,15 @@ define([
      * @description Closes and removes the children from the tree.
      */
     empty: function() {
-      if(!this.children()) return;
+      if (!this.children()) {
+        return;
+      }
       this.children().each(function(child) {
         child.close();
       });
       this.base();
     },
+
     applyBindings: function() {
       var that = this;
       var throttleScroll = function(f) {
@@ -119,8 +122,9 @@ define([
        * Create listeners
        */
       _.each(bindings, function(bindingList, object) {
-        return _.each(bindingList, function(method, event) {
-          return that.listenTo(that.attributes[object], event, _.bind(method, that));
+        var obj = that.attributes[object];
+        _.each(bindingList, function(method, event) {
+          that.listenTo(obj, event, _.bind(method, that));
         });
       });
 
@@ -135,7 +139,6 @@ define([
        * Decide which view to use
        */
       var Controller, View, configuration, controller, newController, target;
-      var shareController = true;
       if (this.parent() != null) {
 
         /*
@@ -144,8 +147,8 @@ define([
          */
         var that = this.parent();
         configuration = that.get('configuration');
-        var childConfig = configuration[that.get('view').type].view.childConfig;
         target = that.get('view').createChildNode();
+        var childConfig = configuration[that.get('view').type].view.childConfig;
         if (newModel.children()) {
           View = Views[childConfig.withChildrenPrototype];
         } else {
@@ -179,6 +182,7 @@ define([
       /*
        * Reuse the existing controller, or create a new one, if needed
        */
+      var shareController = true;
       if (shareController === true && controller !== null) {
         newController = controller;
         newController.bindToView(newView);
@@ -190,31 +194,30 @@ define([
         });
       }
       this.set('controller', newController);
-      this.debug("addViewAndController is done for " + (newModel.get('id')) + " : " + (newModel.get('label')));
       return this;
     },
+
     onNewData: function(item, collection, obj) {
-      var itemParent;
-      itemParent = this.where({
+      var itemParent = this.where({
         model: item.parent()
       });
       if (itemParent.length === 1) {
-        return itemParent[0].trigger("post:child:add");
+        itemParent[0].trigger("post:child:add");
       }
     },
+
     onUpdateChildren: function() {
-      this.debug("New data added to " + (this.get('model').get('label')) + " : updating children");
       this.updateChildren();
       this.restoreScroll();
-      return this.trigger('post:update:children', this);
+      this.trigger('post:update:children', this);
     },
+
     restoreScroll: function() {
-      if (this.get('view')._scrollBar != null) {
-        this.debug("This group has a scrollbar");
+      var view = this.get('view');
+      if (view._scrollBar != null) {
         if (this.previousPosition != null) {
-          this.debug("Scrolling back");
-          this.get('view').setScrollBarAt(this.previousPosition);
-          return this.previousPosition = null;
+          view.setScrollBarAt(this.previousPosition);
+          this.previousPosition = null;
         }
       }
     },
@@ -236,14 +239,16 @@ define([
       this.previousPosition = secondChild != null ? secondChild.target : undefined;
       return this.getPage('previous', model, event);
     },
+
     getPage: function(page, model, event) {
       Logger.debug("Item " + (model.get('label')) + " requested page " + page);
       var searchPattern = "";
       if (this.get('configuration').search.serverSide === true) {
         searchPattern = model.root().get('searchPattern')
       }
-      return this.requestPage(page,searchPattern);
+      return this.requestPage(page, searchPattern);
     },
+
     requestPage: function(page, searchPattern) {
       var getPage = this.get('configuration').pagination.getPage;
       if (!_.isFunction(getPage)) {
@@ -264,23 +269,30 @@ define([
      */
     updateChildren: function() {
       var models = this.get('model').children();
-      if (models != null) {
-        var that = this;
-        models.each(function(m) {
-          var hasModel = false;
-          if (that.children()) {
-            hasModel = _.any(that.children().map(function(child) {
-              return child.get('model') === m;
-            }));
-          }
-          if (!hasModel) {
-            return that.addChild(m);
-          }
-        });
-        this.renderSortedChildren();
-        this.get('view').updateScrollBar();
+      if (models == null) {
+        return;
       }
-      return this;
+
+      var children = this.children();
+      var modelsToAdd;
+      if (!children) {
+        modelsToAdd = models;
+      } else {
+        var existentModels = children.map(function(child) {
+          return child.get('model');
+        });
+
+        modelsToAdd = models.chain().reject(function(m) {
+          return _.includes(existentModels, m);
+        });
+      }
+
+      modelsToAdd.each(function(m) {
+        this.addChild(m);
+      }, this);
+
+      this.renderSortedChildren();
+      this.get('view').updateScrollBar();
     },
 
     /**
@@ -319,9 +331,9 @@ define([
         return [customSorters];
       } else if (_.isArray(customSorters)) {
         return customSorters;
-      } else {
-        return [];
       }
+
+      return [];
     },
     /**
      * Sorts a collection according to one or more custom sorter functions.
@@ -370,36 +382,34 @@ define([
 
       return this;
     },
+
     _listChildren: function() {
-      var children;
-      if (this.children()) {
-        children = this.children().map(function(child) {
+      var children = this.children();
+      if (children) {
+        return children.map(function(child) {
           return {
             item: child,
             target: child.get('view').$el
           };
         });
-      } else {
-        children = null;
       }
-      return children;
+      return null;
     },
-    _detachChildren: function(){
-        var list = this._listChildren();
-        list.forEach(function(obj){
-            obj.target.detach();
-        });
-        return list;
+
+    _detachChildren: function() {
+      var list = this._listChildren();
+      list.forEach(function(obj) {
+        obj.target.detach();
+      });
+      return list;
     },
+
     _appendChildren: function(children) {
       if (children != null) {
-        _.each(children, (function(_this) {
-          return function(child) {
-            return _this.get('view').appendChildNode(child.target);
-          };
-        })(this));
+        _.each(children, function(child) {
+            return this.get('view').appendChildNode(child.target);
+          }, this);
       }
-      return this;
     },
 
     /**

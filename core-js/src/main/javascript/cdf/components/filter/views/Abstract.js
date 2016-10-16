@@ -38,45 +38,46 @@ define([
        * Consider user-defined templates
        */
       if (this.config.view.templates != null) {
-        $.extend(true, this.template, this.config.view.templates);
+        $.extend(true, this.templates, this.config.view.templates);
       }
       if (this.model) {
         this.bindToModel(this.model);
       }
       this.setElement(options.target);
       this.render();
-      return this;
     },
+
     bindToModel: function (model) {
       this.onChange(model, 'isVisible', this.updateVisibility);
-      return this;
     },
+
     onChange: function (model, properties, callback) {
       var props = properties.split(' ');
       var events = _.map(props, function (prop) {
         return 'change:' + prop;
       }).join(' ');
+
       if (this.config.view.throttleTimeMilliseconds >= 0) {
-        this.listenTo(model, events, _.throttle(callback, this.config.view.throttleTime, {
+        this.listenTo(model, events, _.throttle(callback, this.config.view.throttleTimeMilliseconds, {
           leading: false
         }));
       } else {
         this.listenTo(model, events, callback);
       }
-      return this;
     },
+
     updateSlot: function (slot) {
       return _.bind(function () {
         var viewModel = this.getViewModel();
-        var renderer = this.renderSlot('slot');
+        var renderer = this.renderSlot(slot);
         return renderer.call(this, viewModel);
       }, this);
     },
+
     renderSlot: function(slot) {
       return _.bind(function(viewModel) {
-        if (this.template[slot]) {
-          var html = Mustache.render(this.template[slot], viewModel);
-          html = HtmlUtils.sanitizeHtml(html);
+        if (this.templates[slot]) {
+          var html = this.getHtml(this.templates[slot], viewModel);
           this.$(this.config.view.slots[slot]).replaceWith(html);
         }
         this.injectContent(slot);
@@ -88,31 +89,58 @@ define([
      * View methods
      */
     getViewModel: function () {
-      var viewOptions;
-      viewOptions = _.result(this.config, 'options');
-      return $.extend(true, this.model.toJSON(), viewOptions, {
-        strings: _.result(this.config, 'strings'),
-        selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy'),
-        isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
-        numberOfChildren: this.model.children() ? this.model.children().length : 0
-      });
+      var viewOptions = _.result(this.config, 'options');
+
+      return $.extend(true,
+        this.model.toJSON(),
+        viewOptions,
+        {
+          strings: _.result(this.config, 'strings'),
+          selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy'),
+          isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
+          numberOfChildren: this.model.children() ? this.model.children().length : 0
+        }
+      );
     },
+
     injectContent: function (slot) {
-      var ref, ref1, renderers, that;
-      renderers = (ref = this.config) != null ? (ref1 = ref.renderers) != null ? ref1[slot] : void 0 : void 0;
+      var ref, ref1;
+      var renderers = (ref = this.config) != null ? (ref1 = ref.renderers) != null ? ref1[slot] : void 0 : void 0;
       if (renderers == null) {
         return;
       }
       if (!_.isArray(renderers)) {
         renderers = [renderers];
       }
-      that = this;
+
       _.each(renderers, function (renderer) {
         if (_.isFunction(renderer)) {
-          return renderer.call(that, that.$el, that.model, that.configuration);
+          return renderer.call(this, this.$el, this.model, this.configuration);
         }
-      });
+      }, this);
       return this;
+    },
+
+    /**
+     * Renders a template to a string whose html is properly sanitized.
+     *
+     * @param {string} template
+     * @param {object} viewModel
+     * @return {string} The sanitized html
+     */
+    getHtml: function(template, viewModel){
+      /**
+       *
+       * To enable setting a placeholder in the input box, one must explicitly whitelist the
+       * corresponding attribute:
+       *
+       * @example
+       * require(["cdf/lib/sanitizer/lib/html4"], function(html4){
+       *   html4.ATTRIBS["input::placeholder"] = 0
+       * });
+       */
+      var html = Mustache.render(template, viewModel);
+      return HtmlUtils.sanitizeHtml(html);
     },
 
     /**
@@ -125,12 +153,13 @@ define([
       this.updateVisibility(viewModel);
       return this;
     },
+
     renderSkeleton: function (viewModel) {
-	  var rHtml = Mustache.render(this.template.skeleton, viewModel);
-	  rHtml = HtmlUtils.sanitizeHtml(rHtml);
-      this.$el.html(rHtml);
+      var html = this.getHtml(this.templates.skeleton, viewModel);
+      this.$el.html(html);
       return this;
     },
+
     updateSelection: function (model, options) {
       if (model === this.model) {
         var viewModel = this.getViewModel();
@@ -138,13 +167,14 @@ define([
       }
       return this;
     },
+
     renderSelection: function (viewModel) {
-      var rHtml = Mustache.render(this.template.selection, viewModel);
-	  rHtml = HtmlUtils.sanitizeHtml(rHtml);
-      this.$(this.config.view.slots.selection).replaceWith(rHtml);
+      var html = this.getHtml(this.templates.selection, viewModel);
+      this.$(this.config.view.slots.selection).replaceWith(html);
       this.injectContent('selection');
       return this;
     },
+
     updateVisibility: function () {
       if (this.model.getVisibility()) {
         return this.$el.show();
@@ -175,17 +205,17 @@ define([
      * Scrollbar methods
      */
     updateScrollBar: function () {
-      var nItems = this.config.options.scrollThreshold;
-      var needsScrollBar = _.isFinite(this.configuration.pagination.pageSize) && this.configuration.pagination.pageSize > 0;
-      needsScrollBar = needsScrollBar || this.type !== 'Item' && this.model.flatten().size().value() > nItems;
-      if (needsScrollBar) {
-        this.debug("There are more than " + nItems + " items, adding scroll bar");
-        return this.addScrollBar();
+      var isPaginated = _.isFinite(this.configuration.pagination.pageSize) && this.configuration.pagination.pageSize > 0;
+      var isOverThreshold = this.model.flatten().size().value() > this.config.options.scrollThreshold;
+
+      if (isPaginated || isOverThreshold) {
+        this.addScrollBar();
       }
     },
+
     addScrollBar: function () {
       if (this._scrollBar != null) {
-        return this;
+        return;
       }
       this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine,this);
 
@@ -197,13 +227,12 @@ define([
           });
         }
       }
-      return this;
     },
+
     setScrollBarAt: function ($tgt) {
       if (this._scrollBar != null) {
         this._scrollBar.scrollToPosition($tgt);
       }
-      return this;
     },
     /*
      * Events triggered by the user

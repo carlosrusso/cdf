@@ -168,6 +168,7 @@ define(['../../../lib/jquery'], function( $ ) {
         showCommitButtons: false,
         showGroupSelection: false,
         showButtonOnlyThis: false,
+        showSelectedItems: false,
         showButtonCollapse: false,
         showValue: false,
         showIcons: true,

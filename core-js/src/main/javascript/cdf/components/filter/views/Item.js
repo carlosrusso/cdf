@@ -37,7 +37,7 @@ define([
      *
      * @type {object}
      */
-    template: {
+    templates: {
       selection: templates['Item-template'],
       skeleton: templates['Item-template']
     },
@@ -69,6 +69,10 @@ define([
     onClickOnlyThis: function (event) {
       event.stopPropagation();
       this.trigger('control:only-this', this.model);
+    },
+
+    updateScrollBar: function(){
+      // noop
     }
   });
 
