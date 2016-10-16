@@ -91,7 +91,6 @@ define([
      */
     onToggleCollapse: function(model) {
       var newState, oldState;
-      this.debug("Setting isCollapsed");
       if (model.get('isDisabled') === true) {
         newState = true;
       } else {

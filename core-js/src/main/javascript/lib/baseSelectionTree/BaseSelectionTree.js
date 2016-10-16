@@ -88,6 +88,7 @@ define([
      */
     setSelection: function(newState) {
       if (this.getSelection() === newState) {
+        //Logger.log("No need to set selection of ", this.get('id'), " to ", newState);
         return this;
       }
       this.set('isSelected', newState);
@@ -394,8 +395,8 @@ define([
         } else {
           isMatch = fullString.toLowerCase().indexOf(text.toLowerCase()) > -1;
         }
-        this.debug("fullstring  " + fullString + " match to " + text + ": " + isMatch);
       }
+
       this.setVisibility(isMatch);
       return isMatch;
     }

@@ -15,12 +15,11 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/mustache',
-  '../../../Logger',
   '../baseevents/baseeventsView',
   '../models/SelectionTree',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function ($, _, Mustache, Logger, BaseView, SelectionTree, ScrollBarFactory, HtmlUtils) {
+], function ($, _, Mustache, BaseView, SelectionTree, ScrollBarFactory, HtmlUtils) {
 
   /**
    * @class cdf.components.filter.views.Abstract
@@ -30,10 +29,9 @@ define([
    * @extends cdf.Logger
    * @ignore
    */
-  return BaseView.extend(Logger).extend(/** @lends cdf.components.filter.views.Abstract# */{
+  return BaseView.extend(/** @lends cdf.components.filter.views.Abstract# */{
     initialize: function (options) {
       this.configuration = options.configuration;
-      this.loglevel = this.configuration.loglevel;
       this.config = this.configuration[this.type];
 
       /*
@@ -189,8 +187,8 @@ define([
       if (this._scrollBar != null) {
         return this;
       }
-      this.debug("Adding a scrollbar to " + (this.model.get('label')));
       this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine,this);
+
       if (this.config.options.isResizable) {
         var $container = this.$(this.config.view.slots.children).parent();
         if (_.isFunction($container.resizable)) {
@@ -233,7 +231,6 @@ define([
       return this;
     },
     onCancel: function (event) {
-      this.debug("triggered Cancel");
       this.trigger('control:cancel', this.model);
       return this;
     },
@@ -249,7 +246,6 @@ define([
       return this;
     },
     onToggleCollapse: function (event) {
-      this.debug("triggered collapse");
       this.trigger("toggleCollapse", this.model, event);
       return this;
     },

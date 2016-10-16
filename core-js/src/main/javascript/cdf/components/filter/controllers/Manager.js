@@ -50,19 +50,14 @@ define([
      */
     constructor: function(node) {
       this.base.apply(this, arguments);
-      var loglevel = this.get('configuration').loglevel;
-      if (!_.isUndefined(loglevel)) {
-        this.loglevel = loglevel;
-      }
       this.updateChildren();
-      return this;
     },
+
     initialize: function(options) {
       if (this.get('view') == null) {
         this.addViewAndController(this.get('model'));
       }
       this.applyBindings();
-      return this;
     },
     /**
      * @summary Removes event handlers and closes the view from this node and its children.
@@ -200,7 +195,6 @@ define([
     },
     onNewData: function(item, collection, obj) {
       var itemParent;
-      this.debug("New data (" + (item.get('label')) + ") caught by " + (this.get('model').get('label')));
       itemParent = this.where({
         model: item.parent()
       });
@@ -243,7 +237,7 @@ define([
       return this.getPage('previous', model, event);
     },
     getPage: function(page, model, event) {
-      this.debug("Item " + (model.get('label')) + " requested page " + page);
+      Logger.debug("Item " + (model.get('label')) + " requested page " + page);
       var searchPattern = "";
       if (this.get('configuration').search.serverSide === true) {
         searchPattern = model.root().get('searchPattern')
@@ -255,12 +249,12 @@ define([
       if (!_.isFunction(getPage)) {
         return this;
       }
-      var that = this;
+
       return getPage(page, searchPattern).then(function(json) {
         if (json.resultset != null) {
-          that.debug("getPage: got " + json.resultset.length + " more items");
+          Logger.debug("getPage: got " + json.resultset.length + " more items");
         } else {
-          that.debug("getPage: no more items");
+          Logger.debug("getPage: no more items");
         }
       });
     },
@@ -280,7 +274,6 @@ define([
             }));
           }
           if (!hasModel) {
-            that.debug("adding child model " + (m.get('label')));
             return that.addChild(m);
           }
         });
@@ -305,7 +298,6 @@ define([
       throw new Error("NotImplemented");
     },
     sortSiblings: function(model) {
-      this.debug("sortSiblings: " + (this.get('model').get('label')) + " was triggered from " + (model.get('label')) + ":" + (model.getSelection()));
       if (this.get('model') !== model) {
         return this;
       }

@@ -10,18 +10,12 @@
 define([
   'amd!cdf/lib/underscore',
   'amd!cdf/lib/backbone.treemodel',
-  'cdf/lib/BaseEvents',
-  'cdf/Logger'
-], function (_, Backbone, BaseEvents, Logger) {
+  'cdf/lib/BaseEvents'
+], function (_, Backbone, BaseEvents) {
 
-  var Tree = BaseEvents.extendWithEvents(Backbone.TreeModel).extend(Logger).extend({
-    url: '',
-    loglevel: 'log',
+  var Tree = BaseEvents.extendWithEvents(Backbone.TreeModel).extend({
     children: function () {
       return this.nodes.apply(this, arguments);
-    },
-    parse: function (response, options) {
-      return response;
     },
 
     /**

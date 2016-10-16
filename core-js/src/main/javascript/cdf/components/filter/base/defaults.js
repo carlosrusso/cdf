@@ -17,13 +17,6 @@ define(['../../../lib/jquery'], function( $ ) {
    * Default settings
    */
   var privateDefaults = /** @lends cdf.components.filter.base.defaults */ {
-    /**
-     * Configuration of the log level.
-     *
-     * @type {string}
-     * @default "log"
-     */
-    loglevel: "log",
     pagination: {
       throttleTimeMilliseconds: 500
     },

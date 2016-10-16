@@ -71,7 +71,6 @@ define([
    * @classdesc Import data from multiple sources, populate the model.
    * @ignore
    */
-  return BaseModel.extend(Logger).extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
     /**
      * Class identifier.
      *
@@ -82,6 +81,7 @@ define([
     getModel: function() {
       return this.get('model');
     },
+  return BaseModel.extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
 
     /**
      * Import data into the MVC model, eventually inferring the data format.

@@ -13,9 +13,8 @@
 
 define([
   'amd!../../../lib/underscore',
-  '../baseevents/baseeventsModel',
-  '../../../Logger'
-], function(_, BaseModel, Logger) {
+  '../baseevents/baseeventsModel'
+], function(_, BaseModel) {
 
   /**
    * @class cdf.components.filter.data-handlers.OutputDataHandler
@@ -28,7 +27,6 @@ define([
    *   except that it writes to a CDF parameter.
    * @ignore
    */
-  return BaseModel.extend(Logger).extend(/** @lends cdf.components.filter.data-handlers.OutputDataHandler# */{
     /**
      * Class identifier.
      *
@@ -36,6 +34,8 @@ define([
      * @type {string}
      */
     ID: 'BaseFilter.DataHandlers.Output',
+  return BaseModel.extend(/** @lends cdf.components.filter.data-handlers.OutputDataHandler# */{
+
     initialize: function() {
       if (true || this.attributes.options.trigger === 'apply') {
         this.listenTo(this.get('model'), 'change:selectedItems', this.onApply);
@@ -122,13 +122,10 @@ define([
         return this;
       }
       treatedSelection = this._processOutput(model, selectionState);
-      this.debug("confirmed selection:" + treatedSelection);
       this.trigger('changed', treatedSelection);
       return this;
     },
     onSelection: function(model) {
-      this.debug("onSelection: " + model.get('label'));
-      return this;
     },
 
     /**
