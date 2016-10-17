@@ -15,9 +15,8 @@
  * @description OptiScrollBar implementation of ScrollBarHandler
  */
 define([
-  './AbstractScrollBarHandler',
-  '../../../../lib/jquery'
-], function(AbstractScrollBarHandler, $) {
+  './AbstractScrollBarHandler'
+], function(AbstractScrollBarHandler) {
   return AbstractScrollBarHandler.extend({
     scrollbar: null,
     constructor: function(view) {
