@@ -14,38 +14,38 @@
 define([
   '../../../lib/mustache',
   'text!../templates/Group-skeleton.html',
-  'text!../templates/Group-template.html',
+  'text!../templates/Group-selection.html',
   'text!../templates/Item-template.html',
   'text!../templates/Root-footer.html',
   'text!../templates/Root-header.html',
   'text!../templates/Root-overlay.html',
   'text!../templates/Root-skeleton.html',
-  'text!../templates/Root-template.html'
+  'text!../templates/Root-selection.html'
 ], function(
   Mustache,
   GroupSkeleton,
-  GroupTemplate,
+  GroupSelection,
   ItemTemplate,
   RootFooter,
   RootHeader,
   RootOverlay,
   RootSkeleton,
-  RootTemplate
+  RootSelection
 ) {
   var templates = {};
   function _loadTemplate(name, source) {
-    templates[name] = source;
+    templates[name] = source.replace(/\s+/g, ' ');
     Mustache.parse(templates[name]);
   }
 
   _loadTemplate("Group-skeleton", GroupSkeleton);
-  _loadTemplate("Group-template", GroupTemplate);
+  _loadTemplate("Group-selection", GroupSelection);
   _loadTemplate("Item-template", ItemTemplate);
   _loadTemplate("Root-footer", RootFooter);
   _loadTemplate("Root-header", RootHeader);
   _loadTemplate("Root-overlay", RootOverlay);
   _loadTemplate("Root-skeleton", RootSkeleton);
-  _loadTemplate("Root-template", RootTemplate);
+  _loadTemplate("Root-selection", RootSelection);
   _loadTemplate(undefined, "No template");
 
   return templates;

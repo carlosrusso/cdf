@@ -8,9 +8,11 @@
        {{#showTooltip}}
          title="{{#header}}{{{header}}}{{/header}}{{^header}}{{#selectedItems}}{{{.}}}{{/selectedItems}}{{/header}}"
        {{/showTooltip}}>
+
     {{#isDisabled}}
       {{strings.isDisabled}}
     {{/isDisabled}}
+
     {{^isDisabled}}
       {{#showSelectedItems}}
         <span class="filter-root-info-selected-items">

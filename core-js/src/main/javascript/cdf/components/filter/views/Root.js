@@ -45,7 +45,7 @@ define([
       skeleton: templates['Root-skeleton'],
       overlay: templates['Root-overlay'],
       header: templates['Root-header'],
-      selection: templates['Root-template'],
+      selection: templates['Root-selection'],
       footer: templates['Root-footer']
     },
     /**
@@ -79,7 +79,7 @@ define([
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems reachedSelectionLimit', this.updateHeader);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems selectedItems', this.updateSelection);
       this.onChange(model, 'reachedSelectionLimit isBusy', this.updateFooter);
-      return this.onChange(model, 'isDisabled', _.bind(this.updateAvailability, this));
+      this.onChange(model, 'isDisabled', this.updateAvailability);
     },
 
     getViewModel: function () {
@@ -130,11 +130,11 @@ define([
 
     renderCollapse: function (viewModel) {
       if (viewModel.isDisabled === true) {
-        var expand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
+        var isAlwaysExpand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
         this.$('.filter-root-container')
-          .toggleClass('expanded', expand)
-          .toggleClass('collapsed', !expand)
-          .toggleClass('always-expanded', expand);
+          .toggleClass('expanded', false)
+          .toggleClass('collapsed', !isAlwaysExpand)
+          .toggleClass('always-expanded', isAlwaysExpand);
       } else if (viewModel.alwaysExpanded === true) {
         this.$('.filter-root-container')
           .toggleClass('expanded', false)

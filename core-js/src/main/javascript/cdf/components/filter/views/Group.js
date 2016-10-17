@@ -39,7 +39,7 @@ define([
      */
     templates: {
       skeleton: templates['Group-skeleton'],
-      selection: templates['Group-template']
+      selection: templates['Group-selection']
     },
 
     /**
