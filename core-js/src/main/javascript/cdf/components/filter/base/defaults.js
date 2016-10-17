@@ -17,16 +17,12 @@ define(['../../../lib/jquery'], function( $ ) {
    * Default settings
    */
   var privateDefaults = /** @lends cdf.components.filter.base.defaults */ {
-    pagination: {
-      throttleTimeMilliseconds: 500
-    },
     Root: {
       renderers: void 0,
       sorter: void 0,
       view: {
         styles: [],
         throttleTimeMilliseconds: 10,
-        templates: {},
         slots: {
           selection: '.filter-root-control',
           header: '.filter-root-header',
@@ -47,8 +43,8 @@ define(['../../../lib/jquery'], function( $ ) {
       renderers: void 0,
       sorter: void 0,
       view: {
+        styles: [],
         throttleTimeMilliseconds: 10,
-        templates: {},
         slots: {
           selection: '.filter-group-header:eq(0)',
           children: '.filter-group-items'
@@ -66,7 +62,6 @@ define(['../../../lib/jquery'], function( $ ) {
       view: {
         styles: [],
         throttleTimeMilliseconds: 10,
-        templates: {},
         slots: {
           selection: '.filter-item-container'
         }
@@ -88,6 +83,7 @@ define(['../../../lib/jquery'], function( $ ) {
      * @type {object}
      */
     pagination: {
+      throttleTimeMilliseconds: 500,
       pageSize: Infinity
     },
     /**
@@ -117,7 +113,8 @@ define(['../../../lib/jquery'], function( $ ) {
     Root: {
       options: {
         className: 'multi-select',
-        styles: void 0,
+        styles: [],
+        label: 'All', // TODO: remove in favor of strings.groupSelection
         showCommitButtons: true,
         showFilter: false,
         showGroupSelection: true,
@@ -146,6 +143,7 @@ define(['../../../lib/jquery'], function( $ ) {
 
       },
       view: {
+        templates: {},
         scrollbar: {
           engine: 'mCustomScrollbar',
           options: {
@@ -181,7 +179,10 @@ define(['../../../lib/jquery'], function( $ ) {
         groupSelection: 'All',
         btnApply: 'Apply',
         btnCancel: 'Cancel',
-        moreData: 'More...'
+        moreData: 'Get more data...'
+      },
+      view: {
+        templates: {}
       }
     },
 
@@ -198,6 +199,9 @@ define(['../../../lib/jquery'], function( $ ) {
       },
       strings: {
         btnOnlyThis: 'Only'
+      },
+      view: {
+        templates: {}
       }
     }
   });

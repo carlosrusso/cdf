@@ -68,7 +68,9 @@ define([
           value: 4
         }
       },
-      output: {}
+      output: {
+        trigger: 'apply'
+      }
     },
 
     /**
@@ -184,11 +186,8 @@ define([
       /*
        * Selection strategy
        */
-      $.extend(true, configuration.component, {
-        selectionStrategy: {
-          limit: _.isNumber(cd.selectionLimit) ? cd.selectionLimit : Infinity
-        }
-      });
+      var limit = _.isNumber(cd.selectionLimit) ? cd.selectionLimit : Infinity;
+      configuration.component.selectionStrategy.limit = limit;
 
       var strategyCfg = configuration.component.selectionStrategy;
       var strategy = new BaseFilter.SelectionStrategies[strategyCfg.type](strategyCfg);
