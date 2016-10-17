@@ -15,7 +15,7 @@ define([
   '../../lib/jquery',
   'amd!../../lib/underscore',
   '../../Logger',
-  './BaseFilter',
+  './BaseFilter'
 ], function ($, _, Logger, BaseFilter) {
 
   /*
@@ -100,7 +100,7 @@ define([
       var cd = this.componentDefinition;
       var selectionStrategy = cd.multiselect ? 'LimitedSelect' : 'SingleSelect';
       $.extend(true, configuration.component,
-        BaseFilter.Enum.selectionStrategy[selectionStrategy],
+        BaseFilter.presets[selectionStrategy],
         {
           target: this.placeholder(),
           Root: {

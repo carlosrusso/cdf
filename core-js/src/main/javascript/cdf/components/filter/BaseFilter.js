@@ -23,7 +23,8 @@ define([
   './data-handlers/InputDataHandler',
   './data-handlers/OutputDataHandler',
   './base/templates',
-  './base/defaults'
+  './base/defaults',
+  './base/presets'
 ], function (
   SelectionTree,
   Views,
@@ -31,7 +32,8 @@ define([
   AbstractSelect, LimitedSelect, MultiSelect, SingleSelect,
   Input, Output,
   templates,
-  defaults
+  defaults,
+  presets
 ) {
 
   /*
@@ -97,81 +99,7 @@ define([
     },
 
     defaults: defaults,
-    templates: templates,
-    /**
-     * Enumerations
-     */
-    Enum: {
-      select: SelectionTree.SelectionStates,
-      selectionStrategy: {
-        'LimitedSelect': {
-          Root: {
-            options: {
-              className: 'multi-select',
-              showCommitButtons: true,
-              showNumberOfSelectedItems: true,
-              showGroupSelection: true,
-              label: 'All'
-            }
-          },
-          Item: {
-            options: {
-              showButtonOnlyThis: true
-            }
-          },
-          selectionStrategy: {
-            type: 'LimitedSelect',
-            limit: 500
-          },
-          output: {
-            trigger: 'apply'
-          }
-        },
-        'MultiSelect': {
-          Root: {
-            options: {
-              className: 'multi-select',
-              showCommitButtons: true,
-              showNumberOfSelectedItems: true,
-              showGroupSelection: true,
-              label: 'All'
-            }
-          },
-          Item: {
-            options: {
-              showButtonOnlyThis: true
-            }
-          },
-          selectionStrategy: {
-            type: 'MultiSelect'
-          },
-          output: {
-            trigger: 'apply'
-          }
-        },
-        'SingleSelect': {
-          Root: {
-            options: {
-              className: 'single-select',
-              showCommitButtons: false,
-              showSelectedItems: true,
-              showNumberOfSelectedItems: false,
-              showGroupSelection: false
-            }
-          },
-          Item: {
-            options: {
-              showButtonOnlyThis: false
-            }
-          },
-          selectionStrategy: {
-            type: 'SingleSelect'
-          },
-          output: {
-            trigger: 'apply'
-          }
-        }
-      }
-    }
+    presets: presets,
+    templates: templates
   };
 });
