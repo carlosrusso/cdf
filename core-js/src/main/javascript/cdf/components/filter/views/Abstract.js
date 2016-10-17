@@ -21,6 +21,7 @@ define([
   '../HtmlUtils'
 ], function ($, _, Mustache, BaseView, SelectionTree, ScrollBarFactory, HtmlUtils) {
 
+  "use strict";
   /**
    * @class cdf.components.filter.views.Abstract
    * @amd cdf/components/filter/views/Abstract
@@ -57,13 +58,10 @@ define([
         return 'change:' + prop;
       }).join(' ');
 
-      if (this.config.view.throttleTimeMilliseconds >= 0) {
-        this.listenTo(model, events, _.throttle(callback, this.config.view.throttleTimeMilliseconds, {
-          leading: false
-        }));
-      } else {
-        this.listenTo(model, events, callback);
-      }
+      var delay = this.config.view.throttleTimeMilliseconds;
+      var c = _.bind(callback, this);
+      var f = (delay >= 0) ? _.debounce(c, delay) : c;
+      this.listenTo(model, events, f);
     },
 
     updateSlot: function (slot) {
