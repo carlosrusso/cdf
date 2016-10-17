@@ -47,29 +47,30 @@ define([
      * @return {string} The new selection state.
      */
     setSelection: function (newState, model) {
-      var numberOfUnselectedItems, selectedItems;
+
       var allow = true;
       var oldState = model.getSelection();
       newState = this.getNewState(oldState);
       if (newState !== SelectionTree.SelectionStates.NONE) {
-        selectedItems = model.root().get('numberOfSelectedItems');
-        if (!_.isFinite(selectedItems)) {
+
+        var nSelected = model.root().get('numberOfSelectedItems');
+        if (!_.isFinite(nSelected)) {
           model.update();
-          selectedItems = model.root().get('numberOfSelectedItems');
+          nSelected = model.root().get('numberOfSelectedItems');
         }
 
-        if (selectedItems >= this.selectionLimit) {
+        if (nSelected >= this.selectionLimit) {
           this.warn("Cannot allow the selection of  \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " has been reached.");
           allow = false;
         } else {
           if (model.children() && (newState === SelectionTree.SelectionStates.ALL)) {
-            numberOfUnselectedItems = model.leafs()
+            var nCandidates = model.leafs()
               .filter(function(m) {
-                return m.getSelection() === SelectionTree.SelectionStates.NONE;
+                return m.getSelection() !== SelectionTree.SelectionStates.ALL;
               })
               .size()
               .value();
-            if (selectedItems + numberOfUnselectedItems >= this.selectionLimit) {
+            if (nSelected + nCandidates >= this.selectionLimit) {
               this.warn("Cannot allow the selection of \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " would be reached.");
               allow = false;
             }
@@ -79,13 +80,30 @@ define([
 
       if (allow) {
         model.setAndUpdateSelection(newState);
-        selectedItems = model.root().get('numberOfSelectedItems');
-        model.root().set("reachedSelectionLimit", selectedItems >= this.selectionLimit);
+        this._updateReachedSelectionLimit(model);
       } else {
         newState = oldState;
       }
+
       return newState;
+    },
+
+    _updateReachedSelectionLimit: function(model){
+      var root = model.root();
+      root.set("reachedSelectionLimit", root.get('numberOfSelectedItems') >= this.selectionLimit);
+    },
+
+    cancelSelection: function(model){
+      this.base(model);
+      this._updateReachedSelectionLimit(model);
+    },
+
+    applySelection: function(model){
+      this.base(model);
+      this._updateReachedSelectionLimit(model);
     }
+
+
   });
 
 });
