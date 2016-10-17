@@ -70,7 +70,7 @@ define([
       var filterText = this.root().get('searchPattern');
       this.filterBy(filterText);
 
-      this.on('add remove', this.update);
+      this.on('add remove', this._onAddRemove);
     },
 
     _inheritSelectionFromParent: function() {
@@ -78,6 +78,10 @@ define([
       if (parentSelectionState !== SelectionStates.SOME) {
         this.setSelection(parentSelectionState);
       }
+    },
+
+    _onAddRemove: function() {
+      this.update();
     },
 
     /**

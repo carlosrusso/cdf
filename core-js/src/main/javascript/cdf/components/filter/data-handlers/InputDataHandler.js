@@ -46,8 +46,6 @@ define([
       }
 
       var model = this.get('model');
-      model.set('isDisabled', model.children() === null);
-
       var options = this.get('options');
       if (options.root && options.root.id) {
         model.set('id', options.root.id);

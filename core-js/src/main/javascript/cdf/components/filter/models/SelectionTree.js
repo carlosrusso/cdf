@@ -49,6 +49,14 @@ define([
       page: 0
     },
 
+    _onAddRemove: function() {
+      this.base();
+
+      var root = this.root();
+      root.set('isDisabled', root.children() === null);
+    },
+
+
     /**
      * Sets the isBusy parameter.
      *
