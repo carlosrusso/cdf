@@ -69,12 +69,12 @@
   top: 0;
   margin: auto 0;
   right: 10px;
-  background: url("../images/filter-arrow.svg") no-repeat left center;
+  background: url("images/filter-arrow.svg") no-repeat left center;
   width: 10px;
   height: 10px;
 }
 .no-svg .filter-collapse-icon {
-  background: url("../images/filter-arrow.png") no-repeat left center;
+  background: url("images/filter-arrow.png") no-repeat left center;
 }
 .filter-collapse-icon.collapsed {
   background-position: left center;
@@ -205,17 +205,17 @@
   height: 12px;
   pointer-events: none;
   left: 10px;
-  background: url("../images/search-icon.svg") no-repeat center center;
+  background: url("images/search-icon.svg") no-repeat center center;
 }
 .filter-controls .filter-filter .no-svg .filter-filter-icon {
-  background: url("../images/search-icon.png") no-repeat center center;
+  background: url("images/search-icon.png") no-repeat center center;
 }
 .filter-controls .filter-filter .filter-filter-clear {
   width: 10px;
   height: 10px;
   cursor: pointer;
   right: 10px;
-  background: url("../images/close-icon.svg");
+  background: url("images/close-icon.svg");
   background-repeat: no-repeat;
   background-position: left center;
 }
@@ -223,7 +223,7 @@
   background-position: right center;
 }
 .filter-controls .filter-filter .no-svg .filter-filter-clear {
-  background: url("../images/close-icon.png");
+  background: url("images/close-icon.png");
 }
 .filter-root-selection {
   position: relative;
@@ -406,7 +406,7 @@
   -moz-border-radius: 0;
   border-radius: 0;
   background-color: #fff;
-  background-image: url("../images/checkbox-sprite.svg");
+  background-image: url("images/checkbox-sprite.svg");
   background-repeat: no-repeat;
   background-position: left center;
 }
@@ -424,7 +424,7 @@
 .no-svg .filter-root-container.multi-select .filter-root-selection-icon,
 .no-svg .filter-root-container.multi-select .filter-group-selection-icon,
 .no-svg .filter-root-container.multi-select .filter-item-selection-icon {
-  background-image: url("../images/checkbox-sprite.png");
+  background-image: url("images/checkbox-sprite.png");
 }
 .filter-root-container.single-select .filter-root-selection-icon,
 .filter-root-container.single-select .filter-group-selection-icon,
@@ -464,7 +464,7 @@
 .filter-root-container.single-select .filter-root-selection-icon.some-selected,
 .filter-root-container.single-select .filter-group-selection-icon.some-selected,
 .filter-root-container.single-select .filter-item-container.some-selected .filter-item-selection-icon {
-  background: url("../images/24px/collapse.png") no-repeat 50% 50%;
+  background: url("images/collapse.png") no-repeat 50% 50%;
   background-position: -24px 50%;
   background: #005ca7;
 }
@@ -520,7 +520,7 @@
   font-size: 13px;
 }
 /************************
- *  Scrollbar 
+ *  Scrollbar
  *****/
 .filter-root-items-container.mCustomScrollbar {
   height: 180px;
@@ -532,7 +532,7 @@
 .filter-root-items-container.mCustomScrollbar .mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar {
   width: 6px;
 }
-/************************  
+/************************
  *  Notifications
  */
 .filter-busy {
