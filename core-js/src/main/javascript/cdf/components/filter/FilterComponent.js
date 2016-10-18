@@ -75,8 +75,8 @@ define([
     update: function() {
       this.getData().then(
         _.bind(function(data) {
-          this.initialize();
-          return this.onDataReady(data);
+          var configuration = this.initialize();
+          return this.onDataReady(data, configuration);
         }, this),
         _.bind(this.onDataFail, this)
       );
@@ -87,12 +87,11 @@ define([
      * Initialize the component by creating new instances of the main objects:
      * <ul>
      *   <li>model</li>
-     *   <li>MVC manager</li>
      *   <li>input data handler</li>
      *   <li>output data handler</li>
      * </ul>
      *
-     * @return {Promise} Returns a $.Deferred().promise() object.
+     * @return {object} Returns a configuration object.
      */
     initialize: function() {
       this.close();
@@ -103,14 +102,10 @@ define([
       var configuration = this.getConfiguration();
 
       /*
-       * Initialize our little MVC world
+       * Initialize the model
        */
-      this.model = new BaseFilter.Models.SelectionTree(configuration.input.defaultModel);
-      this.model.set('matcher', configuration.component.search.matcher);
-
-      this.manager = new BaseFilter.Controllers.Manager({
-        model: this.model,
-        configuration: configuration.component
+      this.model = new BaseFilter.Models.SelectionTree(configuration.input.defaultModel, {
+        matcher: configuration.component.search.matcher
       });
 
       /*
@@ -188,12 +183,18 @@ define([
      * Launch an event equivalent to postExecution
      */
 
-    onDataReady: function(data) {
+    onDataReady: function(data, configuration) {
       this.inputDataHandler.updateModel(data);
       if (this.parameter) {
         var currentSelection = this.dashboard.getParameterValue(this.parameter);
         this.setValue(currentSelection);
       }
+
+      // we can now instantiate views
+      this.manager = new BaseFilter.Controllers.Manager({
+        model: this.model,
+        configuration: configuration.component
+      });
 
       this.trigger('getData:success');
       return this;
