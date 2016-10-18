@@ -56,25 +56,22 @@ define([
       'mouseover .filter-group-container': 'onMouseOver',
       'mouseout  .filter-group-container': 'onMouseOut'
     },
-    /**
-     * @param {object} model
-     * @return {*}
-     */
+
     bindToModel: function (model) {
       this.base(model);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems', this.updateSelection);
       this.onChange(model, 'isCollapsed', this.updateCollapse);
     },
+
     /**
-     * @return {*}
      */
     updateCollapse: function () {
       var viewModel = this.getViewModel();
       this.renderCollapse(viewModel);
     },
+
     /**
      * @param {object} viewModel
-     * @return {*}
      */
     renderCollapse: function (viewModel) {
       this.renderSelection(viewModel);

@@ -88,7 +88,7 @@ define([
       var selectedItems = this.configuration
         .selectionStrategy
         .strategy
-        .getSelectedItems(this.model, 'label')
+        .getSelectedItems(this.model, 'label');
 
       $.extend(viewModel, {
         selectedItems: selectedItems,
@@ -132,26 +132,24 @@ define([
     },
 
     renderCollapse: function (viewModel) {
+      var $tgt = this.$('.filter-root-container');
+
       if (viewModel.isDisabled === true) {
         var isAlwaysExpand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
-        this.$('.filter-root-container')
+        $tgt
           .toggleClass('expanded', false)
           .toggleClass('collapsed', !isAlwaysExpand)
           .toggleClass('always-expanded', isAlwaysExpand);
       } else if (viewModel.alwaysExpanded === true) {
-        this.$('.filter-root-container')
+        $tgt
           .toggleClass('expanded', false)
           .toggleClass('collapsed', false)
           .toggleClass('always-expanded', true);
-      } else if (viewModel.isCollapsed === true) {
-        this.$('.filter-root-container')
-          .toggleClass('expanded', false)
-          .toggleClass('collapsed', true)
-          .toggleClass('always-expanded', false);
       } else {
-        this.$('.filter-root-container')
-          .toggleClass('expanded', true)
-          .toggleClass('collapsed', false)
+        var isCollapsed = viewModel.isCollapsed;
+        $tgt
+          .toggleClass('expanded', !isCollapsed)
+          .toggleClass('collapsed', isCollapsed)
           .toggleClass('always-expanded', false);
       }
       return this;
@@ -171,18 +169,14 @@ define([
     onOverlayClick: function (event) {
       this.trigger("click:outside", this.model);
       if (this.config.view.overlaySimulateClick === true) {
-        this.$('.filter-overlay').toggleClass('expanded', false).toggleClass('collapsed', true);
+        this.$('.filter-overlay')
+          .toggleClass('expanded', false)
+          .toggleClass('collapsed', true);
+
         _.delay(function () {
           var $element = $(document.elementFromPoint(event.clientX, event.clientY));
-          var item = _.chain($element.parents())
-            .filter(function(m) {
-              return $(m).hasClass('filter-root-header');
-            })
-            .first()
-            .value();
-          if (item != null) {
-            return $(item).click();
-          }
+
+          $element.closest('.filter-root-header').click();
         }, 0);
       }
       return this;

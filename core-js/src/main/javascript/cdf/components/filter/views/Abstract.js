@@ -49,6 +49,12 @@ define([
       this.render();
     },
 
+    /**
+     * Binds changes of model properties to view methods.
+     *
+     * @param {cdf.components.filter.model.SelectionTree} model
+     */
+
     bindToModel: function (model) {
       this.onChange(model, 'isVisible', this.updateVisibility);
     },
