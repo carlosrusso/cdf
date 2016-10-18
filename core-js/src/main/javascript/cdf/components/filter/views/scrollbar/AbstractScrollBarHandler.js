@@ -18,6 +18,7 @@ define([
  '../../../../lib/Base'
 ],function(Base) {
   return Base.extend({
+    scrollbar: null,
     scrollToPosition: function(position) {}
   })
  }

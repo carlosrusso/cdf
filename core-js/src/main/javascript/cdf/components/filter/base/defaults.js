@@ -13,15 +13,16 @@
 
 define(['../../../lib/jquery'], function( $ ) {
 
+  "use strict";
+
   /*
    * Default settings
    */
   var privateDefaults = /** @lends cdf.components.filter.base.defaults */ {
     Root: {
-      renderers: void 0,
-      sorter: void 0,
+      renderers: [],
+      sorters: [],
       view: {
-        styles: [],
         throttleTimeMilliseconds: 10,
         slots: {
           selection: '.filter-root-control',
@@ -40,14 +41,13 @@ define(['../../../lib/jquery'], function( $ ) {
       }
     },
     Group: {
-      renderers: void 0,
-      sorter: void 0,
+      renderers: [],
+      sorters: [],
       view: {
-        styles: [],
         throttleTimeMilliseconds: 10,
         slots: {
-          selection: '.filter-group-header:eq(0)',
-          children: '.filter-group-items'
+          selection: '.filter-group-header:eq(0)', // There can be nested groups
+          children: '.filter-group-items:eq(0)'
         },
         childConfig: {
           withChildrenPrototype: 'Group',
@@ -57,10 +57,9 @@ define(['../../../lib/jquery'], function( $ ) {
       }
     },
     Item: {
-      renderers: void 0,
-      sorter: void 0,
+      renderers: [],
+      sorters: [],
       view: {
-        styles: [],
         throttleTimeMilliseconds: 10,
         slots: {
           selection: '.filter-item-container'
@@ -113,8 +112,6 @@ define(['../../../lib/jquery'], function( $ ) {
     Root: {
       options: {
         className: 'multi-select',
-        styles: [],
-        label: 'All', // TODO: remove in favor of strings.groupSelection
         showCommitButtons: true,
         showFilter: false,
         showGroupSelection: true,
@@ -162,6 +159,7 @@ define(['../../../lib/jquery'], function( $ ) {
      */
     Group: {
       options: {
+        className: '',
         showFilter: false,
         showCommitButtons: false,
         showGroupSelection: false,
@@ -193,6 +191,7 @@ define(['../../../lib/jquery'], function( $ ) {
      */
     Item: {
       options: {
+        className: '',
         showButtonOnlyThis: false,
         showValue: false,
         showIcons: true

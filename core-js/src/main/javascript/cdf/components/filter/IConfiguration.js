@@ -107,13 +107,23 @@ define([
           target: this.placeholder(),
           Root: {
             options: {
-              styles: cd.showIcons ? [] : ['no-icons'],
+              showIcons: cd.showIcons,
               alwaysExpanded: cd.alwaysExpanded,
               showFilter: cd.showFilter,
               useOverlay: cd.useOverlay
             },
             strings: {
               title: cd.title
+            }
+          },
+          Group: {
+            options: {
+              showIcons: cd.showIcons
+            }
+          },
+          Item: {
+            options: {
+              showIcons: cd.showIcons
             }
           }
         }
@@ -283,8 +293,8 @@ define([
         renderRootFooter: 'component.Root.renderers.footer',
         renderGroupSelection: 'component.Group.renderers.selection',
         renderItemSelection: 'component.Item.renderers.selection',
-        sortItem: 'component.Item.sorter',
-        sortGroup: 'component.Group.sorter',
+        sortItem: 'component.Item.sorters',
+        sortGroup: 'component.Group.sorters',
         outputFormat: 'output.outputFormat'
       };
 

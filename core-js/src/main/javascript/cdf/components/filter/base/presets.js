@@ -63,7 +63,6 @@ define([], function() {
         showCommitButtons: true,
         showNumberOfSelectedItems: true,
         showGroupSelection: true,
-        label: 'All'
       }
     },
     Item: {

@@ -84,11 +84,14 @@ define([
 
     getViewModel: function () {
       var viewModel = this.base();
+
+      var selectedItems = this.configuration
+        .selectionStrategy
+        .strategy
+        .getSelectedItems(this.model, 'label')
+
       $.extend(viewModel, {
-        selectedItems: _.map(
-          this.configuration.selectionStrategy.strategy.getSelectedItems(this.model, 'label') /*this.model.getSelectedItems('label')*/, function (label) {
-            return label + " ";
-          }),
+        selectedItems: selectedItems,
         allItemsSelected: this.model.getSelection() === true,
         noItemsSelected: this.model.getSelection() === false,
         hasChanged: this.model.hasChanged()

@@ -14,22 +14,26 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  '../baseevents/baseeventsModel',
+  '../../../lib/BaseEvents',
   '../../../Logger',
   '../HtmlUtils'
-], function($, _, BaseModel, Logger, HtmlUtils) {
+], function($, _, BaseEvents, Logger, HtmlUtils) {
 
   "use strict";
 
   /**
    * @class cdf.components.filter.data-handlers.InputDataHandler
    * @amd cdf/components/filter/data-handlers/InputDataHandler
-   * @extends cdf.components.filter.baseevents.baseeventsModel
+   * @extends cdf.lib.BaseEvents
    * @classdesc Import data from multiple sources, populate the model.
    * @ignore
    */
-  return BaseModel.extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
+  return BaseEvents.extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
 
+    constructor: function(spec) {
+      this.model = spec.model;
+      this.options = spec.options || {};
+    },
     /**
      * Import data into the MVC model, eventually inferring the data format.
      *
@@ -45,8 +49,8 @@ define([
         this._updateModelFromJson(whatever);
       }
 
-      var model = this.get('model');
-      var options = this.get('options');
+      var model = this.model;
+      var options = this.options;
       if (options.root && options.root.id) {
         model.set('id', options.root.id);
       }
@@ -61,7 +65,7 @@ define([
     },
 
     _updateModelFromCdaJson: function(json) {
-      var query = this.get('options').query;
+      var query = this.options.query;
       var queryInfo = json.queryInfo;
 
       var pageData = getPageData(queryInfo, query.getOption('pageSize'));
@@ -72,7 +76,7 @@ define([
         var numberOfItems = parseInt(queryInfo.totalRows);
         var searchPattern = query.getOption('searchPattern');
         if (_.isEmpty(searchPattern)) {
-          this.get('model').set('numberOfItemsAtServer', numberOfItems);
+          this.model.set('numberOfItemsAtServer', numberOfItems);
         }
       }
     },
@@ -89,7 +93,7 @@ define([
         return;
       }
 
-      var indexes = this.get('options').indexes;
+      var indexes = this.options.indexes;
       var parentIndexes = _.chain(indexes)
         .pick('parentId', 'parentLabel')
         .filter(_.isFinite)
@@ -127,7 +131,7 @@ define([
         data = itemGenerator(indexes, pageData)(rows);
       }
 
-      this.get('model').add(data);
+      this.model.add(data);
     },
 
     _isCdaJson: function(obj) {
@@ -140,7 +144,7 @@ define([
      * @param {Array} selectedItems Array containing the ids of the selected items.
      */
     setValue: function(selectedItems) {
-      this.get('model').setSelectedItems(selectedItems);
+      this.model.setSelectedItems(selectedItems);
       this.trigger('setValue', selectedItems);
     }
   });

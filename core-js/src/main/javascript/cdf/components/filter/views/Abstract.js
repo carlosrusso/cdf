@@ -14,23 +14,24 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
+  'amd!../../../lib/backbone',
   '../../../lib/mustache',
-  '../baseevents/baseeventsView',
+  '../../../lib/BaseEvents',
   '../models/SelectionTree',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function ($, _, Mustache, BaseView, SelectionTree, ScrollBarFactory, HtmlUtils) {
+], function ($, _, Backbone, Mustache, BaseEvents, SelectionTree, ScrollBarFactory, HtmlUtils) {
 
   "use strict";
   /**
    * @class cdf.components.filter.views.Abstract
    * @amd cdf/components/filter/views/Abstract
    * @classdesc Abstract base class for all Views
-   * @extends cdf.components.filter.baseevents.baseeventsView
-   * @extends cdf.Logger
+   * @extends cdf.lib.BaseEvents
+   * @extends Backbone.View
    * @ignore
    */
-  return BaseView.extend(/** @lends cdf.components.filter.views.Abstract# */{
+  return BaseEvents.convertClass(Backbone.View).extend(/** @lends cdf.components.filter.views.Abstract# */{
     initialize: function (options) {
       this.configuration = options.configuration;
       this.config = this.configuration[this.type];

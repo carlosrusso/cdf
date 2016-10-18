@@ -17,19 +17,25 @@
 define([
   './AbstractScrollBarHandler'
 ], function(AbstractScrollBarHandler) {
+
+  "use strict";
+
   return AbstractScrollBarHandler.extend({
-    scrollbar: null,
     constructor: function(view) {
       this.scrollbar = view.$(view.config.view.slots.children)
-        .addClass('optiscroll-content').parent()
-        .addClass('optiscroll').optiscroll()
+        .addClass('optiscroll-content')
+        .parent()
+        .addClass('optiscroll')
+        .optiscroll()
         .off('scrollreachbottom')
         .on('scrollreachbottom', function(event) {
           return view.trigger('scroll:reached:bottom', view.model, event);
-        }).off('scrollreachtop')
+        })
+        .off('scrollreachtop')
         .on('scrollreachtop', function(event) {
           return view.trigger('scroll:reached:top', view.model, event);
-        }).data('optiscroll');
+        })
+        .data('optiscroll');
     },
 
     scrollToPosition: function(position) {

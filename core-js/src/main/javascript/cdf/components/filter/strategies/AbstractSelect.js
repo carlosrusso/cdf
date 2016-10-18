@@ -56,11 +56,11 @@ define([
     },
 
     /**
-     * Gets the selected items. Default behaviour is do defer to the model's one.
+     * Gets the selected models.
      *
      * @param {object} model The target model.
-     * @param {object} field
-     * @return {*} The return value of executing the model object _getSelectedItems_ function.
+     * @param {string} [field="id"] The field that will be used to identify the selected item .
+     * @return {object[]} The list of selected items.
      */
     getSelectedItems: function (model, field) {
       return model.getSelectedItems(field);

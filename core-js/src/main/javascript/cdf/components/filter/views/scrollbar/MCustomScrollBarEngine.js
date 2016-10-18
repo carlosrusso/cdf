@@ -19,9 +19,10 @@ define([
   '../../../../lib/jquery',
   'amd!../../../../lib/jquery.mCustomScrollbar'
 ],function(AbstractScrollBarHandler, $){
+
+  "use strict";
+
   return AbstractScrollBarHandler.extend({
-    
-    scrollbar: null,
     constructor: function (view) {
       var options = $.extend(true, {}, view.config.view.scrollbar.options, {
         callbacks: {
@@ -34,7 +35,7 @@ define([
         }
       });
       this.scrollbar = view.$(view.config.view.slots.children).parent().mCustomScrollbar(options);
-      
+
     },
     scrollToPosition: function(position) {
       this.scrollbar.mCustomScrollbar("scrollTo",position,{callbacks:false});

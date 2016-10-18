@@ -13,14 +13,14 @@
 
 define([
   '../../../lib/mustache',
-  'text!../templates/Group-skeleton.html',
-  'text!../templates/Group-selection.html',
-  'text!../templates/Item-template.html',
-  'text!../templates/Root-footer.html',
-  'text!../templates/Root-header.html',
-  'text!../templates/Root-overlay.html',
-  'text!../templates/Root-skeleton.html',
-  'text!../templates/Root-selection.html'
+  'text!./templates/Group-skeleton.html',
+  'text!./templates/Group-selection.html',
+  'text!./templates/Item-template.html',
+  'text!./templates/Root-footer.html',
+  'text!./templates/Root-header.html',
+  'text!./templates/Root-overlay.html',
+  'text!./templates/Root-skeleton.html',
+  'text!./templates/Root-selection.html'
 ], function(
   Mustache,
   GroupSkeleton,
@@ -32,6 +32,9 @@ define([
   RootSkeleton,
   RootSelection
 ) {
+
+  "use strict";
+
   var templates = {};
   function _loadTemplate(name, source) {
     templates[name] = source.replace(/\s+/g, ' ');

@@ -13,13 +13,13 @@
 
 define([
   'amd!../../../lib/underscore',
-  '../baseevents/baseeventsModel'
-], function(_, BaseModel) {
+  '../../../lib/BaseEvents'
+], function(_, BaseEvents) {
 
   /**
    * @class cdf.components.filter.data-handlers.OutputDataHandler
    * @amd cdf/components/filter/data-handlers/OutputDataHandler
-   * @extends cdf.components.filter.baseevents.baseeventsModel
+   * @extends cdf.lib.BaseEvents
    * @classdesc The Output DataHandler:
    *   <ul><li>watches the model for specific changes</li>
    *       <li>synchronizes CDF with the model</li></ul>
@@ -27,20 +27,23 @@ define([
    *   except that it writes to a CDF parameter.
    * @ignore
    */
-  return BaseModel.extend(/** @lends cdf.components.filter.data-handlers.OutputDataHandler# */{
+  return BaseEvents.extend(/** @lends cdf.components.filter.data-handlers.OutputDataHandler# */{
 
-    initialize: function() {
-      if (true || this.attributes.options.trigger === 'apply') {
-        this.listenTo(this.get('model'), 'change:selectedItems', this.onApply);
+    constructor: function(spec) {
+      this.model = spec.model;
+      this.options = spec.options;
+
+      if (true || this.options.trigger === 'apply') {
+        this.listenTo(this.model, 'change:selectedItems', this.onApply);
       } else {
-        this.listenTo(this.get('model'), 'change:isSelected', this.onSelection);
+        this.listenTo(this.model, 'change:isSelected', this.onSelection);
       }
     },
 
     _processOutput: function(model, selection) {
       var result;
 
-      var outputFormat = this.attributes.options.outputFormat;
+      var outputFormat = this.options.outputFormat;
       if (_.isString(outputFormat)) {
         switch (outputFormat.toLowerCase()) {
           case 'lowestid':
@@ -127,7 +130,7 @@ define([
      * @return {string[] | any} Returns the currently committed selection state.
      */
     getValue: function() {
-      var model = this.get('model');
+      var model = this.model;
       var selection = model.root().get('selectedItems');
       return this._processOutput(selection, model);
     }
