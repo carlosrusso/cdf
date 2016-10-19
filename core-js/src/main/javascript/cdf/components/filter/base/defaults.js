@@ -26,6 +26,7 @@ define(['../../../lib/jquery'], function( $ ) {
         throttleTimeMilliseconds: 10,
         slots: {
           selection: '.filter-root-control',
+          filter: '.filter-filter-input:eq(0)',
           header: '.filter-root-header',
           footer: '.filter-root-footer',
           children: '.filter-root-items',
@@ -47,6 +48,7 @@ define(['../../../lib/jquery'], function( $ ) {
         throttleTimeMilliseconds: 10,
         slots: {
           selection: '.filter-group-header:eq(0)', // There can be nested groups
+          filter: '.filter-filter-input:eq(0)',
           children: '.filter-group-items:eq(0)'
         },
         childConfig: {

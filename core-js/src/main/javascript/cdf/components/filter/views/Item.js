@@ -53,6 +53,7 @@ define([
       'click     .filter-item-body': 'onSelection',
       'click     .filter-item-only-this': 'onClickOnlyThis'
     },
+
     /**
      * @param {object} model
      */
@@ -69,10 +70,6 @@ define([
     onClickOnlyThis: function (event) {
       event.stopPropagation();
       this.trigger('control:only-this', this.model);
-    },
-
-    updateScrollBar: function(){
-      // noop
     }
   });
 

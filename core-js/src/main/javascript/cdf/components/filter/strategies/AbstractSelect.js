@@ -117,6 +117,34 @@ define([
 
     clickOutside: function(model) {
       model.root().set('isCollapsed', true);
+    },
+
+    filter: function(model, text){
+      model.root().set('searchPattern', text);
+    },
+
+    toggleCollapse: function(model) {
+      var willBeCollapsed;
+
+      if (model.get('isDisabled') === true) {
+        willBeCollapsed = true;
+      } else {
+        var isCollapsed = model.get('isCollapsed');
+        willBeCollapsed = !isCollapsed;
+        var hasVisibleNode = model.walkDown(function(m) {
+          return m.getVisibility();
+        }, _.some);
+        if (!hasVisibleNode && isCollapsed) {
+          this.filter(model, '');
+        }
+      }
+      model.set('isCollapsed', willBeCollapsed);
+    },
+
+    mouseOver: function(model) {
+    },
+
+    mouseOut: function(model) {
     }
   });
 

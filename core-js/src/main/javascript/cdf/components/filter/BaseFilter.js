@@ -14,7 +14,6 @@
 define([
   './models/SelectionTree',
   './views/Views',
-  './controllers/RootCtrl',
   './controllers/Manager',
   './strategies/AbstractSelect',
   './strategies/LimitedSelect',
@@ -28,7 +27,7 @@ define([
 ], function (
   SelectionTree,
   Views,
-  RootCtrl, Manager,
+  Manager,
   AbstractSelect, LimitedSelect, MultiSelect, SingleSelect,
   Input, Output,
   templates,
@@ -68,7 +67,6 @@ define([
      * Set of Controllers responsible for handling the interaction between views and models
      */
     Controllers: {
-      RootCtrl: RootCtrl,
       Manager: Manager
     },
 

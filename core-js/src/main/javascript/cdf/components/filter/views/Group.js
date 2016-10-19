@@ -12,18 +12,18 @@
  */
 
 define([
-  './Abstract',
+  './Parent',
   '../base/templates'
-], function (AbstractView, templates) {
+], function (ParentView, templates) {
 
   /**
    * @class cdf.components.filter.views.Group
    * @amd cdf/components/filter/views/Group
-   * @extends cdf.components.filter.views.Abstract
+   * @extends cdf.components.filter.views.Parent
    * @classdesc View for groups of items.
    * @ignore
    */
-  return AbstractView.extend(/** @lends cdf.components.filter.views.Group# */{
+  return ParentView.extend(/** @lends cdf.components.filter.views.Group# */{
     /**
      * View type.
      *
@@ -75,11 +75,11 @@ define([
      */
     renderCollapse: function (viewModel) {
       this.renderSelection(viewModel);
-      var $collapsable = this.$('.filter-group-body, .filter-group-footer');
+      var $collapsible = this.$('.filter-group-body, .filter-group-footer');
       if (viewModel.isCollapsed) {
-        $collapsable.hide();
+        $collapsible.hide();
       } else {
-        $collapsable.show();
+        $collapsible.show();
       }
     }
   });

@@ -15,19 +15,19 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/mustache',
-  './Abstract',
+  './Parent',
   '../base/templates'
-], function ($, _, Mustache, AbstractView, templates) {
+], function ($, _, Mustache, ParentView, templates) {
 
   /**
    * @class cdf.components.filter.views.Root
    * @amd cdf/components/filter/views/Root
-   * @extends cdf.components.filter.views.Abstract
+   * @extends cdf.components.filter.views.Parent
    * @classdesc Root View. The part of the filter that remains visible
    *   when the filter is collapsed.
    * @ignore
    */
-  return AbstractView.extend(/** @lends cdf.components.filter.views.Root# */{
+  return ParentView.extend(/** @lends cdf.components.filter.views.Root# */{
     /**
      * View type.
      *
@@ -80,6 +80,7 @@ define([
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems selectedItems', this.updateSelection);
       this.onChange(model, 'reachedSelectionLimit isBusy', this.updateFooter);
       this.onChange(model, 'isDisabled', this.updateAvailability);
+      this.onChange(model, 'searchPattern', this.updateFilter);
     },
 
     getViewModel: function () {
@@ -90,7 +91,7 @@ define([
         .strategy
         .getSelectedItems(this.model, 'label');
 
-      $.extend(viewModel, {
+      _.extend(viewModel, {
         selectedItems: selectedItems,
         allItemsSelected: this.model.getSelection() === true,
         noItemsSelected: this.model.getSelection() === false,

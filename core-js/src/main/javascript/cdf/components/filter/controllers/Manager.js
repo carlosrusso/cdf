@@ -15,9 +15,8 @@ define([
   'amd!../../../lib/underscore',
   '../../../lib/Tree',
   '../../../Logger',
-  '../views/Views',
-  './RootCtrl'
-], function(_, Tree, Logger, Views, RootCtrl) {
+  '../views/Views'
+], function(_, Tree, Logger, Views) {
 
   return Tree.extend(/** @lends cdf.components.filter.controllers.Manager# */{
     /**
@@ -30,12 +29,11 @@ define([
     /**
      * Default values.
      *
-     * @type {{model: object, view: object, controller: object, configuration: object}}
+     * @type {{model: object, view: object, configuration: object}}
      */
     defaults: {
       model: null,
       view: null,
-      controller: null,
       configuration: null
     },
     /**
@@ -55,7 +53,7 @@ define([
 
     initialize: function(options) {
       if (this.get('view') == null) {
-        this.addViewAndController(this.get('model'));
+        this.addView(this.get('model'));
       }
       this.applyBindings();
     },
@@ -69,7 +67,7 @@ define([
     close: function() {
       this.empty();
       this.get('view').close();
-      this.get('controller').stopListening().off();
+      //this.get('controller').stopListening().off();
       this.stopListening();
       this.off();
       this.clear();
@@ -90,21 +88,25 @@ define([
     },
 
     applyBindings: function() {
-      var that = this;
+      var view = this.get('view');
+      var configuration = this.get('configuration');
+      var strategy = this.get('configuration').selectionStrategy.strategy;
+
       var throttleScroll = function(f) {
-        var throttleTimeMilliseconds = that.get('configuration').pagination.throttleTimeMilliseconds;
+        var throttleTimeMilliseconds = configuration.pagination.throttleTimeMilliseconds;
         return _.throttle(f, throttleTimeMilliseconds || 0, {
           trailing: false
         });
       };
       var throttleFilter = function(f) {
-        var throttleTimeMilliseconds = that.get('view').config.view.throttleTimeMilliseconds;
+        var throttleTimeMilliseconds = view.config.view.throttleTimeMilliseconds;
         return _.debounce(f, throttleTimeMilliseconds);
       };
 
       /*
        * Declare bindings to model and view.
        */
+
       var bindings = {
         model: {
           'add': this.onNewData,
@@ -118,29 +120,60 @@ define([
         }
       };
 
+      //map viewEvent: strategyMethod
+      var viewBindings = {
+        'toggleCollapse': 'toggleCollapse',
+        'mouseover': 'mouseOver',
+        'mouseout': 'mouseOut',
+        'selected': 'changeSelection',
+        'control:apply': 'applySelection',
+        'control:cancel': 'cancelSelection',
+        'control:only-this': 'selectOnlyThis',
+        'click:outside': 'clickOutside'
+      };
+
+
+      _.each(viewBindings, function(strategyMethod, viewEvent) {
+        this.listenTo(view, viewEvent, function() {
+          strategy[strategyMethod].apply(strategy, arguments);
+        });
+      }, this);
+
+
       /*
        * Create listeners
        */
+
       _.each(bindings, function(bindingList, object) {
-        var obj = that.attributes[object];
+        var obj = this.get(object);
         _.each(bindingList, function(method, event) {
-          that.listenTo(obj, event, _.bind(method, that));
-        });
-      });
+
+          this.listenTo(obj, event, _.bind(method, this));
+
+        }, this);
+      }, this);
 
 
       this.on('post:child:selection request:child:sort', throttleFilter(this.renderSortedChildren));
       this.on('post:child:add', throttleFilter(this.onUpdateChildren));
       return this;
     },
-    addViewAndController: function(newModel) {
+
+    addView: function(newModel) {
 
       /*
        * Decide which view to use
        */
-      var Controller, View, configuration, controller, newController, target;
-      if (this.parent() != null) {
-
+      var View, configuration, target;
+      if (this.isRoot()) {
+        /*
+         * This node is the Root.
+         * A configuration object must have been passed as an option
+         */
+        configuration = this.get('configuration');
+        target = configuration.target;
+        View = Views.Root;
+      } else {
         /*
          * This node is either a Group or an Item
          * Use the parent's configuration
@@ -154,19 +187,6 @@ define([
         } else {
           View = Views[childConfig.withoutChildrenPrototype];
         }
-        Controller = RootCtrl;
-        controller = that.get('controller');
-      } else {
-
-        /*
-         * This node is the Root.
-         * A configuration object must have been passed as an option
-         */
-        configuration = this.get('configuration');
-        target = configuration.target;
-        View = Views.Root;
-        Controller = RootCtrl;
-        controller = null;
       }
 
       /*
@@ -177,24 +197,8 @@ define([
         configuration: configuration,
         target: target
       });
-      this.set('view', newView);
 
-      /*
-       * Reuse the existing controller, or create a new one, if needed
-       */
-      var shareController = true;
-      if (shareController === true && controller !== null) {
-        newController = controller;
-        newController.bindToView(newView);
-      } else {
-        newController = new Controller({
-          model: newModel,
-          view: newView,
-          configuration: configuration
-        });
-      }
-      this.set('controller', newController);
-      return this;
+      this.set('view', newView);
     },
 
     onNewData: function(item, collection, obj) {
@@ -418,10 +422,11 @@ define([
      * @param {String} text The new search pattern.
      */
     onFilterChange: function(text) {
+      this.get('configuration').selectionStrategy.strategy.filter(this.get('model'), text);
+
       if (this.get('configuration').search.serverSide === true) {
         this.requestPage(0, text)
       }
-      this.get('model').filterBy(text);
     },
 
     /**

@@ -12,7 +12,6 @@
  */
 
 define([
-  '../../../lib/jquery',
   'amd!../../../lib/underscore',
   'amd!../../../lib/backbone',
   '../../../lib/mustache',
@@ -20,7 +19,7 @@ define([
   '../models/SelectionTree',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function ($, _, Backbone, Mustache, BaseEvents, SelectionTree, ScrollBarFactory, HtmlUtils) {
+], function (_, Backbone, Mustache, BaseEvents, SelectionTree, ScrollBarFactory, HtmlUtils) {
 
   "use strict";
   /**
@@ -31,7 +30,35 @@ define([
    * @extends Backbone.View
    * @ignore
    */
+
+  window.countRenders = {};
+
+  /**
+   * Map the handlers that are directly relayed to view events,
+   * which will be processed by the view's controller.
+   *
+   * @type {object}
+   */
+  var relayEvents = {
+    onToggleCollapse : 'toggleCollapse',
+    onMouseOver: 'mouseover',
+    onMouseOut: 'mouseout',
+    onSelection:'selected',
+    onApply: 'control:apply',
+    onCancel:'control:cancel'
+  };
+
+  var EventsMixin = {};
+  _.each(relayEvents, function(viewEvent, viewHandler) {
+    this[viewHandler] = function(event) {
+      this.trigger(viewEvent, this.model, event);
+    };
+  }, EventsMixin);
+
   return BaseEvents.convertClass(Backbone.View).extend(/** @lends cdf.components.filter.views.Abstract# */{
+    type: null,
+    templates: null,
+
     initialize: function (options) {
       this.configuration = options.configuration;
       this.config = this.configuration[this.type];
@@ -40,11 +67,10 @@ define([
        * Consider user-defined templates
        */
       if (this.config.view.templates != null) {
-        $.extend(true, this.templates, this.config.view.templates);
+        _.extend(this.templates, this.config.view.templates);
       }
-      if (this.model) {
-        this.bindToModel(this.model);
-      }
+
+      this.bindToModel(this.model);
       this.setElement(options.target);
       this.render();
     },
@@ -71,59 +97,23 @@ define([
       this.listenTo(model, events, f);
     },
 
-    updateSlot: function (slot) {
-      return _.bind(function () {
-        var viewModel = this.getViewModel();
-        var renderer = this.renderSlot(slot);
-        return renderer.call(this, viewModel);
-      }, this);
-    },
-
-    renderSlot: function(slot) {
-      return _.bind(function(viewModel) {
-        if (this.templates[slot]) {
-          var html = this.getHtml(this.templates[slot], viewModel);
-          this.$(this.config.view.slots[slot]).replaceWith(html);
-        }
-        this.injectContent(slot);
-        return this;
-      }, this);
-    },
-
     /*
      * View methods
      */
     getViewModel: function () {
-      var viewOptions = _.result(this.config, 'options');
+      var viewOptions = _.result(this.config, 'options', {});
+      var children = this.model.children();
 
-      return $.extend(true,
+      return _.extend(
         this.model.toJSON(),
         viewOptions,
         {
-          strings: _.result(this.config, 'strings'),
+          strings: _.result(this.config, 'strings', {}),
           selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy'),
           isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
-          numberOfChildren: this.model.children() ? this.model.children().length : 0
+          numberOfChildren:  children ? children.length : 0
         }
       );
-    },
-
-    injectContent: function (slot) {
-      var ref, ref1;
-      var renderers = (ref = this.config) != null ? (ref1 = ref.renderers) != null ? ref1[slot] : void 0 : void 0;
-      if (renderers == null) {
-        return;
-      }
-      if (!_.isArray(renderers)) {
-        renderers = [renderers];
-      }
-
-      _.each(renderers, function (renderer) {
-        if (_.isFunction(renderer)) {
-          return renderer.call(this, this.$el, this.model, this.configuration);
-        }
-      }, this);
-      return this;
     },
 
     /**
@@ -144,8 +134,29 @@ define([
        *   html4.ATTRIBS["input::placeholder"] = 0
        * });
        */
+      if(!template){
+        return "";
+      }
       var html = Mustache.render(template, viewModel);
       return HtmlUtils.sanitizeHtml(html);
+    },
+
+    injectContent: function (slot) {
+      var ref, ref1;
+      var renderers = (ref = this.config) != null ? (ref1 = ref.renderers) != null ? ref1[slot] : void 0 : void 0;
+      if (renderers == null) {
+        return;
+      }
+      if (!_.isArray(renderers)) {
+        renderers = [renderers];
+      }
+
+      _.each(renderers, function (renderer) {
+        if (_.isFunction(renderer)) {
+          return renderer.call(this, this.$el, this.model, this.configuration);
+        }
+      }, this);
+      return this;
     },
 
     /**
@@ -177,111 +188,17 @@ define([
       var html = this.getHtml(this.templates.selection, viewModel);
       this.$(this.config.view.slots.selection).replaceWith(html);
       this.injectContent('selection');
+
+      window.countRenders[this.type] = (window.countRenders[this.type] || 0) + 1;
       return this;
     },
 
     updateVisibility: function () {
       if (this.model.getVisibility()) {
-        return this.$el.show();
+        this.$el.show();
       } else {
-        return this.$el.hide();
+        this.$el.hide();
       }
-    },
-
-    /*
-     * Children management
-     */
-    getChildrenContainer: function () {
-      return this.$(this.config.view.slots.children);
-    },
-    createChildNode: function () {
-      var $child = $('<div/>').addClass(this.config.view.childConfig.className);
-      var $target = this.$(this.config.view.slots.children);
-      $child.appendTo($target);
-      return $child;
-    },
-    appendChildNode: function ($child) {
-      var $target = this.$(this.config.view.slots.children);
-      $child.appendTo($target);
-      return $child;
-    },
-
-    /*
-     * Scrollbar methods
-     */
-    updateScrollBar: function () {
-      var isPaginated = _.isFinite(this.configuration.pagination.pageSize) && this.configuration.pagination.pageSize > 0;
-      var isOverThreshold = this.model.flatten().size().value() > this.config.options.scrollThreshold;
-
-      if (isPaginated || isOverThreshold) {
-        this.addScrollBar();
-      }
-    },
-
-    addScrollBar: function () {
-      if (this._scrollBar != null) {
-        return;
-      }
-      this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine,this);
-
-      if (this.config.options.isResizable) {
-        var $container = this.$(this.config.view.slots.children).parent();
-        if (_.isFunction($container.resizable)) {
-          $container.resizable({
-            handles: 's'
-          });
-        }
-      }
-    },
-
-    setScrollBarAt: function ($tgt) {
-      if (this._scrollBar != null) {
-        this._scrollBar.scrollToPosition($tgt);
-      }
-    },
-    /*
-     * Events triggered by the user
-     */
-    onMouseOver: function (event) {
-      var $node;
-      $node = this.$(this.config.view.slots.selection);
-      $node = this.$('div:eq(0)');
-      this.trigger('mouseover', this.model);
-      return this;
-    },
-    onMouseOut: function (event) {
-      var $node;
-      $node = this.$(this.config.view.slots.selection);
-      $node = this.$('div:eq(0)');
-      this.trigger('mouseout', this.model);
-      return this;
-    },
-    onSelection: function () {
-      this.trigger('selected', this.model);
-      return this;
-    },
-    onApply: function (event) {
-      this.trigger('control:apply', this.model);
-      return this;
-    },
-    onCancel: function (event) {
-      this.trigger('control:cancel', this.model);
-      return this;
-    },
-    onFilterChange: function (event) {
-      var text = $(event.target).val();
-      this.trigger('filter', text, this.model);
-      return this;
-    },
-    onFilterClear: function (event) {
-      var text = '';
-      this.$('.filter-filter-input:eq(0)').val(text);
-      this.trigger('filter', text, this.model);
-      return this;
-    },
-    onToggleCollapse: function (event) {
-      this.trigger("toggleCollapse", this.model, event);
-      return this;
     },
 
     /*
@@ -290,11 +207,22 @@ define([
     close: function () {
       this.remove();
       return this.unbind();
+    },
 
-      /*
-       * Update tree of views
-       */
+    /*
+     * internal machinery
+     */
+
+    _renderSlot: function(slot) {
+      return _.bind(function(viewModel) {
+        if (this.templates[slot]) {
+          var html = this.getHtml(this.templates[slot], viewModel);
+          this.$(this.config.view.slots[slot]).replaceWith(html);
+        }
+        this.injectContent(slot);
+      }, this);
     }
-  });
+
+  }).extend(EventsMixin);
 
 });

@@ -52,36 +52,45 @@ define([
       numberOfItems: 0
     },
 
-    constructor: function(attributes, options) {
-      if ((attributes != null ? attributes.label : void 0) != null) {
-        if ((getOwn(attributes, 'id') == null) || (getOwn(options, 'useValueAsId') === true)) {
-          attributes.id = attributes.label;
+    initialize: function(attributes, options) {
+      if (attributes) {
+        if (attributes.label != null) {
+          if ((getOwn(attributes, 'id') == null) || (getOwn(options, 'useValueAsId') === true)) {
+            attributes.id = attributes.label;
+          }
         }
       }
+
       this.base(attributes, options);
-    },
 
-    initialize: function() {
-      this.base.apply(this, arguments);
+      this.on('change:searchPattern', function(model, value){
+        model.filterBy(value);
+      });
 
-      if (this.parent()) {
+      if (this.isRoot()) {
+        // Initializations specific to root node
+        this.set('matcher', getOwn(options, 'matcher') || defaultMatcher);
+      } else {
         this._inheritSelectionFromParent();
+
+        // If there's a searchPattern defined, adjust the visibility of this node
+        var root = this.root();
+        var filterText = root.get('searchPattern');
+        this._filter(filterText, root.get('matcher'));
       }
-      var filterText = this.root().get('searchPattern');
-      this.filterBy(filterText);
 
       this.on('add remove', this._onAddRemove);
     },
 
-    _inheritSelectionFromParent: function() {
-      var parentSelectionState = this.parent().getSelection();
-      if (parentSelectionState !== SelectionStates.SOME) {
-        this.setSelection(parentSelectionState);
-      }
-    },
-
-    _onAddRemove: function() {
-      this.update();
+    /**
+     * Gets the selection state of the model.
+     *
+     * @method getSelection
+     * @public
+     * @return {Boolean}
+     */
+    getSelection: function() {
+      return this.get('isSelected');
     },
 
     /**
@@ -96,7 +105,9 @@ define([
         //Logger.log("No need to set selection of ", this.get('id'), " to ", newState);
         return this;
       }
+
       this.set('isSelected', newState);
+
       if (newState !== SelectionStates.SOME) {
         var children = this.children();
         if (children) {
@@ -105,21 +116,12 @@ define([
           });
         }
       }
-      if (this.parent()) {
-        this.parent().updateSelection();
+
+      var parent = this.parent();
+      if (parent) {
+        parent.updateSelection();
       }
       return this;
-    },
-
-    /**
-     * Gets the selection state of the model.
-     *
-     * @method getSelection
-     * @public
-     * @return {Boolean}
-     */
-    getSelection: function() {
-      return this.get('isSelected');
     },
 
     setAndUpdateSelection: function(newState) {
@@ -147,7 +149,7 @@ define([
         case SelectionStates.NONE:
           return [];
         case SelectionStates.ALL:
-          return this.get(field || 'id');
+          return [this.get(field || 'id')];
         default:
           var children = this.children();
           if (children) {
@@ -160,6 +162,73 @@ define([
           }
       }
       return [];
+    },
+
+    update: function() {
+      var root = this.root();
+      root.updateSelection();
+
+      var numberOfServerItems = root.get('numberOfItemsAtServer');
+      if (numberOfServerItems != null) {
+        root.set('numberOfItems', numberOfServerItems);
+      } else {
+        root._updateCount('numberOfItems', function(model) {
+          return 1; // 1 parent + 10 children === 11?
+        });
+      }
+
+      root._updateCount('numberOfSelectedItems', countSelectedItem);
+      return this;
+    },
+
+    updateSelection: function() {
+      function getSelection(m) {
+        return m.getSelection();
+      }
+      function setSelection(model, state) {
+        if (model.children()) {
+          model.setSelection(state);
+        }
+        return state;
+      }
+
+      return this.walkDown(getSelection, reduceSelectionStates, setSelection);
+    },
+
+    countItems: function(callback) {
+      return this.walkDown(callback, sum, null);
+    },
+
+    countSelectedItems: function() {
+      return this.walkDown(countSelectedItem, sum, null);
+    },
+
+    _updateCount: function(property, countItemCallback) {
+      function setPropertyIfParent(model, count) {
+        if (model.children()) {
+          model.set(property, count);
+        }
+        return count;
+      }
+
+      return this.walkDown(countItemCallback, sum, setPropertyIfParent);
+    },
+
+    hasChanged: function() {
+      var previousSelection = this.get('selectedItems');
+      if (previousSelection == null) {
+        return false;
+      }
+      previousSelection = previousSelection.value();
+      var hasChanged = this._getSelectionSnapshot()
+        .some(function(current, state) {
+          var previous = previousSelection[state];
+          var intersection = _.intersection(current, previous);
+          return !(_.isEqual(current, intersection) && _.isEqual(previous, intersection));
+        })
+        .value();
+
+      return hasChanged;
     },
 
     /**
@@ -253,98 +322,16 @@ define([
       return selectionSnapshot;
     },
 
-    update: function() {
-      this.root().updateSelection();
-
-      var numberOfServerItems = this.root().get('numberOfItemsAtServer');
-      if (numberOfServerItems != null) {
-        this.root().set('numberOfItems', numberOfServerItems);
-      } else {
-        this.root().updateCountOfItems('numberOfItems', function(model) {
-          return 1;
-        });
-      }
-
-      this.root().updateCountOfSelectedItems();
-      return this;
-    },
-
-    updateSelection: function() {
-
-      function getSelection(m) {
-        return m.getSelection();
-      }
-
-      function setSelection(model, state) {
-        if (model.children()) {
-          model.setSelection(state);
-        }
-        return state;
-      }
-
-      return this.walkDown(getSelection, reduceSelectionStates, setSelection);
-    },
-
-    countItems: function(callback) {
-      // TODO: attempt to reimplement using walkDown
-      var count;
-      var children = this.children();
-      if (children) {
-        count = children.reduce(function(memo, child) {
-          return memo + child.countItems(callback);
-        }, 0);
-      } else {
-        count = callback(this);
-      }
-      return count;
-    },
-
-    updateCountOfItems: function(property, countItemCallback) {
-      function setPropertyIfParent(model, count) {
-        if (model.children()) {
-          model.set(property, count);
-        }
-        return count;
-      }
-
-      return this.walkDown(countItemCallback, sum, setPropertyIfParent);
-    },
-
-    countSelectedItems: function() {
-      return this.countItems(countSelectedItem);
-    },
-
-    updateCountOfSelectedItems: function() {
-      return this.updateCountOfItems('numberOfSelectedItems', countSelectedItem);
-    },
-
-
-    hasChanged: function() {
-      var previousSelection = this.get('selectedItems');
-      if (previousSelection == null) {
-        return false;
-      }
-      previousSelection = previousSelection.value();
-      var hasChanged = this._getSelectionSnapshot()
-        .map(function(current, state) {
-          var previous = previousSelection[state];
-          var intersection = _.intersection(current, previous);
-          return !(_.isEqual(current, intersection) && _.isEqual(previous, intersection));
-        })
-        .any()
-        .value();
-
-      return hasChanged;
-    },
 
     filterBy: function(text) {
-      this.root().set('searchPattern', text);
-      this._filter(text, "", this.get("matcher"));
-      this.root().setVisibility(true);
+      var root = this.root();
+      root.set('searchPattern', text);
+      this._filter(text, root.get("matcher"));
+      root.setVisibility(true);
       return this;
     },
 
-    _filter: function(text, prefix, customMatcher) {
+    _filter: function(text, customMatcher) {
 
       /*
        * decide on item visibility based on a match to a filter string
@@ -352,37 +339,37 @@ define([
        * if the user decides to delete/clear the search box
        */
 
-      // TODO: generalize this to allow searching by id, value, etc
-      var fullString = _.chain(['label'])
-        .map(function(property) {
-          return this.get(property);
-        }, this)
-        .compact()
-        .value()
-        .join(' ');
-      if (prefix) {
-        fullString = prefix + fullString;
-      }
-
       var isMatch;
-      if (this.children()) {
-        isMatch = _.any(this.children().map(function(m) {
-          return m._filter(text, fullString, customMatcher);
-        }));
+      var children = this.children();
+
+      if (children) {
+        // iterate over all children to set the visibility
+        isMatch = children.chain()
+          .map(function(m) {
+            return m._filter(text, customMatcher);
+          })
+          .some()
+          .value();
       } else if (_.isEmpty(text)) {
         isMatch = true;
       } else {
-        if (_.isFunction(customMatcher)) {
-          isMatch = customMatcher(fullString, text);
-        } else {
-          isMatch = fullString.toLowerCase().indexOf(text.toLowerCase()) > -1;
-        }
+        isMatch = customMatcher(this, text);
       }
 
       this.setVisibility(isMatch);
       return isMatch;
-    }
+    },
 
+    _inheritSelectionFromParent: function() {
+      var parentSelectionState = this.parent().getSelection();
+      if (parentSelectionState !== SelectionStates.SOME) {
+        this.setSelection(parentSelectionState);
+      }
+    },
+
+    _onAddRemove: function() {
+      this.update();
+    }
 
   }, {
     SelectionStates: SelectionStates
@@ -397,10 +384,7 @@ define([
   }
 
   function countSelectedItem(model) {
-    if (model.getSelection() === SelectionStates.ALL) {
-      return 1;
-    }
-    return 0;
+    return (model.getSelection() === SelectionStates.ALL) ? 1 : 0;
   }
 
   /**
@@ -429,6 +413,14 @@ define([
 
   function getOwn(o, p, v) {
     return _.has(o, p) ? o[p] : v;
+  }
+
+  function defaultMatcher(model, text) {
+    var fullString = '';
+    for (var n = model; n != null; n = n.parent()) {
+      fullString = n.get('label') + ' ' + fullString;
+    }
+    return fullString.toLowerCase().indexOf(text.toLowerCase()) > -1;
   }
 
 });
