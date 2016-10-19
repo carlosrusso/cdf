@@ -25,7 +25,9 @@ define(['../../../lib/jquery'], function( $ ) {
       view: {
         throttleTimeMilliseconds: 10,
         slots: {
-          selection: '.filter-root-control',
+          container: '.filter-root-container',
+          selection: '.filter-root-selection',
+          controls: '.filter-root-control .filter-control-buttons:eq(0)',
           filter: '.filter-filter-input:eq(0)',
           header: '.filter-root-header',
           footer: '.filter-root-footer',

@@ -15,17 +15,15 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/Base',
-  '../../../Logger',
   '../models/SelectionTree'
-], function ($, _, Base, Logger, SelectionTree) {
+], function ($, _, Base, SelectionTree) {
 
   var SelectionStates = SelectionTree.SelectionStates;
 
-  return Base.extend(Logger).extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
+  return Base.extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
     /**
      * @constructs
      * @extends {@link http://dean.edwards.name/weblog/2006/03/base/|Base}
-     * @extends cdf.Logger
      * @amd cdf/components/filter/strategies/AbstractSelect
      * @classdesc Base class for handling the selection logic, for instance:
      *   <ul>
@@ -101,7 +99,10 @@ define([
      */
     applySelection: function (model) {
       model.updateSelectedItems();
-      model.root().set('isCollapsed', true);
+      model.root().set({
+        'isCollapsed': true,
+        'searchPattern': ''
+      });
     },
 
     /**
@@ -131,12 +132,16 @@ define([
       } else {
         var isCollapsed = model.get('isCollapsed');
         willBeCollapsed = !isCollapsed;
-        var hasVisibleNode = model.walkDown(function(m) {
-          return m.getVisibility();
-        }, _.some);
-        if (!hasVisibleNode && isCollapsed) {
-          this.filter(model, '');
+
+        if (isCollapsed) {
+          var hasVisibleNode = model.walkDown(function(m) {
+            return m.getVisibility();
+          }, _.some);
+          if (!hasVisibleNode) {
+            this.filter(model, '');
+          }
         }
+
       }
       model.set('isCollapsed', willBeCollapsed);
     },

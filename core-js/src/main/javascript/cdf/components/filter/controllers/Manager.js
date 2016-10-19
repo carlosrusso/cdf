@@ -110,7 +110,6 @@ define([
       var bindings = {
         model: {
           'add': this.onNewData,
-          'change:selectedItems': this.onApply,
           'selection': this.sortSiblings
         },
         view: {
@@ -419,26 +418,14 @@ define([
     /**
      * React to the user typing in the search box.
      *
-     * @param {String} text The new search pattern.
+     * @param {string} text The new search pattern.
      */
-    onFilterChange: function(text) {
-      this.get('configuration').selectionStrategy.strategy.filter(this.get('model'), text);
+    onFilterChange: function(model, text) {
+      this.get('configuration').selectionStrategy.strategy.filter(model, text);
 
       if (this.get('configuration').search.serverSide === true) {
         this.requestPage(0, text)
       }
-    },
-
-    /**
-     * Resets the search pattern by executing
-     * {@link cdf.components.filter.controllers.Manager#onFilterChange|onFilterChange}
-     * using an empty string parameter.
-     *
-     * @param {object} model The model object.
-     * @return {*} The return value of {@link cdf.components.filter.controllers.Manager#onFilterChange|onFilterChange}.
-     */
-    onApply: function(model) {
-      return this.onFilterChange('');
     }
 
   });

@@ -1,0 +1,19 @@
+{{#showCommitButtons}}
+<div class="filter-control-buttons clearfix">
+    <div class="filter-control-button">
+        <button class="filter-btn-cancel
+                       {{#hasChanged}} dirty{{/hasChanged}}
+                       {{^hasChanged}} pristine{{/hasChanged}}">
+            {{strings.btnCancel}}
+        </button>
+    </div>
+    <div class="filter-control-button">
+        <button class="filter-btn-apply
+                       {{#hasChanged}} dirty{{/hasChanged}}
+                       {{^hasChanged}} pristine{{/hasChanged}}"
+                {{^hasChanged}} disabled="disabled" {{/hasChanged}}>
+        {{strings.btnApply}}
+        </button>
+    </div>
+</div>
+{{/showCommitButtons}}

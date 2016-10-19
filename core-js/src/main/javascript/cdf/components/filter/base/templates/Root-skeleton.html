@@ -26,7 +26,28 @@
     <div class="filter-root-collapse-icon" />
   </div>
   <div class="filter-root-body filter-expand-{{expandMode}}" >
-    <div class="filter-root-control" />
+
+    <div class="filter-root-control">
+
+      <div class="filter-controls">
+        {{#showCommitButtons}}
+        <div class="filter-control-buttons clearfix" />
+        {{/showCommitButtons}}
+
+        {{#showFilter}}
+        <div class="filter-filter">
+          <input type="text" value="{{searchPattern}}"
+                 placeholder="{{strings.searchPlaceholder}}"
+                 class="filter-filter-input">
+          <div class="filter-filter-icon"/>
+          <div class="filter-filter-clear"/>
+        </div>
+        {{/showFilter}}
+      </div>
+
+      <div class="filter-root-selection"/>
+    </div>
+
     <div class="filter-root-items-container">
       <div class="filter-root-items" />
     </div>

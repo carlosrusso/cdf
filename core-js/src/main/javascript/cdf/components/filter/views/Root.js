@@ -45,6 +45,7 @@ define([
       skeleton: templates['Root-skeleton'],
       overlay: templates['Root-overlay'],
       header: templates['Root-header'],
+      controls: templates['Root-controls'],
       selection: templates['Root-selection'],
       footer: templates['Root-footer']
     },
@@ -67,9 +68,10 @@ define([
     },
 
     initialize: function (options) {
-      this.renderOverlay = this.renderSlot('overlay');
-      this.renderHeader = this.renderSlot('header');
-      this.renderFooter = this.renderSlot('footer');
+      this.renderOverlay = this._renderSlot('overlay');
+      this.renderHeader = this._renderSlot('header');
+      this.renderFooter = this._renderSlot('footer');
+      this.renderControls = this._renderSlot('controls');
       this.base(options);
     },
 
@@ -78,7 +80,8 @@ define([
       this.onChange(model, 'isCollapsed', this.updateCollapse);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems reachedSelectionLimit', this.updateHeader);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems selectedItems', this.updateSelection);
-      this.onChange(model, 'reachedSelectionLimit isBusy', this.updateFooter);
+      this.onChange(model, 'isSelected', this.updateControls);
+      this.onChange(model, 'numberOfSelectedItems isBusy', this.updateFooter);
       this.onChange(model, 'isDisabled', this.updateAvailability);
       this.onChange(model, 'searchPattern', this.updateFilter);
     },
@@ -97,6 +100,7 @@ define([
         noItemsSelected: this.model.getSelection() === false,
         hasChanged: this.model.hasChanged()
       });
+
       return viewModel;
     },
 
@@ -107,33 +111,37 @@ define([
       this.renderHeader(viewModel);
       this.renderCollapse(viewModel);
       this.renderSelection(viewModel);
+      this.renderControls(viewModel);
       this.renderFooter(viewModel);
       this.renderAvailability(viewModel);
-      return this;
     },
 
     updateHeader: function () {
       var viewModel = this.getViewModel();
       this.renderHeader(viewModel);
-      return this;
     },
 
     updateFooter: function () {
       var viewModel = this.getViewModel();
       this.renderFooter(viewModel);
-      return this;
     },
+
+
+    updateControls: function () {
+      var viewModel = this.getViewModel();
+      this.renderControls(viewModel);
+    },
+
 
     updateCollapse: function () {
       var viewModel = this.getViewModel();
       this.renderHeader(viewModel);
       this.renderOverlay(viewModel);
       this.renderCollapse(viewModel);
-      return this;
     },
 
     renderCollapse: function (viewModel) {
-      var $tgt = this.$('.filter-root-container');
+      var $tgt = this.$(this.config.view.slots.container);
 
       if (viewModel.isDisabled === true) {
         var isAlwaysExpand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
@@ -153,22 +161,20 @@ define([
           .toggleClass('collapsed', isCollapsed)
           .toggleClass('always-expanded', false);
       }
-      return this;
     },
 
     updateAvailability: function () {
       var viewModel = this.getViewModel();
       this.renderAvailability(viewModel);
-      return this;
     },
 
     renderAvailability: function (viewModel) {
       this.$('.filter-root-container').toggleClass('disabled', viewModel.isDisabled === true);
-      return this;
     },
 
     onOverlayClick: function (event) {
       this.trigger("click:outside", this.model);
+
       if (this.config.view.overlaySimulateClick === true) {
         this.$('.filter-overlay')
           .toggleClass('expanded', false)
@@ -180,7 +186,6 @@ define([
           $element.closest('.filter-root-header').click();
         }, 0);
       }
-      return this;
     }
   });
 

@@ -16,21 +16,23 @@ define([
   'text!./templates/Group-skeleton.html',
   'text!./templates/Group-selection.html',
   'text!./templates/Item-template.html',
-  'text!./templates/Root-footer.html',
-  'text!./templates/Root-header.html',
-  'text!./templates/Root-overlay.html',
   'text!./templates/Root-skeleton.html',
-  'text!./templates/Root-selection.html'
+  'text!./templates/Root-overlay.html',
+  'text!./templates/Root-header.html',
+  'text!./templates/Root-controls.html',
+  'text!./templates/Root-selection.html',
+  'text!./templates/Root-footer.html',
 ], function(
   Mustache,
   GroupSkeleton,
   GroupSelection,
   ItemTemplate,
-  RootFooter,
-  RootHeader,
-  RootOverlay,
   RootSkeleton,
-  RootSelection
+  RootOverlay,
+  RootHeader,
+  RootControls,
+  RootSelection,
+  RootFooter
 ) {
 
   "use strict";
@@ -41,14 +43,18 @@ define([
     Mustache.parse(templates[name]);
   }
 
+  _loadTemplate("Root-skeleton", RootSkeleton);
+  _loadTemplate("Root-overlay", RootOverlay);
+  _loadTemplate("Root-header", RootHeader);
+  _loadTemplate("Root-controls", RootControls);
+  _loadTemplate("Root-selection", RootSelection);
+  _loadTemplate("Root-footer", RootFooter);
+
   _loadTemplate("Group-skeleton", GroupSkeleton);
   _loadTemplate("Group-selection", GroupSelection);
+
   _loadTemplate("Item-template", ItemTemplate);
-  _loadTemplate("Root-footer", RootFooter);
-  _loadTemplate("Root-header", RootHeader);
-  _loadTemplate("Root-overlay", RootOverlay);
-  _loadTemplate("Root-skeleton", RootSkeleton);
-  _loadTemplate("Root-selection", RootSelection);
+
   _loadTemplate(undefined, "No template");
 
   return templates;

@@ -14,8 +14,9 @@
 define([
   'amd!../../../lib/underscore',
   '../models/SelectionTree',
-  './MultiSelect'
-], function (_, SelectionTree, MultiSelect) {
+  './MultiSelect',
+  '../../../Logger'
+], function (_, SelectionTree, MultiSelect, Logger) {
 
   return MultiSelect.extend(/** @lends cdf.components.filter.strategies.LimitedSelect# */{
     /**
@@ -60,7 +61,7 @@ define([
         }
 
         if (nSelected >= this.selectionLimit) {
-          this.warn("Cannot allow the selection of  \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " has been reached.");
+          Logger.warn("Cannot allow the selection of  \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " has been reached.");
           allow = false;
         } else {
           if (model.children() && (newState === SelectionTree.SelectionStates.ALL)) {
@@ -71,7 +72,7 @@ define([
               .size()
               .value();
             if (nSelected + nCandidates >= this.selectionLimit) {
-              this.warn("Cannot allow the selection of \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " would be reached.");
+              Logger.warn("Cannot allow the selection of \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " would be reached.");
               allow = false;
             }
           }

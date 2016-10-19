@@ -135,11 +135,11 @@ define([
       if(event.keyCode === 27){
         text = '';
       }
-      this.trigger('filter', text, this.model);
+      this.trigger('filter', this.model, text);
     },
 
     onFilterClear: function () {
-      this.trigger('filter', '', this.model);
+      this.trigger('filter', this.model, '');
     }
 
   }).extend(EventsMixin);
