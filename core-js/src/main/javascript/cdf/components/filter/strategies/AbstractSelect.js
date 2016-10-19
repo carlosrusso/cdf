@@ -32,9 +32,6 @@ define([
      *   </ul>
      * @ignore
      */
-    constructor: function (options) {
-      this.isLogicGlobal = true;
-    },
 
     /**
      * Calculates the new state of an item, after the user clicked on it.

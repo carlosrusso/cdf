@@ -25,14 +25,6 @@ define([
    */
   return AbstractSelect.extend(/** @lends cdf.components.filter.strategies.MultiSelect# */{
     /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.MultiSelect',
-
-    /**
      * Sets a new selection state.
      *
      * @param {string} newState The new selection state.

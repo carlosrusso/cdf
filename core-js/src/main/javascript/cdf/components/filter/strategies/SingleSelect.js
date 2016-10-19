@@ -27,14 +27,6 @@ define([
    */
   return AbstractSelect.extend(/** @lends cdf.components.filter.strategies.SingleSelect# */{
     /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.SingleSelect',
-
-    /**
      * Sets a new selection state.
      *
      * @param {string} newState The new selection state.
@@ -47,14 +39,7 @@ define([
         return;
       }
 
-      if (this.isLogicGlobal === true) {
-        model.root().setSelection(SelectionStates.NONE);
-      } else if (model.getSelection() !== SelectionStates.ALL) {
-        var parent = model.parent();
-        if (parent) {
-          parent.setSelection(SelectionStates.NONE);
-        }
-      }
+      model.root().setSelection(SelectionStates.NONE);
       model.setAndUpdateSelection(SelectionStates.ALL);
       return newState;
     },

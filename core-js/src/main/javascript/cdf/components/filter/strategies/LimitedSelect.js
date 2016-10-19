@@ -20,14 +20,6 @@ define([
 
   return MultiSelect.extend(/** @lends cdf.components.filter.strategies.LimitedSelect# */{
     /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.SelectionStrategies.LimitedSelect',
-
-    /**
      * @constructs
      * @amd cdf/components/filter/strategies/LimitedSelect
      * @extends cdf.components.filter.strategies.MultiSelect
@@ -37,6 +29,7 @@ define([
      * @ignore
      */
     constructor: function (options) {
+      this.base(options);
       this.selectionLimit = options.limit || Infinity;
     },
 
