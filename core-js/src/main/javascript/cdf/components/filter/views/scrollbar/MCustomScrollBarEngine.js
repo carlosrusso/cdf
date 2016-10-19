@@ -27,18 +27,19 @@ define([
       var options = $.extend(true, {}, view.config.view.scrollbar.options, {
         callbacks: {
           onTotalScroll: function () {
-            return view.trigger('scroll:reached:bottom', view.model);
+            view.trigger('scroll:reached:bottom', view.model);
           },
           onTotalScrollBack: function () {
-            return view.trigger('scroll:reached:top', view.model);
+            view.trigger('scroll:reached:top', view.model);
           }
         }
       });
-      this.scrollbar = view.$(view.config.view.slots.children).parent().mCustomScrollbar(options);
 
+      this.scrollbar = view.$(view.config.view.slots.children).parent().mCustomScrollbar(options);
     },
+
     scrollToPosition: function(position) {
-      this.scrollbar.mCustomScrollbar("scrollTo",position,{callbacks:false});
+      this.scrollbar.mCustomScrollbar("scrollTo", position, { callbacks: false });
     }
   });
 });
