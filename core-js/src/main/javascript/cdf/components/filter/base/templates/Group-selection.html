@@ -4,33 +4,14 @@
               {{#isSelected}} all-selected{{/isSelected}}
               {{^isSelected}} none-selected{{/isSelected}}
             {{/isPartiallySelected}}">
+
   {{#showButtonCollapse}}
     <div class="filter-collapse-icon
                 {{#isCollapsed}} collapsed{{/isCollapsed}}
                 {{^isCollapsed}} expanded{{/isCollapsed}}" />
   {{/showButtonCollapse}}
+
   <div class="filter-group-title">{{{label}}}</div>
-  <div class="filter-controls">
-    {{#showFilter}}
-      <div class="filter-filter">
-        <input type="text" value="{{searchPattern}}"
-               placeholder="{{strings.searchPlaceholder}}"
-        class="filter-filter-input">
-        <div class="filter-filter-icon" />
-        <div class="filter-filter-clear" />
-      </div>
-    {{/showFilter}}
-    {{#showCommitButtons}}
-      <div class="filter-control-buttons clearfix">
-        <div class="filter-control-button">
-          <button class="filter-btn-cancel">{{strings.btnCancel}}</button>
-        </div>
-        <div class="filter-control-button">
-          <button class="filter-btn-apply">{{strings.btnApply}}</button>
-        </div>
-      </div>
-    {{/showCommitButtons}}
-  </div>
 
   {{#showGroupSelection}}
     <div class="filter-group-selection">

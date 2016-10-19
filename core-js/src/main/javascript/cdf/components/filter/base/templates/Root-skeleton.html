@@ -3,35 +3,20 @@
             {{#className}} {{className}}{{/className}}
             {{^showIcons}} no-icons{{/showIcons}}
             {{#isDisabled}} disabled{{/isDisabled}}">
+
   {{#useOverlay}}
-    <div class="filter-overlay
-                {{^alwaysExpanded}}
-                  {{#isCollapsed}} collapsed{{/isCollapsed}}
-                  {{^isCollapsed}} expanded {{/isCollapsed}}
-                {{/alwaysExpanded}}
-                {{#alwaysExpanded}} always-expanded{{/alwaysExpanded}}" />
+    <div class="filter-overlay" />
   {{/useOverlay}}
-  <div class="filter-root-header
-              {{#isPartiallySelected}} some-selected{{/isPartiallySelected}}
-              {{^isPartiallySelected}}
-                {{#isSelected}} all-selected{{/isSelected}}
-                {{^isSelected}} none-selected{{/isSelected}}
-              {{/isPartiallySelected}}
-              {{^alwaysExpanded}}
-                {{#isCollapsed}} collapsed{{/isCollapsed}}
-                {{^isCollapsed}} expanded {{/isCollapsed}}
-              {{/alwaysExpanded}}
-              {{#alwaysExpanded}} always-expanded{{/alwaysExpanded}}">
-    <div class="filter-root-header-label">{{{header}}}</div>
-    <div class="filter-root-collapse-icon" />
-  </div>
+
+  <div class="filter-root-header"/>
+
   <div class="filter-root-body filter-expand-{{expandMode}}" >
 
     <div class="filter-root-control">
 
       <div class="filter-controls">
         {{#showCommitButtons}}
-        <div class="filter-control-buttons clearfix" />
+        <div class="filter-control-buttons" />
         {{/showCommitButtons}}
 
         {{#showFilter}}
@@ -51,6 +36,6 @@
     <div class="filter-root-items-container">
       <div class="filter-root-items" />
     </div>
-    <div class="filter-root-footer">{{{footer}}}</div>
+    <div class="filter-root-footer" />
   </div>
 </div>
