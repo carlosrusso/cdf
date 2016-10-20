@@ -22,13 +22,13 @@ define([
   "use strict";
 
   /**
-   * @class cdf.components.filter.data-handlers.InputDataHandler
-   * @amd cdf/components/filter/data-handlers/InputDataHandler
+   * @class cdf.components.filter.core.InputDataHandler
+   * @amd cdf/components/filter/core/InputDataHandler
    * @extends cdf.lib.BaseEvents
    * @classdesc Import data from multiple sources, populate the model.
    * @ignore
    */
-  return BaseEvents.extend(/** @lends cdf.components.filter.data-handlers.InputDataHandler# */{
+  return BaseEvents.extend(/** @lends cdf.components.filter.core.InputDataHandler# */{
 
     constructor: function(spec) {
       this.model = spec.model;

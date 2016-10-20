@@ -15,16 +15,16 @@ define([
   '../../lib/jquery',
   'amd!../../lib/underscore',
   '../../Logger',
-  './BaseFilter'
-], function ($, _, Logger, BaseFilter) {
+  './strategies',
+  './configuration/defaults',
+  './configuration/presets'
+], function ($, _, Logger, strategies, defaults, presets) {
 
-  /*
-   * Über-filter: one filter to rule them all
-   */
-
-  var SelectionStrategies = BaseFilter.SelectionStrategies;
   /*
    * Interface mixin for the configuration
+   *
+   * Processes the public properties of the FilterComponent and generates a configuration object.
+   *
    */
   return /** @lends cdf.components.filter.FilterComponent# */ {
 
@@ -54,7 +54,7 @@ define([
      * @type {object}
      */
     defaults: {
-      component: BaseFilter.defaults,
+      component: defaults,
       input: {
         defaultModel: {
           isDisabled: true,
@@ -69,7 +69,8 @@ define([
         }
       },
       output: {
-        trigger: 'apply'
+        trigger: 'apply',
+        outputFormat: 'lowestId'
       }
     },
 
@@ -102,7 +103,7 @@ define([
       var cd = this.componentDefinition;
       var selectionStrategy = cd.multiselect ? 'LimitedSelect' : 'SingleSelect';
       $.extend(true, configuration.component,
-        BaseFilter.presets[selectionStrategy],
+        presets[selectionStrategy],
         {
           target: this.placeholder(),
           Root: {
@@ -200,7 +201,7 @@ define([
       configuration.component.selectionStrategy.limit = limit;
 
       var strategyCfg = configuration.component.selectionStrategy;
-      var strategy = new BaseFilter.SelectionStrategies[strategyCfg.type](strategyCfg);
+      var strategy = new strategies[strategyCfg.type](strategyCfg);
       configuration.component.selectionStrategy.strategy = strategy;
 
       /*

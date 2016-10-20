@@ -16,12 +16,12 @@ define([
   'amd!../../../lib/backbone',
   '../../../lib/mustache',
   '../../../lib/BaseEvents',
-  '../models/SelectionTree',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function (_, Backbone, Mustache, BaseEvents, SelectionTree, ScrollBarFactory, HtmlUtils) {
+], function (_, Backbone, Mustache, BaseEvents, ScrollBarFactory, HtmlUtils) {
 
   "use strict";
+
   /**
    * @class cdf.components.filter.views.Abstract
    * @amd cdf/components/filter/views/Abstract
@@ -62,12 +62,10 @@ define([
     initialize: function (options) {
       this.configuration = options.configuration;
       this.config = this.configuration[this.type];
+      this.templates = this.config.view.templates;
 
-      /*
-       * Consider user-defined templates
-       */
-      if (this.config.view.templates != null) {
-        _.extend(this.templates, this.config.view.templates);
+      if(this.config.view.events){
+        this.events = this.config.view.events
       }
 
       this.bindToModel(this.model);
@@ -101,17 +99,14 @@ define([
      * View methods
      */
     getViewModel: function () {
-      var viewOptions = _.result(this.config, 'options', {});
       var children = this.model.children();
 
       return _.extend(
         this.model.toJSON(),
-        viewOptions,
+        this.config.options,
         {
-          strings: _.result(this.config, 'strings', {}),
-          selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy'),
-          isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
-          numberOfChildren:  children ? children.length : 0
+          strings: this.config.strings,
+          selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy')
         }
       );
     },
@@ -137,7 +132,13 @@ define([
       if(!template){
         return "";
       }
-      var html = Mustache.render(template, viewModel);
+
+      var patchViewModel = this.config.view.patchViewModel;
+      if(_.isFunction(patchViewModel)){
+        viewModel = patchViewModel(viewModel, this.model, this.configuration);
+      }
+
+      var html = Mustache.render(template, viewModel, this.config.view.templates.partials);
       return HtmlUtils.sanitizeHtml(html);
     },
 

@@ -14,14 +14,13 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  '../../../lib/mustache',
   './Abstract',
-  '../models/SelectionTree',
-  './scrollbar/ScrollBarFactory',
-  '../HtmlUtils'
-], function ($, _, Mustache, AbstractView, SelectionTree, ScrollBarFactory, HtmlUtils) {
+  '../core/SelectionTree',
+  './scrollbar/ScrollBarFactory'
+], function ($, _, AbstractView, SelectionTree, ScrollBarFactory) {
 
   "use strict";
+
   /**
    * @class cdf.components.filter.views.Parent
    * @amd cdf/components/filter/views/Parent
@@ -59,10 +58,18 @@ define([
      */
     getViewModel: function () {
       var viewModel = this.base();
-      var children = this.model.children();
 
+      var selectedItems = this.configuration
+        .selectionStrategy
+        .strategy
+        .getSelectedItems(this.model, 'label');
+
+      var children = this.model.children();
       _.extend(viewModel, {
+        selectedItems: selectedItems,
+        allItemsSelected: this.model.getSelection() === SelectionTree.SelectionStates.ALL,
         isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
+        noItemsSelected: this.model.getSelection() === SelectionTree.SelectionStates.NONE,
         numberOfChildren: children ? children.length : 0
       });
 
@@ -82,7 +89,7 @@ define([
     },
 
     createChildNode: function () {
-      var $child = $('<div/>').addClass(this.config.view.childConfig.className);
+      var $child = $(this.getHtml(this.config.view.templates.child, {}));
       this.appendChildNode($child);
       return $child;
     },
@@ -109,6 +116,7 @@ define([
       if (this._scrollBar != null) {
         return;
       }
+
       this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine, this);
 
       if (this.config.options.isResizable) {

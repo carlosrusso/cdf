@@ -12,9 +12,10 @@
  */
 
 define([
-  './Parent',
-  '../base/templates'
-], function (ParentView, templates) {
+  './Parent'
+], function (ParentView) {
+
+  "use strict";
 
   /**
    * @class cdf.components.filter.views.Group
@@ -31,16 +32,6 @@ define([
      * @type {string}
      */
     type: 'Group',
-
-    /**
-     * Default templates.
-     *
-     * @type {object}
-     */
-    templates: {
-      skeleton: templates['Group-skeleton'],
-      selection: templates['Group-selection']
-    },
 
     /**
      * Default event mappings.

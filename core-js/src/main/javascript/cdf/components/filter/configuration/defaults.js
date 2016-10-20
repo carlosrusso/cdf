@@ -11,19 +11,25 @@
  * the license for the specific language governing your rights and limitations.
  */
 
-define(['../../../lib/jquery'], function( $ ) {
+define([
+  '../../../lib/jquery',
+  '../views',
+  './templates'
+], function( $, views, templates ) {
 
   "use strict";
 
   /*
    * Default settings
    */
-  var privateDefaults = /** @lends cdf.components.filter.base.defaults */ {
+  var privateDefaults = /** @lends cdf.components.filter.configuration.defaults */ {
     Root: {
       renderers: [],
       sorters: [],
       view: {
-        throttleTimeMilliseconds: 10,
+        constructor: views.Root,
+        patchViewModel: null,
+        throttleTimeMilliseconds: 0,
         slots: {
           container: '.filter-root-container',
           selection: '.filter-root-selection',
@@ -31,14 +37,12 @@ define(['../../../lib/jquery'], function( $ ) {
           filter: '.filter-filter-input:eq(0)',
           header: '.filter-root-header',
           footer: '.filter-root-footer',
-          children: '.filter-root-items',
+          children: '.filter-root-items',  //container where new children will be appended
           overlay: '.filter-overlay'
         },
         childConfig: {
           withChildrenPrototype: 'Group',
-          withoutChildrenPrototype: 'Item',
-          className: 'filter-root-child',
-          appendTo: '.filter-root-items'
+          withoutChildrenPrototype: 'Item'
         },
         overlaySimulateClick: true
       }
@@ -47,7 +51,9 @@ define(['../../../lib/jquery'], function( $ ) {
       renderers: [],
       sorters: [],
       view: {
-        throttleTimeMilliseconds: 10,
+        constructor: views.Group,
+        patchViewModel: null,
+        throttleTimeMilliseconds: 0,
         slots: {
           selection: '.filter-group-header:eq(0)', // There can be nested groups
           filter: '.filter-filter-input:eq(0)',
@@ -55,8 +61,7 @@ define(['../../../lib/jquery'], function( $ ) {
         },
         childConfig: {
           withChildrenPrototype: 'Group',
-          withoutChildrenPrototype: 'Item',
-          className: 'filter-group-child'
+          withoutChildrenPrototype: 'Item'
         }
       }
     },
@@ -64,7 +69,9 @@ define(['../../../lib/jquery'], function( $ ) {
       renderers: [],
       sorters: [],
       view: {
-        throttleTimeMilliseconds: 10,
+        constructor: views.Item,
+        patchViewModel: null,
+        throttleTimeMilliseconds: 0,
         slots: {
           selection: '.filter-item-container'
         }
@@ -73,12 +80,12 @@ define(['../../../lib/jquery'], function( $ ) {
   };
 
   /**
-   * @class cdf.components.filter.base.defaults
-   * @amd cdf/components/filter/base/defaults
+   * @class cdf.components.filter.configuration.defaults
+   * @amd cdf/components/filter/configuration/defaults
    * @classdesc Filter component default values.
    * @ignore
    */
-  return $.extend(true, {}, privateDefaults, /** @lends cdf.components.filter.base.defaults */ {
+  return $.extend(true, {}, privateDefaults, /** @lends cdf.components.filter.configuration.defaults */ {
 
     /**
      * Configuration of the pagination.
@@ -144,7 +151,7 @@ define(['../../../lib/jquery'], function( $ ) {
 
       },
       view: {
-        templates: {},
+        templates: templates.Root,
         scrollbar: {
           engine: 'mCustomScrollbar',
           options: {
@@ -184,7 +191,7 @@ define(['../../../lib/jquery'], function( $ ) {
         moreData: 'Get more data...'
       },
       view: {
-        templates: {}
+        templates: templates.Group
       }
     },
 
@@ -204,7 +211,7 @@ define(['../../../lib/jquery'], function( $ ) {
         btnOnlyThis: 'Only'
       },
       view: {
-        templates: {}
+        templates: templates.Item
       }
     }
   });

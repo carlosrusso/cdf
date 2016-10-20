@@ -14,10 +14,10 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  '../../../lib/mustache',
-  './Parent',
-  '../base/templates'
-], function ($, _, Mustache, ParentView, templates) {
+  './Parent'
+], function ($, _, ParentView) {
+
+  "use strict";
 
   /**
    * @class cdf.components.filter.views.Root
@@ -36,19 +36,6 @@ define([
      */
     type: 'Root',
 
-    /**
-     * Default templates.
-     *
-     * @type {object}
-     */
-    templates: {
-      skeleton: templates['Root-skeleton'],
-      overlay: templates['Root-overlay'],
-      header: templates['Root-header'],
-      controls: templates['Root-controls'],
-      selection: templates['Root-selection'],
-      footer: templates['Root-footer']
-    },
     /**
      * Default event mappings.
      *
@@ -88,20 +75,9 @@ define([
 
     getViewModel: function () {
       var viewModel = this.base();
-
-      var selectedItems = this.configuration
-        .selectionStrategy
-        .strategy
-        .getSelectedItems(this.model, 'label');
-
-      _.extend(viewModel, {
-        selectedItems: selectedItems,
-        allItemsSelected: this.model.getSelection() === true,
-        noItemsSelected: this.model.getSelection() === false,
+      return _.extend(viewModel, {
         hasChanged: this.model.hasChanged()
       });
-
-      return viewModel;
     },
 
     render: function () {
@@ -169,14 +145,14 @@ define([
     },
 
     renderAvailability: function (viewModel) {
-      this.$('.filter-root-container').toggleClass('disabled', viewModel.isDisabled === true);
+      this.$(this.config.view.slots.container).toggleClass('disabled', viewModel.isDisabled === true);
     },
 
     onOverlayClick: function (event) {
       this.trigger("click:outside", this.model);
 
       if (this.config.view.overlaySimulateClick === true) {
-        this.$('.filter-overlay')
+        this.$(this.config.view.slots.overlay)
           .toggleClass('expanded', false)
           .toggleClass('collapsed', true);
 

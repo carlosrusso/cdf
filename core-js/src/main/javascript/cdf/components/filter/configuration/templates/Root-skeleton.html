@@ -19,15 +19,7 @@
         <div class="filter-control-buttons" />
         {{/showCommitButtons}}
 
-        {{#showFilter}}
-        <div class="filter-filter">
-          <input type="text" value="{{searchPattern}}"
-                 placeholder="{{strings.searchPlaceholder}}"
-                 class="filter-filter-input">
-          <div class="filter-filter-icon"/>
-          <div class="filter-filter-clear"/>
-        </div>
-        {{/showFilter}}
+        {{> filter}}
       </div>
 
       <div class="filter-root-selection"/>

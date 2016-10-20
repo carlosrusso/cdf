@@ -10,25 +10,17 @@
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. Please refer to
  * the license for the specific language governing your rights and limitations.
  */
-/**
- * @summary factory to be used to create the proper scrollbar implementation
- * @submodule factory to be used to create the proper scrollbar implementation
- */
-define([
-  './OptiScrollBarEngine',
-  './MCustomScrollBarEngine'
-], function(OptiScrollBarEngine, MCustomScrollBarEngine) {
 
-  "use strict";
+define([
+  './strategies/SingleSelect',
+  './strategies/MultiSelect',
+  './strategies/LimitedSelect'
+], function (SingleSelect, MultiSelect, LimitedSelect) {
 
   return {
-    createScrollBar: function(engine, view) {
-      switch (engine) {
-        case 'optiscroll':
-          return new OptiScrollBarEngine(view);
-        case 'mCustomScrollbar':
-          return new MCustomScrollBarEngine(view);
-      }
-    }
-  }
+    SingleSelect: SingleSelect,
+    MultiSelect: MultiSelect,
+    LimitedSelect: LimitedSelect
+  };
+
 });

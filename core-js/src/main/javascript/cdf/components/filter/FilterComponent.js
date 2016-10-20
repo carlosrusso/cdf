@@ -17,15 +17,24 @@ define([
   'amd!../../lib/backbone',
   '../UnmanagedComponent',
   '../../Logger',
-  './BaseFilter',
+  //
+  './core/SelectionTree',
+  './core/Manager',
+  './core/InputDataHandler',
+  './core/OutputDataHandler',
   './IFilter',
   './IConfiguration',
   './addIns',
-  'css!./styles/filter'
-], function($, _, Backbone, UnmanagedComponent, Logger, BaseFilter, IFilter, IConfiguration) {
+  // CSS
+  'css!./styles/filter',
+  'css!./styles/filter-notifications'
+], function($, _, Backbone, UnmanagedComponent, Logger,
+            Model, Manager, InputDataHandler, OutputDataHandler,
+            IFilter, IConfiguration) {
 
   /*
    * Über-filter: one filter to rule them all
+   * Schmiede, mein Hammer, ein hartes Schwert!
    */
 
   /**
@@ -34,10 +43,12 @@ define([
    * @amd cdf/components/FilterComponent
    * @classdesc An intuitive Filter Component with many out-of-the-box features:
    *   <ul>
+   *     <li>multiple nested groups</li>
+   *     <li>extensible via addIns</li>
+   *     <li>searchable</li>
    *     <li>pluggable selection logic: single-, multi-, and limited-select</li>
    *     <li>automatic handling of groups of options</li>
-   *     <li>searchable</li>
-   *     <li>extensible via addIns</li>
+   *     <li>server-side pagination and searching</li>
    *   </ul>
    * @ignore
    */
@@ -104,18 +115,18 @@ define([
       /*
        * Initialize the model
        */
-      this.model = new BaseFilter.Models.SelectionTree(configuration.input.defaultModel, {
+      this.model = new Model(configuration.input.defaultModel, {
         matcher: configuration.component.search.matcher
       });
 
       /*
        * Initialize the CDF interface
        */
-      this.inputDataHandler = new BaseFilter.DataHandlers.Input({
+      this.inputDataHandler = new InputDataHandler({
         model: this.model,
         options: configuration.input
       });
-      this.outputDataHandler = new BaseFilter.DataHandlers.Output({
+      this.outputDataHandler = new OutputDataHandler({
         model: this.model,
         options: configuration.output
       });
@@ -191,7 +202,7 @@ define([
       }
 
       // we can now instantiate views
-      this.manager = new BaseFilter.Controllers.Manager({
+      this.manager = new Manager({
         model: this.model,
         configuration: configuration.component
       });

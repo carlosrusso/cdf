@@ -17,7 +17,8 @@
 define([
   './AbstractScrollBarHandler',
   '../../../../lib/jquery',
-  'amd!../../../../lib/jquery.mCustomScrollbar'
+  'amd!../../../../lib/jquery.mCustomScrollbar',
+  'css!./MCustomScrollBar'
 ],function(AbstractScrollBarHandler, $){
 
   "use strict";

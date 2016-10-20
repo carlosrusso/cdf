@@ -14,9 +14,10 @@
 define([
   'amd!../../../lib/underscore',
   '../../../lib/Tree',
-  '../../../Logger',
-  '../views/Views'
-], function(_, Tree, Logger, Views) {
+  '../../../Logger'
+], function(_, Tree, Logger) {
+
+  "use strict";
 
   return Tree.extend(/** @lends cdf.components.filter.controllers.Manager# */{
     /**
@@ -163,7 +164,7 @@ define([
       /*
        * Decide which view to use
        */
-      var View, configuration, target;
+      var viewConfig, configuration, target;
       if (this.isRoot()) {
         /*
          * This node is the Root.
@@ -171,7 +172,7 @@ define([
          */
         configuration = this.get('configuration');
         target = configuration.target;
-        View = Views.Root;
+        viewConfig = configuration.Root;
       } else {
         /*
          * This node is either a Group or an Item
@@ -182,16 +183,16 @@ define([
         target = that.get('view').createChildNode();
         var childConfig = configuration[that.get('view').type].view.childConfig;
         if (newModel.children()) {
-          View = Views[childConfig.withChildrenPrototype];
+          viewConfig = configuration[childConfig.withChildrenPrototype];
         } else {
-          View = Views[childConfig.withoutChildrenPrototype];
+          viewConfig = configuration[childConfig.withoutChildrenPrototype];
         }
       }
 
       /*
        * Create new view
        */
-      var newView = new View({
+      var newView = new viewConfig.view.constructor({
         model: newModel,
         configuration: configuration,
         target: target

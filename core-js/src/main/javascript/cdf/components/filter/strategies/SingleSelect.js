@@ -14,7 +14,7 @@
 define([
   'amd!../../../lib/underscore',
   './AbstractSelect',
-  '../models/SelectionTree'
+  '../core/SelectionTree'
 ], function (_, AbstractSelect, SelectionTree) {
 
   var SelectionStates = SelectionTree.SelectionStates;

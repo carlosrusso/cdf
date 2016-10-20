@@ -13,7 +13,7 @@
 
 define([
   'amd!../../../lib/underscore',
-  '../models/SelectionTree',
+  '../core/SelectionTree',
   './MultiSelect',
   '../../../Logger'
 ], function (_, SelectionTree, MultiSelect, Logger) {

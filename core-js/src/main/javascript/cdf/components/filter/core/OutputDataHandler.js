@@ -17,8 +17,8 @@ define([
 ], function(_, BaseEvents) {
 
   /**
-   * @class cdf.components.filter.data-handlers.OutputDataHandler
-   * @amd cdf/components/filter/data-handlers/OutputDataHandler
+   * @class cdf.components.filter.core.OutputDataHandler
+   * @amd cdf/components/filter/core/OutputDataHandler
    * @extends cdf.lib.BaseEvents
    * @classdesc The Output DataHandler:
    *   <ul><li>watches the model for specific changes</li>
@@ -27,7 +27,7 @@ define([
    *   except that it writes to a CDF parameter.
    * @ignore
    */
-  return BaseEvents.extend(/** @lends cdf.components.filter.data-handlers.OutputDataHandler# */{
+  return BaseEvents.extend(/** @lends cdf.components.filter.core.OutputDataHandler# */{
 
     constructor: function(spec) {
       this.model = spec.model;

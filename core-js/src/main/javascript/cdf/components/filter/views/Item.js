@@ -12,9 +12,10 @@
  */
 
 define([
-  './Abstract',
-  '../base/templates'
-], function (AbstractView, templates) {
+  './Abstract'
+], function (AbstractView) {
+
+  "use strict";
 
   /**
    * @class cdf.components.filter.views.Item
@@ -31,16 +32,6 @@ define([
      * @type {string}
      */
     type: 'Item',
-
-    /**
-     * Default templates.
-     *
-     * @type {object}
-     */
-    templates: {
-      selection: templates['Item-template'],
-      skeleton: templates['Item-template']
-    },
 
     /**
      * Default event mappings.

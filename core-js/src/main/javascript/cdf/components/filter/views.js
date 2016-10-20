@@ -12,9 +12,9 @@
  */
 
 define([
-  './Root',
-  './Group',
-  './Item'
+  './views/Root',
+  './views/Group',
+  './views/Item'
 ], function (Root, Group, Item) {
 
   return {

@@ -15,10 +15,17 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/Base',
-  '../models/SelectionTree'
+  '../core/SelectionTree'
 ], function ($, _, Base, SelectionTree) {
 
   var SelectionStates = SelectionTree.SelectionStates;
+
+  /**
+   * Controller-like set of classes design to encapsulate the selection strategy
+   * and isolate that "business" logic from lower-level view interaction logic.
+   *
+   * These classes are singletons passed as part of the configuration objects.
+   */
 
   return Base.extend(/** @lends cdf.components.filter.strategies.AbstractSelect# */{
     /**

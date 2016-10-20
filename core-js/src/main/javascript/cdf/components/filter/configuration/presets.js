@@ -43,7 +43,7 @@ define([], function() {
         className: 'multi-select',
         showCommitButtons: true,
         showNumberOfSelectedItems: true,
-        showGroupSelection: true,
+        showGroupSelection: true
       }
     },
     Item: {
@@ -62,7 +62,7 @@ define([], function() {
         className: 'multi-select',
         showCommitButtons: true,
         showNumberOfSelectedItems: true,
-        showGroupSelection: true,
+        showGroupSelection: true
       }
     },
     Item: {

@@ -12,50 +12,64 @@
  */
 
 define([
-  '../../../lib/mustache',
-  'text!./templates/Group-skeleton.html',
-  'text!./templates/Group-selection.html',
-  'text!./templates/Item-template.html',
   'text!./templates/Root-skeleton.html',
   'text!./templates/Root-overlay.html',
   'text!./templates/Root-header.html',
   'text!./templates/Root-controls.html',
   'text!./templates/Root-selection.html',
   'text!./templates/Root-footer.html',
+  'text!./templates/Group-skeleton.html',
+  'text!./templates/Group-selection.html',
+  'text!./templates/Item-template.html',
+  'text!./templates/partial-filter.html'
 ], function(
-  Mustache,
-  GroupSkeleton,
-  GroupSelection,
-  ItemTemplate,
   RootSkeleton,
   RootOverlay,
   RootHeader,
   RootControls,
   RootSelection,
-  RootFooter
+  RootFooter,
+  GroupSkeleton,
+  GroupSelection,
+  ItemTemplate,
+  filter
 ) {
 
   "use strict";
 
-  var templates = {};
-  function _loadTemplate(name, source) {
-    templates[name] = source.replace(/\s+/g, ' ');
-    Mustache.parse(templates[name]);
+  var item = f(ItemTemplate);
+  var partials = {
+    filter: f(filter)
+  };
+
+  return {
+    Root: {
+      skeleton: f(RootSkeleton),
+      overlay: f(RootOverlay),
+      header: f(RootHeader),
+      controls: f(RootControls),
+      selection: f(RootSelection),
+      footer: f(RootFooter),
+      child: '<div class="filter-root-child"/>',
+      partials: partials
+    },
+
+    Group: {
+      skeleton: f(GroupSkeleton),
+      selection: f(GroupSelection),
+      child: '<div class="filter-group-child"/>',
+      partials: partials
+    },
+
+    Item: {
+      skeleton: item,
+      selection: item,
+      partials: partials
+    }
+  };
+
+  function f(template){
+    return template.replace(/\s+/g, ' ');
   }
 
-  _loadTemplate("Root-skeleton", RootSkeleton);
-  _loadTemplate("Root-overlay", RootOverlay);
-  _loadTemplate("Root-header", RootHeader);
-  _loadTemplate("Root-controls", RootControls);
-  _loadTemplate("Root-selection", RootSelection);
-  _loadTemplate("Root-footer", RootFooter);
-
-  _loadTemplate("Group-skeleton", GroupSkeleton);
-  _loadTemplate("Group-selection", GroupSelection);
-
-  _loadTemplate("Item-template", ItemTemplate);
-
-  _loadTemplate(undefined, "No template");
-
-  return templates;
 });
