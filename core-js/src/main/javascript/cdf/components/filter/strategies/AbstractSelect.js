@@ -15,10 +15,10 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/Base',
-  '../core/SelectionTree'
-], function ($, _, Base, SelectionTree) {
+  '../core/Model'
+], function ($, _, Base, Model) {
 
-  var SelectionStates = SelectionTree.SelectionStates;
+  var SelectionStates = Model.SelectionStates;
 
   /**
    * Controller-like set of classes design to encapsulate the selection strategy

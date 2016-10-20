@@ -17,13 +17,13 @@ define([
 ], function( _, BaseSelectionTree ) {
 
   /**
-   * @class cdf.components.filter.core.SelectionTree
-   * @amd cdf/components/filter/core/SelectionTree
+   * @class cdf.components.filter.core.Model
+   * @amd cdf/components/filter/core/Model
    * @extends cdf.lib.baseSelectionTree.BaseSelectionTree
    * @classdesc Represents the state of the filter as a tree structure.
    * @ignore
    */
-  return BaseSelectionTree.extend(/** @lends cdf.components.filter.core.SelectionTree# */{
+  return BaseSelectionTree.extend(/** @lends cdf.components.filter.core.Model# */{
 
     /**
      * Default values for each node in the selection tree.

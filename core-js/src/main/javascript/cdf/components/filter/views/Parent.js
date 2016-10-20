@@ -15,11 +15,13 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   './Abstract',
-  '../core/SelectionTree',
+  '../core/Model',
   './scrollbar/ScrollBarFactory'
-], function ($, _, AbstractView, SelectionTree, ScrollBarFactory) {
+], function ($, _, AbstractView, Model, ScrollBarFactory) {
 
   "use strict";
+
+  var SelectionStates = Model.SelectionStates;
 
   /**
    * @class cdf.components.filter.views.Parent
@@ -67,9 +69,9 @@ define([
       var children = this.model.children();
       _.extend(viewModel, {
         selectedItems: selectedItems,
-        allItemsSelected: this.model.getSelection() === SelectionTree.SelectionStates.ALL,
-        isPartiallySelected: this.model.getSelection() === SelectionTree.SelectionStates.SOME,
-        noItemsSelected: this.model.getSelection() === SelectionTree.SelectionStates.NONE,
+        allItemsSelected: this.model.getSelection() === SelectionStates.ALL,
+        isPartiallySelected: this.model.getSelection() === SelectionStates.SOME,
+        noItemsSelected: this.model.getSelection() === SelectionStates.NONE,
         numberOfChildren: children ? children.length : 0
       });
 

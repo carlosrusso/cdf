@@ -76,7 +76,7 @@ define([
     /**
      * Binds changes of model properties to view methods.
      *
-     * @param {cdf.components.filter.model.SelectionTree} model
+     * @param {cdf.components.filter.core.Model} model
      */
 
     bindToModel: function (model) {

@@ -1,19 +1,20 @@
 
 define([
   'amd!cdf/lib/underscore',
-  'cdf/components/filter/BaseFilter'
-], function(_ , Filter) {
+  'cdf/components/filter/core/Model',
+  'cdf/components/filter/strategies/SingleSelect'
+], function(_ , Model, SingleSelect) {
 
   describe('Filter.SelectionStrategies.SingleSelect', function() {
-    var SelectionStates = Filter.Models.SelectionTree.SelectionStates;
+    var SelectionStates = Model.SelectionStates;
 
     var model;
     var strategy;
 
     describe('at a depth of 1 level', function() {
       beforeEach(function() {
-        strategy = new Filter.SelectionStrategies.SingleSelect();
-        return model = new Filter.Models.SelectionTree({
+        strategy = new SingleSelect();
+        return model = new Model({
           label: 'Parent',
           id: '#parent',
           isSelected: false,
@@ -61,8 +62,8 @@ define([
 
     describe('at a depth of 2 levels', function() {
       beforeEach(function() {
-        strategy = new Filter.SelectionStrategies.SingleSelect();
-        return model = new Filter.Models.SelectionTree({
+        strategy = new SingleSelect();
+        return model = new Model({
           label: 'Root',
           id: '#root',
           isSelected: false,

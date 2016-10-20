@@ -1,11 +1,11 @@
 define([
   'amd!cdf/lib/underscore',
-  'cdf/components/filter/models/SelectionTree',
+  'cdf/components/filter/core/Model',
   'cdf/components/filter/strategies/LimitedSelect'
-], function(_, SelectionTree, LimitedSelect) {
+], function(_, Model, LimitedSelect) {
 
   describe('Filter.SelectionStrategies.LimitedSelect', function() {
-    var SelectionStates = SelectionTree.SelectionStates;
+    var SelectionStates = Model.SelectionStates;
 
     var model;
     var strategy;
@@ -15,7 +15,7 @@ define([
         strategy = new LimitedSelect({
           limit: 5
         });
-        return model = new SelectionTree({
+        return model = new Model({
           label: 'Parent',
           id: '#parent',
           isSelected: false,
@@ -72,7 +72,7 @@ define([
         strategy = new LimitedSelect({
           limit: 5
         });
-        return model = new SelectionTree({
+        return model = new Model({
           id: '#root',
           label: 'Root',
           isSelected: false,

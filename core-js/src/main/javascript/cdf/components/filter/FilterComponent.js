@@ -18,7 +18,7 @@ define([
   '../UnmanagedComponent',
   '../../Logger',
   //
-  './core/SelectionTree',
+  './core/Model',
   './core/Manager',
   './core/InputDataHandler',
   './core/OutputDataHandler',
@@ -58,28 +58,28 @@ define([
     /**
      * Object responsible for storing the MVC model, which contains both the data and the state of the component.
      *
-     * @type {SelectionTree}
+     * @type {cdf.components.filter.core.Model}
      */
     model: void 0,
 
     /**
      * Object responsible for managing the MVC hierarchy of views and controllers associated with the model.
      *
-     * @type {Manager}
+     * @type {cdf.components.filter.core.Manager}
      */
     manager: void 0,
 
     /**
      * Object that handles writing to the MVC model.
      *
-     * @type {Input}
+     * @type {cdf.components.filter.core.InputDataHandler}
      */
     inputDataHandler: void 0,
 
     /**
      * Object that handles reading from the MVC model.
      *
-     * @type {Output}
+     * @type {cdf.components.filter.core.InputDataHandler}
      */
     outputDataHandler: void 0,
 

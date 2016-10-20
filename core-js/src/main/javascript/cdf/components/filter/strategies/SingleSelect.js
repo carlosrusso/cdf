@@ -14,10 +14,10 @@
 define([
   'amd!../../../lib/underscore',
   './AbstractSelect',
-  '../core/SelectionTree'
-], function (_, AbstractSelect, SelectionTree) {
+  '../core/Model'
+], function (_, AbstractSelect, Model) {
 
-  var SelectionStates = SelectionTree.SelectionStates;
+  var SelectionStates = Model.SelectionStates;
   /**
    * @class cdf.components.filter.strategies.SingleSelect
    * @amd cdf/components/filter/strategies/SingleSelect
