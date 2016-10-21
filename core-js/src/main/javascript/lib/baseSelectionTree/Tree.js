@@ -24,7 +24,7 @@ define([
      * 2. if the node has children, run child.walk for every child and combine the array of results with combineCallback
      *
      *
-     *     function combineCallback(model, array){
+     *     function combineCallback(array, model){
          *         return _.all(array);
          *     }
      *
@@ -73,7 +73,8 @@ define([
         .map(function(m) {
           return m._walkDown(_.identity, _.identity);
         })
-        .flatten();
+        .flatten()
+        .union([this]);
     },
 
     /**
