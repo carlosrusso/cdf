@@ -53,7 +53,7 @@ define([
       if (children) {
         result = combineCb(children.map(function (child) {
           return child._walkDown(itemCb, combineCb, alwaysCb);
-        }));
+        }), this);
       } else {
         result = itemCb(this);
       }

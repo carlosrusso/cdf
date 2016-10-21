@@ -28,6 +28,15 @@ define([
    * @classdesc Import data from multiple sources, populate the model.
    * @ignore
    */
+
+  var defaultNormalizers = {
+    label: sanitizeInput,
+    value: sanitizeInput,
+    isSelected: function(v){
+      return _.isNull(v) ? null : Boolean(v);
+    }
+  };
+
   return BaseEvents.extend(/** @lends cdf.components.filter.core.InputDataHandler# */{
 
     constructor: function(spec) {
@@ -97,6 +106,7 @@ define([
         .max()
         .value();
 
+      var normalizers = _.extend({}, defaultNormalizers, this.options.normalizers);
       var data;
       var hasGroups = _.isFinite(parentIndexes) && parentIndexes < rows[0].length;
       if (hasGroups) {
@@ -106,17 +116,19 @@ define([
 
         // Generate a flat map of groups
         var root = {};
-        var createGroup = groupGenerator(indexes, pageData);
+        var createGroup = groupGenerator(indexes, normalizers, pageData);
         _.each(groupedRows, function(rows, groupId) {
           root[groupId] = createGroup(rows, groupId);
         });
 
         // Assemble the tree by placing the groups in the correct place
-        _.each(_.values(root), function(group){
-          _.each(group.nodes, function(node){
+        _.each(_.values(root), function(group) {
+          _.each(group.nodes, function(node) {
             var id = node.id;
-            if(_.has(root, id)){
-              $.extend(node, root[id]);
+            if (_.has(root, id)) {
+              var label = node.label;
+              _.extend(node, root[id]);
+              node.label = label; // restore the group's label
               delete root[id];
             }
           });
@@ -125,10 +137,19 @@ define([
         data = _.values(root);
 
       } else {
-        data = itemGenerator(indexes, pageData)(rows);
+        data = itemGenerator(indexes, normalizers, pageData)(rows);
       }
 
-      this.model.add(data);
+      // Attempt to insert nodes at pre-existent parents
+      _.each(data, function(node) {
+        var insertionNode = this.model.find(node.id);
+        if (insertionNode) {
+            insertionNode.add(node.nodes);
+        } else {
+          this.model.add(node);
+        }
+      }, this);
+
     },
 
     _isCdaJson: function(obj) {
@@ -153,46 +174,44 @@ define([
   }
 
   function getPageData(queryInfo, pageSize) {
-    var pageData = {};
     if ((queryInfo != null ? queryInfo.pageStart : void 0) != null) {
-      pageData = {
+      return {
         page: Math.floor(parseInt(queryInfo.pageStart) / pageSize)
       };
     }
-    return pageData;
+    return {};
   }
 
-  function itemGenerator(idx, pageData) {
+  function itemGenerator(idx, normalizers,pageData) {
     if (!_.isObject(pageData)) {
       pageData = {};
     }
-    var idxId = idx.id;
-    var idxLabel = idx.label;
-
-    var idxValue = idx.value;
-    var hasValue = _.isFinite(idxValue) && idxValue >= 0;
-
-    var createItems = function(rows) {
+    return function createItems(rows) {
       return _.map(rows, function(row) {
-        var itemData = {
-          id: row[idxId],
-          label: sanitizeInput(row[idxLabel])
-        };
-        if (hasValue) {
-          itemData.value = sanitizeInput(row[idxValue]);
-        }
-        itemData = $.extend(true, itemData, pageData);
-        return itemData;
+
+        var N = row.length;
+        var itemData = _.reduce(idx, function(memo, k, field) {
+
+          var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
+          if (isValidIdx && !_.contains(['parentId', 'parentLabel'], field)) {
+            var normalizer = normalizers[field];
+            memo[field] = normalizer ? normalizer(row[k]) : row[k];
+          }
+
+          return memo;
+        }, {});
+
+        return $.extend(true, itemData, pageData);
       });
     };
-    return createItems;
-  };
+  }
 
-  function groupGenerator(idx, pageData) {
-    var createGroup = function(rows, group) {
+  function groupGenerator(idx, normalizers, pageData) {
+    return function createGroup(rows, group) {
 
       var label = _.chain(rows)
         .pluck(idx.parentLabel)
+        .filter(_.isString)
         .compact()
         .first()
         .value();
@@ -202,10 +221,9 @@ define([
       return {
         id: group != null ? id : void 0,
         label: label || id,
-        nodes: itemGenerator(idx, pageData)(rows)
+        nodes: itemGenerator(idx, normalizers, pageData)(rows)
       };
     };
-    return createGroup;
-  };
+  }
 
 });
