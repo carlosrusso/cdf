@@ -373,18 +373,20 @@ define([
 
         filterComponent.once("cdf:postExecution", function() {
           // simulate a search term that doesn't have any matches
-          expect(filterComponent.model.root().get('isCollapsed')).toEqual(true);
-          $('.filter-filter-input:eq(0)').val("fake_search_text");
-          _.map(filterComponent.model.nodes().models, function(model) {
-            model.set('isVisible', false);
+          expect(filterComponent.model.get('isCollapsed')).toEqual(true);
+
+          filterComponent.placeholder('.filter-filter-input:eq(0)').val("fake_search_text");
+
+          filterComponent.model.on('change:searchPattern', function(){
+            // We are relying on the fact that this listener is handled last
+            var text = filterComponent.placeholder('.filter-filter-input:eq(0)').val();
+            expect(text).toBe("");
+            done();
           });
 
-          spyOn(filterComponent.manager.get("view"), "onFilterClear").and.callThrough();
-          filterComponent.manager.get("controller").onToggleCollapse(filterComponent.model);
-          expect(filterComponent.manager.get("view").onFilterClear).toHaveBeenCalled();
-          expect($('.filter-filter-input:eq(0)').val()).toEqual("");
+          var strategy = filterComponent.manager.get("configuration").component.selectionStrategy.strategy;
+          strategy.toggleCollapse(filterComponent.model);
 
-          done();
         });
 
         dashboard.update(filterComponent);
@@ -402,15 +404,17 @@ define([
         dashboard.addComponent(filterComponent);
 
         filterComponent.once("cdf:postExecution", function() {
-          var controller = filterComponent.manager.get('controller');
+          var strategy = filterComponent.manager.get('configuration').component.selectionStrategy.strategy;
           var rootModel = filterComponent.model;
-          var childrenModels = rootModel.children().models;
           expect(rootModel.get('numberOfSelectedItems')).toEqual(0);
+
+          var childrenModels = rootModel.children().models;
           for (var i = 0; i < selectionLimit; i++) {
-            controller.onSelection(childrenModels[i]);
+            strategy.changeSelection(childrenModels[i]);
           }
-          expect(rootModel.get('numberOfSelectedItems')).toEqual(selectionLimit);
-          controller.onOnlyThis(childrenModels[0]);
+          expect(rootModel.get('numberOfSelectedItems')).toBe(selectionLimit);
+
+          strategy.selectOnlyThis(childrenModels[0]);
           expect(rootModel.get('numberOfSelectedItems')).toEqual(1);
           done();
         });
