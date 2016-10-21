@@ -195,20 +195,61 @@ define([
     },
 
     hasChanged: function() {
-      var previousSelection = this.get('selectedItems');
-      if (previousSelection == null) {
+      var _previousSelection = this.get('selectedItems');
+      if (_previousSelection == null) {
         return false;
       }
-      previousSelection = previousSelection.value();
-      var hasChanged = this._getSelectionSnapshot()
-        .some(function(current, state) {
-          var previous = previousSelection[state];
-          var intersection = _.intersection(current, previous);
-          return !(_.isEqual(current, intersection) && _.isEqual(previous, intersection));
-        })
-        .value();
 
-      return hasChanged;
+      var previousSelection = _previousSelection.value();
+
+      // Confirm if any of the previously marked items changed its selection state
+      var foundChange = _.some(previousSelection.some, function(m) {
+        return m.getSelection() != SelectionStates.SOME;
+      });
+      if (foundChange) {
+        return true;
+      }
+
+      foundChange = _.some(previousSelection.none, function(m) {
+        return m.getSelection() != SelectionStates.NONE;
+      });
+      if (foundChange) {
+        return true;
+      }
+
+      foundChange = _.some(previousSelection.all, function(m) {
+        return m.getSelection() != SelectionStates.ALL;
+      });
+      if (foundChange) {
+        return true;
+      }
+
+      // Perhaps we added more elements after saving the snapshot.
+      // Let's see if any of the new items are selected.
+      // We must take into account if the parent item was previously stored as ALL or NONE
+      function item(m) {
+        if(m.getSelection() === SelectionStates.ALL) { // is selected
+          var isNotNew = _.contains(previousSelection.all, m);
+          if(isNotNew){
+            return false;
+          }
+          // is new
+          var parent = m.parent();
+          if(parent){
+            // if the parent was previously unselected, and the child is selected, then
+            // something has changed
+            return _.contains(previousSelection.none, parent);
+              //&& parent.getSelection() !== SelectionStates.ALL;
+          }
+        }
+        return false;
+      }
+
+      function aggregate(results, m){
+        return _.some(results);
+      }
+
+      return this.walkDown(item, aggregate);
     },
 
     /**
