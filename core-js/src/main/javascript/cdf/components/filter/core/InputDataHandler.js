@@ -51,9 +51,6 @@ define([
 
       var model = this.model;
       var options = this.options;
-      if (options.root && options.root.id) {
-        model.set('id', options.root.id);
-      }
 
       if (options.hooks && options.hooks.postUpdate) {
         _.each(options.hooks.postUpdate, function(hook) {

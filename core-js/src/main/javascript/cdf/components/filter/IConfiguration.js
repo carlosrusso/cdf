@@ -33,21 +33,24 @@ define([
      * <pre>
      * <code>
      * {
-         *   component: {}, // Uses BaseFilter defaults
-         *   input: {
-         *     defaultModel: {
-         *      isDisabled: true
-         *     },
-         *     indexes: { // layout of the data: column indexes
-         *       id: 0,
-         *       label: 1,
-         *       parentId: 2,
-         *       parentLabel: 3,
-         *       value: undefined
-         *     }
-         *   },
-         *   output: {}
-         * }
+     *   component: {...}, // Uses defaults
+     *     input: {
+     *       root: {
+     *         isCollapsed: true,
+     *         isDisabled: true,
+     *         searchPattern: ''
+     *       },
+     *       indexes: {
+     *         id: 0,
+     *         label: 1,
+     *         parentId: 2,
+     *         parentLabel: 3,
+     *         value: 4
+     *       }
+     *     },
+     *     output: {
+     *       outputFormat: 'lowestId'
+     *     }
      * </code>
      * </pre>
      *
@@ -56,7 +59,8 @@ define([
     defaults: {
       component: defaults,
       input: {
-        defaultModel: {
+        root: {
+          isCollapsed: true,
           isDisabled: true,
           searchPattern: ''
         },

@@ -115,7 +115,8 @@ define([
       /*
        * Initialize the model
        */
-      this.model = new Model(configuration.input.defaultModel, {
+
+      this.model = new Model(configuration.input.root, {
         matcher: configuration.component.search.matcher
       });
 

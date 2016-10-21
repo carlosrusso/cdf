@@ -43,7 +43,7 @@ define([
       label: "",
       isSelected: BaseSelectionTree.SelectionStates.NONE,
       isVisible: true,
-      isCollapsed: true,
+      isCollapsed: false,
       numberOfSelectedItems: 0,
       numberOfItems: 0,
       page: 0
