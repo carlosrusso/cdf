@@ -181,10 +181,9 @@ There are also advanced properties, that allow further customization of the comp
         parentLabel: 3,  // Label of the group to which the item belongs to.
         value: undefined // Secondary bit of text that will be show next to the item label
       },
-      defaultModel: { // Default properties of the model
-        isDisabled: true
-      },
-      root: {
+      root: { // Default properties of the model's root node
+        isDisabled: true,
+        isCollapsed: true,
         id: undefined // Overrides the id of the root.
       }
     },
@@ -228,6 +227,7 @@ There are also advanced properties, that allow further customization of the comp
           showSelectedItems: false,  // optionally display the labels of selected items
           showNumberOfSelectedItems: true,
           showValue: false,         // optionally shows the value associated with the root
+          showIcons: true,
           scrollThreshold: 12, // number of children (items or groups) that triggers a scrollbar
           useOverlay: true, // should the filter display an overlay when expanded?
           expandMode: 'absolute' // 'relative' will push content on expand, 'absolute' will not
@@ -235,10 +235,14 @@ There are also advanced properties, that allow further customization of the comp
         strings: {
           title: '',            // overrides Title property
           isDisabled: 'Unavailable', // message displayed when the filter is disabled
-          allItems: 'All', // message displayed when all items are selected
-          noItems: 'None', // message displayed when no items are selected
+          allItems: 'All', // message displayed in the header when all items are selected
+          noItems: 'None', // message displayed in the header when no items are selected
+          groupSelection: 'All', // label of the icon that allows group selection
           btnApply: 'Apply', // label of the Apply button
           btnCancel: 'Cancel'  // label of the Cancel button
+          busyInfo: 'Fetching data...',
+          reachedSelectionLimitBefore: 'The selection limit (',
+          reachedSelectionLimitAfter: ') for specific items has been reached.'
         },
         view: {
           overlaySimulateClick: true, // when clicking on the overlay, should the click
@@ -259,19 +263,17 @@ There are also advanced properties, that allow further customization of the comp
        */
       Group: {
         options: {
-          showFilter: false,
-          showCommitButtons: false,
           showGroupSelection: false,
-          showButtonOnlyThis: false,
           showButtonCollapse: false, // show/hide button that allows collapsing of groups
           showValue: false, // optionally shows the value associated with the group
-          scrollThreshold: Infinity // number of items in the group that triggers a group-only scrollbar
+          showIcons: true,
+          scrollThreshold: Infinity, // number of items in the group that triggers a group-only scrollbar
+          isResizable: false
         },
         strings: { // Same keys than Root, but used in the context of a Group
           allItems: 'All',
           noItems: 'None',
-          btnApply: 'Apply',
-          btnCancel: 'Cancel'
+          groupSelection: 'All'
         }
       },
 
@@ -281,7 +283,8 @@ There are also advanced properties, that allow further customization of the comp
       Item: {
         options: {
           showButtonOnlyThis: false, //show/hide "Only This" button
-          showValue: false // optionally shows the value associated with the item
+          showValue: false, // optionally shows the value associated with the item
+          showIcons: true
         },
         strings: {
           btnOnlyThis: 'Only' // caption of the "Only this" button
