@@ -38,19 +38,13 @@ define([
      * @property {number}  numberOfItems         The default number of items.
      * @property {number}  page                  The default page.
      */
-    defaults: {
-      id: undefined,
-      label: "",
-      isSelected: BaseSelectionTree.SelectionStates.NONE,
-      isVisible: true,
+    defaults: _.extend({}, BaseSelectionTree.prototype.defaults, {
       isCollapsed: false,
-      numberOfSelectedItems: 0,
-      numberOfItems: 0,
       page: 0
-    },
+    }),
 
-    _onAddRemove: function() {
-      this.base();
+    load: function(data) {
+      this.base(data);
 
       var root = this.root();
       root.set('isDisabled', root.children() === null);

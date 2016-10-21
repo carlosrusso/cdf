@@ -41,7 +41,6 @@ define([
      * @property {boolean} isCollapsed           - The default collapsed state.
      * @property {number}  numberOfSelectedItems - The default number of selected items.
      * @property {number}  numberOfItems         - The default number of items.
-     * @property {number}  page                  - The default page.
      */
     defaults: {
       id: void 0,
@@ -63,23 +62,13 @@ define([
 
       this.base(attributes, options);
 
-      this.on('change:searchPattern', function(model, value){
-        model.filterBy(value);
-      });
-
       if (this.isRoot()) {
         // Initializations specific to root node
         this.set('matcher', getOwn(options, 'matcher') || defaultMatcher);
-      } else {
-        this._inheritSelectionFromParent();
-
-        // If there's a searchPattern defined, adjust the visibility of this node
-        var root = this.root();
-        var filterText = root.get('searchPattern');
-        this._filter(filterText, root.get('matcher'));
+        this.on('change:searchPattern', function(model, value){
+          model.filterBy(value);
+        });
       }
-
-      this.on('add remove', this._onAddRemove);
     },
 
     /**
@@ -168,16 +157,15 @@ define([
       var root = this.root();
       root.updateSelection();
 
+      root._updateCount('numberOfItems', function(model) {
+        return 1; // 1 parent + 10 children === 11?
+      });
+      root._updateCount('numberOfSelectedItems', countSelectedItem);
+
       var numberOfServerItems = root.get('numberOfItemsAtServer');
       if (numberOfServerItems != null) {
         root.set('numberOfItems', numberOfServerItems);
-      } else {
-        root._updateCount('numberOfItems', function(model) {
-          return 1; // 1 parent + 10 children === 11?
-        });
       }
-
-      root._updateCount('numberOfSelectedItems', countSelectedItem);
       return this;
     },
 
@@ -193,14 +181,6 @@ define([
       }
 
       return this.walkDown(getSelection, reduceSelectionStates, setSelection);
-    },
-
-    countItems: function(callback) {
-      return this.walkDown(callback, sum, null);
-    },
-
-    countSelectedItems: function() {
-      return this.walkDown(countSelectedItem, sum, null);
     },
 
     _updateCount: function(property, countItemCallback) {
@@ -284,15 +264,16 @@ define([
     },
 
     restoreSelectedItems: function() {
-      var selectedItems = this.root().get('selectedItems').value();
+      var _selectedItems = this.root().get('selectedItems');
 
-      if (selectedItems == null) {
-        var root = this.root();
-        root.setSelection(SelectionStates.NONE);
-        root.update();
+      if (_selectedItems == null) {
         return;
       }
 
+      var root = this.root();
+      root.setSelection(SelectionStates.NONE);
+
+      var selectedItems = _selectedItems.value();
       _.each(selectedItems.none, function(m) {
         return m.setSelection(SelectionStates.NONE);
       });
@@ -301,7 +282,7 @@ define([
         return m.setSelection(SelectionStates.ALL);
       });
 
-      return this.update();
+      this.update();
     },
 
     _getSelectionSnapshot: function() {
@@ -361,13 +342,26 @@ define([
     },
 
     _inheritSelectionFromParent: function() {
-      var parentSelectionState = this.parent().getSelection();
+      var parent = this.parent();
+      if(!parent){
+        return;
+      }
+      var parentSelectionState = parent.getSelection();
       if (parentSelectionState !== SelectionStates.SOME) {
         this.setSelection(parentSelectionState);
       }
     },
 
-    _onAddRemove: function() {
+    load: function(data) {
+      this.add(data);
+
+      this._inheritSelectionFromParent();
+
+      // If there's a searchPattern defined, adjust the visibility of this node
+      var root = this.root();
+      var filterText = root.get('searchPattern');
+      this._filter(filterText, root.get('matcher'));
+
       this.update();
     }
 

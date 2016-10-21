@@ -144,9 +144,9 @@ define([
       _.each(data, function(node) {
         var insertionNode = this.model.find(node.id);
         if (insertionNode) {
-            insertionNode.add(node.nodes);
+            insertionNode.load(node.nodes);
         } else {
-          this.model.add(node);
+          this.model.load(node);
         }
       }, this);
 

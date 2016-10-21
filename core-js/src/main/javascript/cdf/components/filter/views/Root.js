@@ -65,9 +65,9 @@ define([
     bindToModel: function (model) {
       this.base(model);
       this.onChange(model, 'isCollapsed', this.updateCollapse);
-      this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems reachedSelectionLimit', this.updateHeader);
+      this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems', this.updateHeader);
       this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems selectedItems', this.updateSelection);
-      this.onChange(model, 'isSelected', this.updateControls);
+      this.onChange(model, 'isSelected selectedItems', this.updateControls);
       this.onChange(model, 'numberOfSelectedItems isBusy', this.updateFooter);
       this.onChange(model, 'isDisabled', this.updateAvailability);
       this.onChange(model, 'searchPattern', this.updateFilter);
