@@ -78,6 +78,11 @@ define([
       return viewModel;
     },
 
+    render: function(){
+      var viewModel = this.base();
+      this.renderCollapse(viewModel);
+    },
+
     updateFilter: function() {
       var text = this.model.root().get('searchPattern');
       this.$(this.config.view.slots.filter).val(text);

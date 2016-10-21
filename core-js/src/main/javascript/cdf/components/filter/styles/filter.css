@@ -503,9 +503,7 @@
 .filter-controls .filter-filter .filter-filter-input:focus {
   border-color: #005ca7;
 }
-.filter-group-container .filter-controls {
-  display: none;
-}
+
 .filter-root-notification {
   padding: 20px;
   border-top: 1px solid #808080;

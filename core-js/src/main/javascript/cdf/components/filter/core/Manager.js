@@ -94,14 +94,14 @@ define([
       var strategy = this.get('configuration').selectionStrategy.strategy;
 
       var throttleScroll = function(f) {
-        var throttleTimeMilliseconds = configuration.pagination.throttleTimeMilliseconds;
-        return _.throttle(f, throttleTimeMilliseconds || 0, {
+        var delayInMilliseconds = configuration.pagination.throttleTimeMilliseconds;
+        return _.throttle(f, delayInMilliseconds || 0, {
           trailing: false
         });
       };
-      var throttleFilter = function(f) {
-        var throttleTimeMilliseconds = view.config.view.throttleTimeMilliseconds;
-        return _.debounce(f, throttleTimeMilliseconds);
+      var debounce = function(f) {
+        var delayInMilliseconds = view.config.view.throttleTimeMilliseconds;
+        return _.debounce(f, delayInMilliseconds);
       };
 
       /*
@@ -114,7 +114,7 @@ define([
           'selection': this.sortSiblings
         },
         view: {
-          'filter': throttleFilter(this.onFilterChange),
+          'filter': debounce(this.onFilterChange),
           'scroll:reached:top': throttleScroll(this.getPreviousPage),
           'scroll:reached:bottom': throttleScroll(this.getNextPage)
         }
@@ -154,8 +154,8 @@ define([
       }, this);
 
 
-      this.on('post:child:selection request:child:sort', throttleFilter(this.renderSortedChildren));
-      this.on('post:child:add', throttleFilter(this.onUpdateChildren));
+      this.on('post:child:selection request:child:sort', debounce(this.renderSortedChildren));
+      this.on('post:child:add', debounce(this.onUpdateChildren));
       return this;
     },
 
@@ -329,7 +329,7 @@ define([
      */
     getSorters: function() {
       var type = this.children().first().get('view').type;
-      var customSorters = this.get('configuration')[type].sorter;
+      var customSorters = this.get('configuration')[type].sorters;
 
       if (_.isFunction(customSorters)) {
         return [customSorters];

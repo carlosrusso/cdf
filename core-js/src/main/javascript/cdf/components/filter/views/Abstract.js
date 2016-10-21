@@ -168,21 +168,18 @@ define([
       this.renderSkeleton(viewModel);
       this.renderSelection(viewModel);
       this.updateVisibility(viewModel);
-      return this;
+      return viewModel;
     },
 
     renderSkeleton: function (viewModel) {
       var html = this.getHtml(this.templates.skeleton, viewModel);
       this.$el.html(html);
-      return this;
+      return viewModel;
     },
 
-    updateSelection: function (model, options) {
-      if (model === this.model) {
-        var viewModel = this.getViewModel();
-        this.renderSelection(viewModel);
-      }
-      return this;
+    updateSelection: function() {
+      var viewModel = this.getViewModel();
+      this.renderSelection(viewModel);
     },
 
     renderSelection: function (viewModel) {

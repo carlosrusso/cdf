@@ -5,6 +5,15 @@
     <div class="filter-group-header"/>
 
     <div class="filter-group-body">
+
+        {{#showFilter}}
+        <div class="filter-group-control">
+            <div class="filter-controls">
+            {{> filter}}
+            </div>
+        </div>
+        {{/showFilter}}
+
         <div class="filter-group-items-container">
             <div class="filter-group-items"></div>
         </div>

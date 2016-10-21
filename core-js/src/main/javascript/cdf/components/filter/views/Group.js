@@ -65,9 +65,14 @@ define([
      * @param {object} viewModel
      */
     renderCollapse: function (viewModel) {
-      this.renderSelection(viewModel);
       var $collapsible = this.$('.filter-group-body, .filter-group-footer');
-      if (viewModel.isCollapsed) {
+      var isCollapsed = viewModel.isCollapsed;
+
+      this.$('.filter-collapse-icon')
+        .toggleClass('collapsed', isCollapsed)
+        .toggleClass('expanded', !isCollapsed);
+
+      if (isCollapsed) {
         $collapsible.hide();
       } else {
         $collapsible.show();

@@ -93,7 +93,7 @@ define([
      * @type {object}
      */
     pagination: {
-      throttleTimeMilliseconds: 500,
+      throttleTimeMilliseconds: 500, // delay between
       pageSize: Infinity
     },
     /**
@@ -123,6 +123,7 @@ define([
     Root: {
       options: {
         className: 'multi-select',
+        styles: [],
         showCommitButtons: true,
         showFilter: false,
         showGroupSelection: true,
@@ -135,7 +136,7 @@ define([
         scrollThreshold: 12,
         isResizable: true,
         useOverlay: true,
-        expandMode: 'absolute'
+        expandMode: 'absolute' // TODO: consider replacing this option with `isExpandAbsolute: true`
       },
       strings: {
         isDisabled: 'Unavailable',
