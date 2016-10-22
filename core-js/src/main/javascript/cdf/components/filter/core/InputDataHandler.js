@@ -178,6 +178,10 @@ define([
      * @param {Array} selectedItems Array containing the ids of the selected items.
      */
     setValue: function(selectedItems) {
+      if(selectedItems == null){
+        this.model.updateSelectedItems();
+        return;
+      }
       this.model.setSelectedItems(selectedItems);
       this.trigger('setValue', selectedItems);
     }
