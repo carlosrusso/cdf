@@ -106,29 +106,31 @@ define([
        */
       var cd = this.componentDefinition;
       var selectionStrategy = cd.multiselect ? 'LimitedSelect' : 'SingleSelect';
-      $.extend(true, configuration.component,
+      $.extend(true, configuration,
         presets[selectionStrategy],
         {
-          target: this.placeholder(),
-          Root: {
-            options: {
-              showIcons: cd.showIcons,
-              alwaysExpanded: cd.alwaysExpanded,
-              showFilter: cd.showFilter,
-              useOverlay: cd.useOverlay
+          component: {
+            target: this.placeholder(),
+            Root: {
+              options: {
+                showIcons: cd.showIcons,
+                alwaysExpanded: cd.alwaysExpanded,
+                showFilter: cd.showFilter,
+                useOverlay: cd.useOverlay
+              },
+              strings: {
+                title: cd.title
+              }
             },
-            strings: {
-              title: cd.title
-            }
-          },
-          Group: {
-            options: {
-              showIcons: cd.showIcons
-            }
-          },
-          Item: {
-            options: {
-              showIcons: cd.showIcons
+            Group: {
+              options: {
+                showIcons: cd.showIcons
+              }
+            },
+            Item: {
+              options: {
+                showIcons: cd.showIcons
+              }
             }
           }
         }

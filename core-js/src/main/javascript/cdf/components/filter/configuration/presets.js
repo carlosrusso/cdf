@@ -18,63 +18,69 @@ define([], function() {
   "use strict";
 
   var singleSelect = {
-    Root: {
-      options: {
-        className: 'single-select',
-        showCommitButtons: false,
-        showSelectedItems: true,
-        showNumberOfSelectedItems: false,
-        showGroupSelection: false
+    component: {
+      Root: {
+        options: {
+          className: 'single-select',
+          showCommitButtons: false,
+          showSelectedItems: true,
+          showNumberOfSelectedItems: false,
+          showGroupSelection: false
+        }
+      },
+      Item: {
+        options: {
+          showButtonOnlyThis: false
+        }
+      },
+      selectionStrategy: {
+        type: 'SingleSelect'
       }
-    },
-    Item: {
-      options: {
-        showButtonOnlyThis: false
-      }
-    },
-    selectionStrategy: {
-      type: 'SingleSelect'
     }
   };
 
   var multiSelect = {
-    Root: {
-      options: {
-        className: 'multi-select',
-        showCommitButtons: true,
-        showSelectedItems: false,
-        showNumberOfSelectedItems: true,
-        showGroupSelection: true
+    component: {
+      Root: {
+        options: {
+          className: 'multi-select',
+          showCommitButtons: true,
+          showSelectedItems: false,
+          showNumberOfSelectedItems: true,
+          showGroupSelection: true
+        }
+      },
+      Item: {
+        options: {
+          showButtonOnlyThis: true
+        }
+      },
+      selectionStrategy: {
+        type: 'MultiSelect'
       }
-    },
-    Item: {
-      options: {
-        showButtonOnlyThis: true
-      }
-    },
-    selectionStrategy: {
-      type: 'MultiSelect'
     }
   };
 
   var limitedSelect = {
-    Root: {
-      options: {
-        className: 'multi-select',
-        showCommitButtons: true,
-        showSelectedItems: false,
-        showNumberOfSelectedItems: true,
-        showGroupSelection: true
+    component: {
+      Root: {
+        options: {
+          className: 'multi-select',
+          showCommitButtons: true,
+          showSelectedItems: false,
+          showNumberOfSelectedItems: true,
+          showGroupSelection: true
+        }
+      },
+      Item: {
+        options: {
+          showButtonOnlyThis: true
+        }
+      },
+      selectionStrategy: {
+        type: 'LimitedSelect',
+        limit: 500
       }
-    },
-    Item: {
-      options: {
-        showButtonOnlyThis: true
-      }
-    },
-    selectionStrategy: {
-      type: 'LimitedSelect',
-      limit: 500
     }
   };
 
