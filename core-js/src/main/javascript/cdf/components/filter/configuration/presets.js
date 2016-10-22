@@ -42,6 +42,7 @@ define([], function() {
       options: {
         className: 'multi-select',
         showCommitButtons: true,
+        showSelectedItems: false,
         showNumberOfSelectedItems: true,
         showGroupSelection: true
       }
@@ -61,6 +62,7 @@ define([], function() {
       options: {
         className: 'multi-select',
         showCommitButtons: true,
+        showSelectedItems: false,
         showNumberOfSelectedItems: true,
         showGroupSelection: true
       }

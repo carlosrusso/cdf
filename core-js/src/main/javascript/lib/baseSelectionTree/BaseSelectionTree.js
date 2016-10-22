@@ -60,7 +60,7 @@ define([
         }
       }
 
-      this.base(attributes, options);
+      this.base.apply(this, arguments);
 
       if (this.isRoot()) {
         // Initializations specific to root node
@@ -69,6 +69,20 @@ define([
           model.filterBy(value);
         });
       }
+    },
+
+
+    load: function(data) {
+      this.add(data);
+
+      this._inheritSelectionFromParent();
+
+      // If there's a searchPattern defined, adjust the visibility of this node
+      var root = this.root();
+      var filterText = root.get('searchPattern');
+      this._filter(filterText, root.get('matcher'));
+
+      this.update();
     },
 
     /**
@@ -391,19 +405,6 @@ define([
       if (parentSelectionState !== SelectionStates.SOME) {
         this.setSelection(parentSelectionState);
       }
-    },
-
-    load: function(data) {
-      this.add(data);
-
-      this._inheritSelectionFromParent();
-
-      // If there's a searchPattern defined, adjust the visibility of this node
-      var root = this.root();
-      var filterText = root.get('searchPattern');
-      this._filter(filterText, root.get('matcher'));
-
-      this.update();
     }
 
   }, {
