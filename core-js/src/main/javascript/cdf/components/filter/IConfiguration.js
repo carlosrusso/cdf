@@ -59,6 +59,8 @@ define([
     defaults: {
       component: defaults,
       input: {
+        valueAsId: false,
+        valuesArray: null,
         root: {
           isCollapsed: true,
           isDisabled: true,

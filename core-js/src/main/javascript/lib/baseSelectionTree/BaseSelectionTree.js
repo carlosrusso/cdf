@@ -38,7 +38,6 @@ define([
      * @property {string}  label                 - The default label.
      * @property {boolean} isSelected            - The default selection state.
      * @property {boolean} isVisible             - The default visibility state.
-     * @property {boolean} isCollapsed           - The default collapsed state.
      * @property {number}  numberOfSelectedItems - The default number of selected items.
      * @property {number}  numberOfItems         - The default number of items.
      */
@@ -52,14 +51,6 @@ define([
     },
 
     initialize: function(attributes, options) {
-      if (attributes) {
-        if (attributes.label != null) {
-          if ((getOwn(attributes, 'id') == null) || (getOwn(options, 'useValueAsId') === true)) {
-            attributes.id = attributes.label;
-          }
-        }
-      }
-
       this.base.apply(this, arguments);
 
       if (this.isRoot()) {
@@ -208,7 +199,11 @@ define([
       return this.walkDown(countItemCallback, sum, setPropertyIfParent);
     },
 
-    hasChanged: function() {
+    hasChanged: function(attr) {
+      if (attr && attr !== 'isSelected') {
+        return this.base(attr);
+      }
+
       var _previousSelection = this.get('selectedItems');
       if (_previousSelection == null) {
         return false;

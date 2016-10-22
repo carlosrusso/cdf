@@ -132,7 +132,7 @@ define([
 
         // Generate a flat map of groups
         var root = {};
-        var createGroup = groupGenerator(indexes, normalizers, pageData);
+        var createGroup = groupGenerator(indexes, options, pageData);
         _.each(groupedRows, function(rows, groupId) {
           root[groupId] = createGroup(rows, groupId);
         });
@@ -153,7 +153,7 @@ define([
         data = _.values(root);
 
       } else {
-        data = itemGenerator(indexes, normalizers, pageData)(rows);
+        data = itemGenerator(indexes, options, pageData)(rows);
       }
 
       // Attempt to insert nodes at pre-existent parents
@@ -202,7 +202,7 @@ define([
     return {};
   }
 
-  function itemGenerator(idx, normalizers,pageData) {
+  function itemGenerator(idx, options,pageData) {
     if (!_.isObject(pageData)) {
       pageData = {};
     }
@@ -214,7 +214,7 @@ define([
 
           var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
           if (isValidIdx && !_.contains(['parentId', 'parentLabel'], field)) {
-            var normalizer = normalizers[field];
+            var normalizer = options.normalizers[field];
             memo[field] = normalizer ? normalizer(row[k]) : row[k];
           }
 
@@ -226,7 +226,7 @@ define([
     };
   }
 
-  function groupGenerator(idx, normalizers, pageData) {
+  function groupGenerator(idx, options, pageData) {
     return function createGroup(rows, group) {
 
       var label = _.chain(rows)
@@ -236,12 +236,18 @@ define([
         .first()
         .value();
 
-      var id = rows[0][idx.parentId];
+      var id;
+      if(options.valueAsId === true){
+        id = label;
+      } else {
+        id = group != null ? rows[0][idx.parentId] : undefined;
+        label = label || id;
+      }
 
       return {
-        id: group != null ? id : void 0,
-        label: label || id,
-        nodes: itemGenerator(idx, normalizers, pageData)(rows)
+        id: id,
+        label: label,
+        nodes: itemGenerator(idx, options, pageData)(rows)
       };
     };
   }
