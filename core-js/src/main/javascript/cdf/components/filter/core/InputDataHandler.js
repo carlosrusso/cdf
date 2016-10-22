@@ -15,9 +15,10 @@ define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/BaseEvents',
+  './Model',
   '../../../Logger',
   '../HtmlUtils'
-], function($, _, BaseEvents, Logger, HtmlUtils) {
+], function($, _, BaseEvents, Model, Logger, HtmlUtils) {
 
   "use strict";
 
@@ -29,11 +30,26 @@ define([
    * @ignore
    */
 
+  var SelectionStates = Model.SelectionStates;
+
   var defaultNormalizers = {
     label: sanitizeInput,
     value: sanitizeInput,
-    isSelected: function(v){
-      return _.isNull(v) ? null : Boolean(v);
+    isSelected: function(v) {
+      if (_.isNull(v)) {
+        return SelectionStates.SOME;
+      } else if (_.isString(v)) {
+        switch (v.toLowerCase()) {
+          case "true":
+            return SelectionStates.ALL;
+          case "null":
+            return SelectionStates.SOME;
+          default:
+            return SelectionStates.NONE;
+        }
+      } else {
+        return Boolean(v) ? SelectionStates.ALL : SelectionStates.NONE;
+      }
     }
   };
 
