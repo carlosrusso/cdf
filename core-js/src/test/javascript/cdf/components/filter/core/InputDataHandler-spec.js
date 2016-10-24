@@ -22,12 +22,13 @@ define([
   fdescribe("InputDataHandler", function() {
     var model;
     var inputDataHandler;
+    var query;
 
     beforeEach(function() {
       model = new Model({
         id: "root"
       });
-      var query = jasmine.createSpyObj('query', ['getOption']);
+      query = jasmine.createSpyObj('query', ['getOption']);
       query.getOption.and.callFake(function(option) {
         switch (option) {
           case "pageSize":
@@ -156,6 +157,50 @@ define([
           expect(model.find('item1').parent()).toBe(model.find('second'));
         });
 
+      });
+
+      describe("should import data with a complex hierarchy to the model", function() {
+
+        it("when data is an array", function() {
+          var data = [
+            ["2013-07-01", "July 1st, 2013", "2013-07", "July", "2013"],
+            ["2013-07-02", "July 2nd, 2013", "2013-07", "July", "2013"],
+            ["2014-10-21", "October 21st, 2014", "2014-10", "October", "2014"],
+            ["2014-11-05", "November 5th, 2014", "2014-11", "November", "2014"]
+          ];
+
+          var inputDataHandler = new InputDataHandler({
+            options: {
+              query: query,
+              indexes: [{
+                id: 5,
+                label: 5
+              },{
+                id: 4,
+                label: 4
+              },{
+                id: 2,
+                label: 3
+              },{
+                id: 0,
+                label: 1
+              }]
+            },
+            model: model
+          });
+
+          inputDataHandler.updateModel(data);
+
+          expect(model.find('2013').parent()).toBe(model);
+          expect(model.find('2013-07').parent()).toBe(model.find('2013'));
+          expect(model.find('2013-07-01').parent()).toBe(model.find('2013-07'));
+          expect(model.find('2013-07-02').parent()).toBe(model.find('2013-07'));
+          expect(model.find('2014').parent()).toBe(model);
+          expect(model.find('2014-10').parent()).toBe(model.find('2014'));
+          expect(model.find('2014-10-21').parent()).toBe(model.find('2014-10'));
+          expect(model.find('2014-11').parent()).toBe(model.find('2014'));
+          expect(model.find('2014-11-05').parent()).toBe(model.find('2014-11'));
+        });
       });
 
       it("uses the label as id when the option `valueAsId === true`", function() {

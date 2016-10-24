@@ -124,6 +124,10 @@ define([
         return;
       }
 
+      if (!this.config.view.scrollbar) {
+        return;
+      }
+
       this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine, this);
 
       if (this.config.options.isResizable) {

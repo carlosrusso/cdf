@@ -57,7 +57,9 @@ define([
 
     constructor: function(spec) {
       this.model = spec.model;
-      this.options = spec.options || {};
+      this.options = _.extend({
+        normalizers: defaultNormalizers
+      }, spec.options);
     },
     /**
      * Import data into the MVC model, eventually inferring the data format.
@@ -114,53 +116,40 @@ define([
       if (rows.length === 0) {
         return;
       }
+      var options = this.options;
+      var indexes = options.indexes;
 
-      var indexes = this.options.indexes;
-      var parentIndexes = _.chain(indexes)
-        .pick('parentId', 'parentLabel')
-        .filter(_.isFinite)
-        .max()
-        .value();
-
-      var normalizers = _.extend({}, defaultNormalizers, this.options.normalizers);
-      var data;
-      var hasGroups = _.isFinite(parentIndexes) && parentIndexes < rows[0].length;
-      if (hasGroups) {
-        var groupedRows = _.groupBy(rows, function(row) {
-            return row[indexes.parentId];
-          });
-
-        // Generate a flat map of groups
-        var root = {};
-        var createGroup = groupGenerator(indexes, options, pageData);
-        _.each(groupedRows, function(rows, groupId) {
-          root[groupId] = createGroup(rows, groupId);
-        });
-
-        // Assemble the tree by placing the groups in the correct place
-        _.each(_.values(root), function(group) {
-          _.each(group.nodes, function(node) {
-            var id = node.id;
-            if (_.has(root, id)) {
-              var label = node.label;
-              _.extend(node, root[id]);
-              node.label = label; // restore the group's label
-              delete root[id];
-            }
-          });
-        });
-
-        data = _.values(root);
-
+      var hierarchy;
+      if (_.isArray(indexes)) {
+        hierarchy = indexes;
       } else {
-        data = itemGenerator(indexes, options, pageData)(rows);
+        hierarchy = [];
+
+        if (_.has(indexes, 'parentId')) {
+          var parentId = indexes.parentId;
+          var isValidParent = _.isNumber(parentId) && parentId >= 0 && parentId < rows[0].length;
+          if (isValidParent)
+            hierarchy.push({
+              id: indexes.parentId,
+              label: indexes.parentLabel
+            });
+        }
+        hierarchy.push(_.omit(indexes, ['parentId', 'parentLabel']));
       }
+
+      if(options.valueAsId === true){
+         _.each(hierarchy, function(levelStructure){
+          levelStructure.id = levelStructure.label;
+        });
+      }
+
+      var data = nestedGroupBy(rows, hierarchy, options, pageData);
 
       // Attempt to insert nodes at pre-existent parents
       _.each(data, function(node) {
         var insertionNode = this.model.find(node.id);
         if (insertionNode) {
-            insertionNode.load(node.nodes);
+          insertionNode.load(node.nodes);
         } else {
           this.model.load(node);
         }
@@ -202,54 +191,40 @@ define([
     return {};
   }
 
-  function itemGenerator(idx, options,pageData) {
-    if (!_.isObject(pageData)) {
-      pageData = {};
+  function nestedGroupBy(rows, indexes, options, payload) {
+    if (!indexes.length) {
+      return null;
     }
-    return function createItems(rows) {
-      return _.map(rows, function(row) {
 
-        var N = row.length;
-        var itemData = _.reduce(idx, function(memo, k, field) {
+    var groupIndexes = indexes[0];
+    var groupings = _.groupBy(rows, groupIndexes.id);
 
-          var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
-          if (isValidIdx && !_.contains(['parentId', 'parentLabel'], field)) {
-            var normalizer = options.normalizers[field];
-            memo[field] = normalizer ? normalizer(row[k]) : row[k];
-          }
+    return _.map(groupings, function(groupedRows, groupId) {
+      var row = groupedRows[0];
+      var N = row.length;
+      var node = _.reduce(_.omit(groupIndexes, 'id'), function(memo, k, field) {
 
-          return memo;
-        }, {});
+        var isValidIdx = _.isNumber(k) && k >= 0 && k < N;
+        if (isValidIdx) {
+          var normalizer = options.normalizers[field];
+          memo[field] = normalizer ? normalizer(row[k]) : row[k];
+        }
 
-        return $.extend(true, itemData, pageData);
+        return memo;
+      }, {
+        id: groupId
       });
-    };
-  }
 
-  function groupGenerator(idx, options, pageData) {
-    return function createGroup(rows, group) {
-
-      var label = _.chain(rows)
-        .pluck(idx.parentLabel)
-        .filter(_.isString)
-        .compact()
-        .first()
-        .value();
-
-      var id;
-      if(options.valueAsId === true){
-        id = label;
-      } else {
-        id = group != null ? rows[0][idx.parentId] : undefined;
-        label = label || id;
+      var nodes = nestedGroupBy(groupedRows, indexes.slice(1), options, payload);
+      if (nodes) {
+        node.nodes = nodes;
       }
+      node.label = node.label || node.id;
+      _.extend(node, payload);
 
-      return {
-        id: id,
-        label: label,
-        nodes: itemGenerator(idx, options, pageData)(rows)
-      };
-    };
+      return node;
+    });
   }
+
 
 });
