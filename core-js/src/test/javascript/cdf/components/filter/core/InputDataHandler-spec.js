@@ -64,8 +64,8 @@ define([
 
           inputDataHandler.updateModel(data);
 
-          expect(model.find('one').parent()).toBe(model);
-          expect(model.find('two').parent()).toBe(model);
+          expectChildOf('one', 'root');
+          expectChildOf('two', 'root');
         });
 
         it("when data is a JSON-CDA", function() {
@@ -86,8 +86,8 @@ define([
 
           inputDataHandler.updateModel(data);
 
-          expect(model.find('one').parent()).toBe(model);
-          expect(model.find('two').parent()).toBe(model);
+          expectChildOf('one', 'root');
+          expectChildOf('two', 'root');
         });
       });
 
@@ -137,24 +137,41 @@ define([
 
           inputDataHandler.updateModel(data);
 
-          expect(model.find('units').parent()).toBe(model);
-          expect(model.find('tens').parent()).toBe(model);
-          expect(model.find('one').parent()).toBe(model.find('units'));
+          expectChildOf('units', 'root');
+          expectChildOf('tens', 'root');
+          expectChildOf('one', 'units');
         });
 
-        it("when data represents a nested group", function() {
+        it("when data represents an ordered nested group", function() {
           var data = [
-            ["item1", "item1", "second", "Second"],
-            ["item2", "item2", "second", "Second"],
+            ["first", "First", "root", "Root"],
             ["second", "Second", "first", "First"],
-            ["first", "first", "root", "Root"]
+            ["item1", "item1", "second", "Second"],
+            ["item2", "item2", "second", "Second"]
           ];
 
           inputDataHandler.updateModel(data);
 
-          expect(model.find('first').parent()).toBe(model);
-          expect(model.find('second').parent()).toBe(model.find('first'));
-          expect(model.find('item1').parent()).toBe(model.find('second'));
+          expectChildOf('item1', 'second');
+          expectChildOf('second', 'first');
+          expectChildOf('first', 'root');
+        });
+
+        xit("when data represents an unordered nested group", function() {
+          var data = [
+            ["item1", "item1", "second", "Second"],
+            ["item2", "item2", "second", "Second"],
+            ["first", "First", "root", "Root"],
+            ["second", "Second", "first", "First"]
+          ];
+
+          inputDataHandler.updateModel(data);
+
+          //expect(JSON.stringify(model.toJSON(), true, " ")).toBe("");
+
+          expectChildOf('item1', 'second');
+          expectChildOf('second', 'first');
+          expectChildOf('first', 'root');
         });
 
       });
@@ -173,9 +190,6 @@ define([
             options: {
               query: query,
               indexes: [{
-                id: 5,
-                label: 5
-              },{
                 id: 4,
                 label: 4
               },{
@@ -191,15 +205,17 @@ define([
 
           inputDataHandler.updateModel(data);
 
-          expect(model.find('2013').parent()).toBe(model);
-          expect(model.find('2013-07').parent()).toBe(model.find('2013'));
-          expect(model.find('2013-07-01').parent()).toBe(model.find('2013-07'));
-          expect(model.find('2013-07-02').parent()).toBe(model.find('2013-07'));
-          expect(model.find('2014').parent()).toBe(model);
-          expect(model.find('2014-10').parent()).toBe(model.find('2014'));
-          expect(model.find('2014-10-21').parent()).toBe(model.find('2014-10'));
-          expect(model.find('2014-11').parent()).toBe(model.find('2014'));
-          expect(model.find('2014-11-05').parent()).toBe(model.find('2014-11'));
+          expectChildOf('2013', 'root');
+          expectChildOf('2013-07', '2013');
+          expectChildOf('2013-07-01', '2013-07');
+          expectChildOf('2013-07-02', '2013-07');
+
+          expectChildOf('2014', 'root');
+          expectChildOf('2014-10', '2014');
+          expectChildOf('2014-10-21', '2014-10');
+          expectChildOf('2014-11', '2014');
+          expectChildOf('2014-11-05', '2014-11');
+
         });
       });
 
@@ -219,5 +235,10 @@ define([
         });
       });
     });
+
+    function expectChildOf(idChild, idParent){
+      expect(model.find(idChild).parent().get('id')).toBe(idParent);
+    }
+
   });
 });
