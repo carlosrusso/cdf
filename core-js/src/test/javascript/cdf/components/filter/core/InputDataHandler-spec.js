@@ -157,7 +157,7 @@ define([
           expectChildOf('first', 'root');
         });
 
-        xit("when data represents an unordered nested group", function() {
+        it("when data represents an unordered nested group", function() {
           var data = [
             ["item1", "item1", "second", "Second"],
             ["item2", "item2", "second", "Second"],

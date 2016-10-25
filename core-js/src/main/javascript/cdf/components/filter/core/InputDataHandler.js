@@ -122,19 +122,16 @@ define([
       var hierarchy;
       if (_.isArray(indexes)) {
         hierarchy = indexes;
-      } else {
-        hierarchy = [];
-
-        if (_.has(indexes, 'parentId')) {
-          var parentId = indexes.parentId;
-          var isValidParent = _.isNumber(parentId) && parentId >= 0 && parentId < rows[0].length;
-          if (isValidParent)
-            hierarchy.push({
-              id: indexes.parentId,
-              label: indexes.parentLabel
-            });
+      } else if (_.has(indexes, 'parentId')) {
+        var parentId = indexes.parentId;
+        var isValidParent = _.isNumber(parentId) && parentId >= 0 && parentId < rows[0].length;
+        if (isValidParent) {
+          hierarchy = [ indexes ];
+        } else {
+          hierarchy = [_.omit(indexes, ['parentId', 'parentLabel'])];
         }
-        hierarchy.push(_.omit(indexes, ['parentId', 'parentLabel']));
+      } else {
+        hierarchy = [_.omit(indexes, ['parentId', 'parentLabel'])];
       }
 
       if(options.valueAsId === true){
@@ -143,7 +140,12 @@ define([
         });
       }
 
-      var data = nestedGroupBy(rows, hierarchy, options, pageData);
+      var data;
+      if(_.has(hierarchy[0], 'parentId')){
+        data = flatGroupBy(rows, hierarchy[0], options, pageData)
+      } else {
+        data = nestedGroupBy(rows, hierarchy, options, pageData);
+      }
 
       // Attempt to insert nodes at pre-existent parents
       _.each(data, function(node) {
@@ -226,5 +228,86 @@ define([
     });
   }
 
+
+  function flatGroupBy(rows, indexes, options, pageData) {
+
+    var groupedRows = _.groupBy(rows, function(row) {
+      return row[indexes.parentId];
+    });
+
+    // Generate a flat map of groups
+    var root = {};
+    var createGroup = groupGenerator(indexes, options, pageData);
+    
+    _.each(groupedRows, function(rows, groupId) {
+      root[groupId] = createGroup(rows, groupId);
+    });
+
+    // Assemble the tree by placing the groups in the correct place
+    _.each(_.values(root), function(group) {
+      _.each(group.nodes, function(node) {
+        var id = node.id;
+        if (_.has(root, id)) {
+          var label = node.label;
+          _.extend(node, root[id]);
+          node.label = label; // restore the group's label
+          delete root[id];
+        }
+      });
+    });
+
+    return _.values(root);
+
+    function itemGenerator(idx, options, pageData) {
+      if (!_.isObject(pageData)) {
+        pageData = {};
+      }
+      return function createItems(rows) {
+        return _.map(rows, function(row) {
+
+          var N = row.length;
+          var itemData = _.reduce(idx, function(memo, k, field) {
+
+            var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
+            if (isValidIdx && !_.contains(['parentId', 'parentLabel'], field)) {
+              var normalizer = options.normalizers[field];
+              memo[field] = normalizer ? normalizer(row[k]) : row[k];
+            }
+
+            return memo;
+          }, {});
+
+          return $.extend(true, itemData, pageData);
+        });
+      };
+    }
+
+    function groupGenerator(idx, options, pageData) {
+      return function createGroup(rows, group) {
+
+        var label = _.chain(rows)
+          .pluck(idx.parentLabel)
+          .filter(_.isString)
+          .compact()
+          .first()
+          .value();
+
+        var id;
+        if (options.valueAsId === true) {
+          id = label;
+        } else {
+          id = group != null ? rows[0][idx.parentId] : undefined;
+          label = label || id;
+        }
+
+        return {
+          id: id,
+          label: label,
+          nodes: itemGenerator(idx, options, pageData)(rows)
+        };
+      };
+    }
+
+  }
 
 });
