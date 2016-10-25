@@ -58,35 +58,7 @@ define([
       }
       this.applyBindings();
     },
-    /**
-     * @summary Removes event handlers and closes the view from this node and its children.
-     * @description Removes event handlers and closes the view from this node and its children.
-     *              Also removes the children.
-     *
-     * @return {Object} Returns this node to allow chaining.
-     */
-    close: function() {
-      this.empty();
-      this.get('view').close();
-      //this.get('controller').stopListening().off();
-      this.stopListening();
-      this.off();
-      this.clear();
-      return this;
-    },
-    /**
-     * @summary Closes and removes the children from the tree.
-     * @description Closes and removes the children from the tree.
-     */
-    empty: function() {
-      if (!this.children()) {
-        return;
-      }
-      this.children().each(function(child) {
-        child.close();
-      });
-      this.base();
-    },
+
 
     applyBindings: function() {
       var view = this.get('view');
@@ -155,7 +127,7 @@ define([
 
 
       this.on('post:child:selection request:child:sort', debounce(this.renderSortedChildren));
-      this.on('post:child:add', debounce(this.onUpdateChildren));
+      this.on('post:child:add', debounce(this.onAddChildren));
       return this;
     },
 
@@ -178,15 +150,19 @@ define([
          * This node is either a Group or an Item
          * Use the parent's configuration
          */
-        var that = this.parent();
-        configuration = that.get('configuration');
-        target = that.get('view').createChildNode();
-        var childConfig = configuration[that.get('view').type].view.childConfig;
+        var parent = this.parent();
+        var parentView = parent.get('view');
+
+        configuration = parent.get('configuration');
+        var childConfig = configuration[parentView.type].view.childConfig;
+
         if (newModel.children()) {
           viewConfig = configuration[childConfig.withChildrenPrototype];
         } else {
           viewConfig = configuration[childConfig.withoutChildrenPrototype];
         }
+
+        target = parentView.createChildNode();
       }
 
       /*
@@ -230,14 +206,14 @@ define([
      * Pagination
      */
     getNextPage: function(model, event) {
-      var listOfChildren = this._listChildren(this.children());
+      var listOfChildren = listNodes(this.children());
       var sortedChildren = this.sortChildren(listOfChildren);
       var penultimateChild = _.last(sortedChildren, 2)[0];
       this.previousPosition = penultimateChild != null ? penultimateChild.target : undefined;
       return this.getPage('next', model, event);
     },
     getPreviousPage: function(model, event) {
-      var listOfChildren = this._listChildren(this.children());
+      var listOfChildren = listNodes(this.children());
       var sortedChildren = this.sortChildren(listOfChildren);
       var secondChild = _.first(sortedChildren, 2)[1];
       this.previousPosition = secondChild != null ? secondChild.target : undefined;
@@ -297,6 +273,10 @@ define([
 
       this.renderSortedChildren();
       this.get('view').updateScrollBar();
+    },
+
+    onAddChildren: function() {
+      this.updateChildren();
     },
 
     /**
@@ -368,52 +348,32 @@ define([
       }
       return orderedChildren.value();
     },
+
     /**
      * Renders an array of sorted children.
      *
      * return {object} The current manager instance.
      */
     renderSortedChildren: function() {
-      var $nursery;
       if (!this.children()) {
-        return this;
+        return;
       }
 
-      $nursery = this.get('view').getChildrenContainer();
+      var $nursery = this.get('view').getChildrenContainer();
       $nursery.hide();
-      this._appendChildren(this.sortChildren(this._detachChildren()));
+      this._appendChildren(this.sortChildren(detachNodes(this.children())));
       $nursery.show();
-
-      return this;
-    },
-
-    _listChildren: function() {
-      var children = this.children();
-      if (children) {
-        return children.map(function(child) {
-          return {
-            item: child,
-            target: child.get('view').$el
-          };
-        });
-      }
-      return null;
-    },
-
-    _detachChildren: function() {
-      var list = this._listChildren();
-      list.forEach(function(obj) {
-        obj.target.detach();
-      });
-      return list;
     },
 
     _appendChildren: function(children) {
-      if (children != null) {
-        _.each(children, function(child) {
-            return this.get('view').appendChildNode(child.target);
-          }, this);
+      if (!children) {
+        return;
       }
+
+      var view = this.get('view');
+      _.each(children, function(child) {
+        view.appendChildNode(child.target);
+      });
     },
 
     /**
@@ -422,12 +382,68 @@ define([
      * @param {string} text The new search pattern.
      */
     onFilterChange: function(model, text) {
-      this.get('configuration').selectionStrategy.strategy.filter(model, text);
+      var configuration = this.get('configuration');
+      configuration.selectionStrategy.strategy.filter(model, text);
 
-      if (this.get('configuration').search.serverSide === true) {
+      if (configuration.search.serverSide === true) {
         this.requestPage(0, text)
       }
+    },
+
+    /**
+     * @summary Removes event handlers and closes the view from this node and its children.
+     * @description Removes event handlers and closes the view from this node and its children.
+     *              Also removes the children.
+     *
+     * @return {Object} Returns this node to allow chaining.
+     */
+    close: function() {
+      this.empty();
+      this.get('view').close();
+      this.stopListening();
+      this.off();
+      this.clear();
+      return this;
+    },
+    /**
+     * @summary Closes and removes the children from the tree.
+     * @description Closes and removes the children from the tree.
+     */
+    empty: function() {
+      if (!this.children()) {
+        return;
+      }
+      this.children().each(function(child) {
+        child.close();
+      });
+      this.base();
     }
 
   });
+
+
+  function detachNodes(children) {
+    if (!children) {
+      return null;
+    }
+    var nodes = listNodes(children);
+    _.each(nodes, function(child) {
+      child.target.detach();
+    });
+    return nodes;
+  }
+
+  function listNodes(children) {
+    if (!children) {
+      return null;
+    }
+    return children.map(function(child) {
+      var $el = child.get('view').$el;
+      return {
+        item: child,
+        target: $el
+      };
+    });
+  }
+
 });
