@@ -1,3 +1,16 @@
+/*!
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
+ *
+ * This software was developed by Webdetails and is provided under the terms
+ * of the Mozilla Public License, Version 2.0, or any later version. You may not use
+ * this file except in compliance with the license. If you need a copy of the license,
+ * please go to http://mozilla.org/MPL/2.0/. The Initial Developer is Webdetails.
+ *
+ * Software distributed under the Mozilla Public License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. Please refer to
+ * the license for the specific language governing your rights and limitations.
+ */
+
 define([
   'amd!cdf/lib/underscore',
   'cdf/components/filter/core/Model',
@@ -108,14 +121,14 @@ define([
         strategy.changeSelection(model.find("#group 0")); // 2 items
 
         expect(model.getSelectedItems()).toEqual(["#group 0"]);
-        expect(model.countSelectedItems()).toBe(2);
+        expect(model.get('numberOfSelectedItems')).toBe(2);
       });
 
       it('does not allow a selecting a group if that leads to having more items selected than the limit', function() {
         strategy.changeSelection(model.find("#group 2")); // 6 items
 
         expect(model.getSelectedItems()).toEqual([]);
-        expect(model.countSelectedItems()).toBe(0);
+        expect(model.get('numberOfSelectedItems')).toBe(0);
       });
 
     });

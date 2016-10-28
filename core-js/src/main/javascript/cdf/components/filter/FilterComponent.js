@@ -84,13 +84,8 @@ define([
     outputDataHandler: void 0,
 
     update: function() {
-      this.getData().then(
-        _.bind(function(data) {
-          var configuration = this.initialize();
-          return this.onDataReady(data, configuration);
-        }, this),
-        _.bind(this.onDataFail, this)
-      );
+      this.close(); // Clean up any leftover from previous executions
+      return this.getData(this.onDataReady, this.onDataFail);
     },
 
 
@@ -105,8 +100,6 @@ define([
      * @return {object} Returns a configuration object.
      */
     initialize: function() {
-      this.close();
-
       /*
        * Transform user-defined CDF settings to our own configuration object
        */
@@ -117,6 +110,8 @@ define([
        */
 
       this.model = new Model(configuration.input.root, {
+        // TODO: deprecate configuration.component.search.matcher in favour of configuration.input.root.matcher
+        // and remove this option
         matcher: configuration.component.search.matcher
       });
 
@@ -139,9 +134,11 @@ define([
     close: function() {
       if (this.manager != null) {
         this.manager.empty();
+        this.manager = null;
       }
       if (this.model != null) {
         this.model.stopListening().off();
+        this.model = null;
       }
       return this.stopListening();
     },
@@ -152,40 +149,44 @@ define([
      *
      * @return {Promise} Returns promise that is fulfilled when the data is available.
      */
-    getData: function() {
+    getData: function(onSuccess, onFailure) {
       var deferred = new $.Deferred();
       if (!_.isEmpty(this.dashboard.detectQueryType(this.queryDefinition))) {
 
         var queryOptions = {
           ajax: {
             error: function() {
-              deferred.reject({});
+              var reason = onFailure.call(this, data);
+              deferred.reject(reason);
               return Logger.log("Query failed", 'debug');
             }
           }
         };
         var onQueryData = _.bind(function(data) {
           deferred.resolve(data);
+          onSuccess.call(this, data);
         }, this);
         this.triggerQuery(this.queryDefinition, _.bind(onQueryData, this), queryOptions);
 
       } else {
 
-        if (!_.isEmpty(this.componentInput.inputParameter)) {
+        if (_.isEmpty(this.componentInput.inputParameter)) {
+
+          var onStaticData = function() {
+            var data = this.componentInput.valuesArray;
+            onSuccess.call(this, data);
+            deferred.resolve(data);
+          };
+          this.synchronous(_.bind(onStaticData, this), null);
+        } else {
 
           var onParamData = function() {
             var data = this.dashboard.getParameterValue(this.componentInput.inputParameter);
+            onSuccess.call(this, data);
             deferred.resolve(data);
           };
           this.synchronous(_.bind(onParamData, this), null);
 
-        } else {
-
-          var onStaticData = function() {
-            var data = this.componentInput.valuesArray;
-            deferred.resolve(data);
-          };
-          this.synchronous(_.bind(onStaticData, this), null);
         }
       }
       return deferred.promise();
@@ -195,7 +196,10 @@ define([
      * Launch an event equivalent to postExecution
      */
 
-    onDataReady: function(data, configuration) {
+    onDataReady: function(data) {
+
+      var configuration = this.initialize();
+
       this.inputDataHandler.updateModel(data);
       if (this.parameter) {
         var currentSelection = this.dashboard.getParameterValue(this.parameter);
@@ -214,12 +218,8 @@ define([
 
     onDataFail: function(reason) {
       Logger.log('Component failed to retrieve data: ' + reason, 'debug');
-      this.trigger('getData:failed');
+      this.trigger('getData:failed', reason);
       return this;
-    }
-  }, {
-    help: function() {
-      return "Filter component";
     }
   });
 

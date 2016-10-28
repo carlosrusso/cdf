@@ -152,9 +152,10 @@ define([
     onFilterChange: function (event) {
       var text = $(event.target).val();
       if(event.keyCode === 27){
-        text = '';
+        this.onFilterClear();
+      } else {
+        this.trigger('filter', this.model, text);
       }
-      this.trigger('filter', this.model, text);
     },
 
     onFilterClear: function () {

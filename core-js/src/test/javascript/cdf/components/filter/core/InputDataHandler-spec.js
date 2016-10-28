@@ -1,25 +1,23 @@
 /*!
- * Copyright 2016 Pentaho Corporation. All rights reserved.
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This software was developed by Webdetails and is provided under the terms
+ * of the Mozilla Public License, Version 2.0, or any later version. You may not use
+ * this file except in compliance with the license. If you need a copy of the license,
+ * please go to http://mozilla.org/MPL/2.0/. The Initial Developer is Webdetails.
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Software distributed under the Mozilla Public License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. Please refer to
+ * the license for the specific language governing your rights and limitations.
  */
+
 define([
   "cdf/components/filter/core/InputDataHandler",
   "cdf/components/filter/core/Model"
 ], function(InputDataHandler, Model) {
   "use strict";
 
-  fdescribe("InputDataHandler", function() {
+  describe("cdf/components/filter/core/InputDataHandler", function() {
     var model;
     var inputDataHandler;
     var query;
@@ -231,6 +229,83 @@ define([
           expect(model.find('one')).toBe(null);
           expect(model.find('One')).not.toBe(null);
           expect(model.find('One').get('label')).toBe('One');
+
+        });
+      });
+
+      it("imports a generic attribute 'foo' into the model", function() {
+        // label, value, isSelected fall into this
+        var data = [
+          ['[0]',  {}],
+          ['[1]',  {}],
+          ['[11]', {}]
+        ];
+
+        var inputDataHandler = new InputDataHandler({
+          options: {
+            normalizers:{
+              foo: function(x){ return x;}
+            },
+            query: query,
+            indexes: {
+              id: 0,
+              foo: 1
+            }
+          },
+          model: model
+        });
+
+        inputDataHandler.updateModel(data);
+
+        data.forEach( function(row){
+          var value = model.find(row[0]).get('foo');
+          expect(value).toBe(row[1]);
+        });
+      });
+
+      it("prevents malicious html injection by sanitizing values and labels", function() {
+
+        inputDataHandler = new InputDataHandler({
+          options: {
+            query: query,
+            indexes: {
+              id: 0,
+              label: 1,
+              value: 2
+            }
+          },
+          model: model
+        });
+
+        var data = [
+          [ "One", "Label", "Value"],
+          [ "Two", "<script>Label</script>", "<script>Value</script>"],
+          [ "Three", "<b>Label</b>", "<b>Value</b>"],
+          [ "Four", "<b><script>Label</script></b>", "<b><script>Value</script></b>"],
+          [ "Five", "<b><iframe>Label</iframe></b>", "<b><iframe>Value</iframe></b>"],
+          [ "Six", "<b><html>Label</html></b>", "<b><html>Value</html></b>"],
+          [ "Seven", "<b><body>Label</body></b>", "<b><body>Value</body></b>"],
+          [ "Eight", "<b><iframe>Label</iframe></b><b><script>Label</script></b>", "<b><html>Value</html></b>"]
+        ];
+
+        inputDataHandler.updateModel(data);
+
+        var expectations = [
+          ["Label", "Value"],
+          ["", ""],
+          ["<b>Label</b>", "<b>Value</b>"],
+          ["<b></b>", "<b></b>"],
+          ["<b></b>", "<b></b>"],
+          ["<b>Label</b>", "<b>Value</b>"],
+          ["<b>Label</b>", "<b>Value</b>"],
+          ["<b></b><b></b>", "<b>Value</b>"]
+        ];
+
+        data.forEach(function(row, i) {
+          var m = model.find(row[0]);
+
+          expect(m.get("label")).toBe(expectations[i][0]);
+          expect(m.get("value")).toBe(expectations[i][1]);
 
         });
       });

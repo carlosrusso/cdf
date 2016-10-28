@@ -1,5 +1,5 @@
 /*!
- * Copyright 2002 - 2015 Webdetails, a Pentaho company. All rights reserved.
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -20,288 +20,282 @@ define([
 
   /**
    * ## The Filter Component
+   *
+   * Although the major parts of the component have its unit tests,
+   * the following tests focus on their integration as a whole.
    */
   describe("The Filter Component #", function() {
 
     var dashboard, filterComponent, $htmlObject, testFilterDefaults;
+    var testData ;
 
-    testFilterDefaults = {
-      type: "FilterComponent",
-      name: "render_singleFilter_simple",
-      priority: 5,
-      executeAtStart: true,
-      htmlObject: "sampleObjectFilter",
-      listeners: [],
-      parameter: "singleSelectionParam_simple",
-      parameters: [],
-      options: function() {
-        return {};
-      },
-      queryDefinition: {},
-      componentInput: {
-        valueAsId: false,
-        valuesArray: [[1.1, "One", "Ones"], [1.2, "Two", "Ones"], [1.3, "Three", "Ones"], [1.4, "Four", "Ones"],
-          [2.1, "One", "Twos"], [2.2, "Two", "Twos"], [2.3, "Three", "Twos"], [2.4, "Four", "Twos"]]
-      },
-      componentOutput: {
-        outputFormat: "lowestID"
-      },
-      componentDefinition: {
-        title: "Single Selection: multiSelect = False",
-        alwaysExpanded: false,
-        multiselect: false,
-        showIcons: true,
-        showButtonOnlyThis: true,
-        useOverlay: false,
-        showFilter: true
-      },
-      addIns: {
-        postUpdate: [],
-        renderRootHeader: [],
-        renderRootSelection: [],
-        renderRootFooter: [],
-        renderGroupSelection: [],
-        renderItemSelection: [],
-        sortGroup: [],
-        sortItem: []
-      }
-    };
-    var getNewFilterComponent = function(options) {
-      return new FilterComponent($.extend(true, {}, testFilterDefaults, options));
-    };
+    function getNewFilterComponent(options) {
+      return new FilterComponent($.extend(true, testFilterDefaults, options));
+    }
 
-    filterComponent = getNewFilterComponent();
-
-    $htmlObject = $('<div />').attr('id', filterComponent.htmlObject);
-
-    var getNewDashboard = function() {
+    function getNewDashboard() {
       var dashboard = new Dashboard();
       dashboard.init();
-      dashboard.addParameter("singleSelectionParam_simple", _.bind(function() {
-        return [];
-      }, {"dashboard": dashboard}));
+      dashboard.addParameter("selectionParam", []);
       return dashboard;
-    };
+    }
 
-    var testMetadata = [
-      {
-        colIndex: 0,
-        colType: "Numeric",
-        colName: "group"
-      },
-      {
-        colIndex: 1,
-        colType: "String",
-        colName: "type"
-      },
-      {
-        colIndex: 2,
-        colType: "String",
-        colName: "empty"
-      }
-    ];
 
-    var getCdaJson = function(resultset, metadata) {
+    function getCdaJson(resultset, metadata) {
       return {
         resultset: resultset,
         metadata: metadata,
         status: "success"
       };
-    };
+    }
+
+    function uponInit(component, dashboard, callback, done) {
+      dashboard.addComponent(component);
+
+      component.once('cdf:postExecution', function(){
+        callback(component);
+      });
+      component.once('getData:failed', function(){
+        done && done.fail(); // ensure test fails before jasmine's timeout
+      });
+
+      dashboard.update(component);
+    }
 
     beforeEach(function() {
-      dashboard = getNewDashboard();
-      $('body').append($htmlObject);
-    });
 
-    afterEach(function() {
-      $htmlObject.remove();
-    });
+      testData = {
+        resultset: [
+          [1.1, "One", "Ones"],
+          [1.2, "Two", "Ones"],
+          [1.3, "Three", "Ones"],
+          [1.4, "Four", "Ones"],
+          //
+          [2.1, "One", "Twos"],
+          [2.2, "Two", "Twos"],
+          [2.3, "Three", "Twos"],
+          [2.4, "Four", "Twos"]
+        ],
+        metadata: [
+          {
+            colIndex: 0,
+            colType: "Numeric",
+            colName: "group"
+          },
+          {
+            colIndex: 1,
+            colType: "String",
+            colName: "type"
+          },
+          {
+            colIndex: 2,
+            colType: "String",
+            colName: "empty"
+          }
+        ]
+      };
 
-    /**
-     * ## The Filter Component # allows a dashboard to execute update
-     */
-    it("allows a dashboard to execute update", function(done) {
-      dashboard.addComponent(filterComponent);
-
-      spyOn(filterComponent, 'update').and.callThrough();
-
-      // listen to cdf:postExecution event
-      filterComponent.once("cdf:postExecution", function() {
-        expect(filterComponent.update).toHaveBeenCalled();
-        done();
-      });
-
-      dashboard.update(filterComponent);
-    });
-
-    it('disables the "only" button when using the SingleSelect strategy', function() {
-      expect(filterComponent.getConfiguration().component.selectionStrategy.type).toEqual("SingleSelect");
-      expect(filterComponent.getConfiguration().component.Root.options.showButtonOnlyThis).toEqual(false);
-      expect(filterComponent.getConfiguration().component.Group.options.showButtonOnlyThis).toEqual(false);
-      expect(filterComponent.getConfiguration().component.Item.options.showButtonOnlyThis).toEqual(false);
-    });
-
-    it("sanitizes values and labels", function(done) {
-      dashboard.addDataSource("sanitizationDatasource", {
-        dataAccessId: "testId",
-        path: "/test.cda"
-      });
-      var modelData = [["One", "Label", "Value"],
-        ["Two", "<script>Label</script>", "<script>Value</script>"],
-        ["Three", "<b>Label</b>", "<b>Value</b>"],
-        ["Four", "<b><script>Label</script></b>", "<b><script>Value</script></b>"],
-        ["Five", "<b><iframe>Label</iframe></b>", "<b><iframe>Value</iframe></b>"],
-        ["Six", "<b><html>Label</html></b>", "<b><html>Value</html></b>"],
-        ["Seven", "<b><body>Label</body></b>", "<b><body>Value</body></b>"],
-        ["Eight", "<b><iframe>Label</iframe></b><b><script>Label</script></b>", "<b><html>Value</html></b>"]
-		];
-      spyOn($, 'ajax').and.callFake(function(params) {
-        params.success(getCdaJson(modelData,
-          [{colIndex: 0, colType: "String", colName: "id"},
-            {colIndex: 1, colType: "String", colName: "name"},
-            {colIndex: 2, colType: "String", colName: "value"}]));
-      });
-
-      var filterComponent = getNewFilterComponent({
-        queryDefinition: {dataSource: "sanitizationDatasource"},
-        componentInput: {valuesArray: []},
+      testFilterDefaults = {
+        type: "FilterComponent",
+        name: "render_filter",
+        priority: 5,
+        executeAtStart: true,
+        htmlObject: "sampleObjectFilter",
+        listeners: [],
+        parameter: "selectionParam",
+        parameters: [],
         options: function() {
-          return {
-            component: {
-              search: {serverSide: true},
-              Root: {view: {scrollbar: {engine: "fake_engine"}}}
-            },
-            input: {
-              indexes: {
-                id: 0,
-                label: 1,
-                value: 2
-              }
-            }
-          };
-        }
-      });
-
-      dashboard.addComponent(filterComponent);
-
-      var evaluateExpectations = function(models, override) {
-        for (var i = 0; i < models.length; i++) {
-          var data = override[i] || modelData[i];
-          expect(models[i].get("label")).toEqual(data[1]);
-          expect(models[i].get("value")).toEqual(data[2]);
+          return {};
+        },
+        queryDefinition: {},
+        componentInput: {
+          valueAsId: false,
+          valuesArray: testData.resultset
+        },
+        componentOutput: {
+          outputFormat: "lowestID"
+        },
+        componentDefinition: {
+          title: "FilterComponent-spec",
+          alwaysExpanded: false,
+          multiselect: false,
+          showIcons: true,
+          showButtonOnlyThis: true,
+          useOverlay: false,
+          showFilter: true
+        },
+        addIns: {
+          postUpdate: [],
+          renderRootHeader: [],
+          renderRootSelection: [],
+          renderRootFooter: [],
+          renderGroupSelection: [],
+          renderItemSelection: [],
+          sortGroup: [],
+          sortItem: []
         }
       };
 
-      filterComponent.once("getData:success", function() {
-        filterComponent.dashboard.parameter;
-        var childrenModels = filterComponent.model.children().models;
-        var override = [];
-        override[1] = ["", "", ""];
-        override[3] = ["", "<b></b>", "<b></b>"];
-        override[4] = ["", "<b></b>", "<b></b>"];
-        override[5] = ["", "<b>Label</b>", "<b>Value</b>"];
-        override[6] = ["", "<b>Label</b>", "<b>Value</b>"];
-        override[7] = ["", "<b></b><b></b>", "<b>Value</b>"];
-        evaluateExpectations(childrenModels, override);
-        done();
-      });
+      filterComponent = getNewFilterComponent();
 
-      dashboard.update(filterComponent);
+      $htmlObject = $('<div />').attr('id', filterComponent.htmlObject);
+      dashboard = getNewDashboard();
+      $('body').empty().append($htmlObject);
+
     });
 
-    describe("InputDataHandler #", function() {
-      it("sets the root as the group of a simple list in valuesArray", function(done) {
-        dashboard.addComponent(filterComponent);
-        filterComponent.once("cdf:postExecution", function() {
-          expect(filterComponent.model.find(1.1).parent()).toBe(filterComponent.model);
+    describe("lifecycle", function() {
+
+      it("allows a dashboard to execute update", function(done) {
+
+        spyOn(filterComponent, 'update').and.callThrough();
+
+        uponInit(filterComponent, dashboard, function() {
+          expect(filterComponent.update).toHaveBeenCalled();
           done();
         });
-        dashboard.update(filterComponent);
+
       });
 
-      describe("when using an augmented valuesArray", function() {
-        it("sets the correct group parent", function(done) {
-          var filterComponent = getNewFilterComponent({
-            componentInput: {
-              valuesArray: [
-                ['[0]', 'Zero', '[<10]', 'Below 10'],
-                ['[1]', 'One', '[<10]', 'Below 10'],
-                ['[11]', 'Eleven', '[>10]', 'Above 10']
-              ]
-            },
-            options: function() {
-              return {
-                component: {
-                  Root: {view: {scrollbar: {engine: "fake_engine"}}}
-                },
-                input: {
-                  indexes: {
-                    id: 0,
-                    label: 1,
-                    parentId: 2,
-                    parentLabel: 3,
-                    value: 4
-                  }
-                }
-              };
-            }
-          });
-          dashboard.addComponent(filterComponent);
-          filterComponent.once("cdf:postExecution", function() {
-            expect(filterComponent.model.find('[0]').parent().get('id')).toBe('[<10]');
-            expect(filterComponent.model.find('[1]').parent().get('id')).toBe('[<10]');
-            expect(filterComponent.model.find('[11]').parent().get('id')).toBe('[>10]');
-            expect(filterComponent.model.find('[<10]').parent().isRoot()).toBe(true);
-            expect(filterComponent.model.find('[>10]').parent().isRoot()).toBe(true);
-            done();
-          });
-          dashboard.update(filterComponent);
+      it('follows the lifecycle preExecution ->  "getData:success" -> postExecution ' +
+        'when the component is fed via valuesArray', function(done) {
+
+        var sequence = [];
+
+        filterComponent.preExecution = function() {
+          sequence.push('preExecution');
+        };
+
+        filterComponent.postFetch = function() {
+          sequence.push('postFetch');
+        };
+
+        filterComponent.on('getData:success', function() {
+          sequence.push('getData:success')
         });
-        it("processes the 'value'", function(done) {
-          var filterComponent = getNewFilterComponent({
-            componentInput: {
-              valuesArray: [
-                ['[0]', 'Zero', '[<10]', 'Below 10', 0],
-                ['[1]', 'One', '[<10]', 'Below 10', 1],
-                ['[11]', 'Eleven', '[>10]', 'Above 10', 11]
-              ]
-            },
-            options: function() {
-              return {
-                component: {
-                  Root: {view: {scrollbar: {engine: "fake_engine"}}}
-                },
-                input: {
-                  indexes: {
-                    id: 0,
-                    label: 1,
-                    parentId: 2,
-                    parentLabel: 3,
-                    value: 4
-                  }
-                }
-              };
-            }
-          });
-          dashboard.addComponent(filterComponent);
-          filterComponent.once("cdf:postExecution", function() {
-            expect(filterComponent.model.find('[0]').get('value')).toBe(0);
-            expect(filterComponent.model.find('[1]').get('value')).toBe(1);
-            expect(filterComponent.model.find('[11]').get('value')).toBe(11);
-            done();
-          });
-          dashboard.update(filterComponent);
+
+        filterComponent.postExecution = function() {
+          expect(sequence).toEqual(['preExecution', 'getData:success']);
+          done();
+        };
+
+        uponInit(filterComponent, dashboard, function() {});
+
+      });
+
+      it('follows the lifecycle preExecution ->  postFetch -> "getData:success" -> postExecution ' +
+        'when the component is fed via a datasource', function(done) {
+
+        spyOn($, 'ajax').and.callFake(function(params) {
+          params.success(testData);
         });
+
+        dashboard.addDataSource("someDatasource", {
+          dataAccessId: "testId",
+          path: "/test.cda"
+        });
+
+        filterComponent.queryDefinition = {
+          dataSource: "someDatasource"
+        };
+
+        var sequence = [];
+
+        filterComponent.preExecution = function() {
+          sequence.push('preExecution');
+        };
+
+        filterComponent.postFetch = function() {
+          sequence.push('postFetch');
+        };
+
+        filterComponent.on('getData:success', function() {
+          sequence.push('getData:success')
+        });
+
+        filterComponent.postExecution = function() {
+          expect(sequence).toEqual(['preExecution', 'postFetch', 'getData:success']);
+          done();
+        };
+
+        uponInit(filterComponent, dashboard, function() {});
+
       });
     });
 
-    describe("Manager controller #", function() {
+    describe("configuration defaults", function() {
+
+      describe('when "multiselect" is true', function() {
+        var configuration;
+
+        beforeEach(function() {
+          filterComponent.dashboard = dashboard;
+          filterComponent.componentDefinition.multiselect = true;
+          configuration = filterComponent.getConfiguration();
+        });
+
+        it('the default strategy is "LimitedSelect"', function() {
+          expect(configuration.component.selectionStrategy.type).toBe("LimitedSelect");
+        });
+
+        it('the "only" button should honor the option showButtonOnlyThis', function() {
+          _.each([true, false], function(v) {
+            filterComponent.componentDefinition.showButtonOnlyThis = v;
+
+            configuration = filterComponent.getConfiguration();
+
+            _.each(["Root", "Group", "Item"], function(viewType) {
+              expect(configuration.component[viewType].options.showButtonOnlyThis).toBe(v);
+            });
+          });
+        });
+
+        it("the apply/cancel buttons should be enabled ", function() {
+          expect(configuration.component.Root.options.showCommitButtons).toBe(true);
+        });
+
+      });
+
+      describe('when "multiselect" is false', function() {
+        var configuration;
+
+        beforeEach(function() {
+          filterComponent.dashboard = dashboard;
+          filterComponent.componentDefinition.multiselect = false;
+          configuration = filterComponent.getConfiguration();
+        });
+
+        it('the default strategy is "SingleSelect"', function() {
+          expect(configuration.component.selectionStrategy.type).toBe("SingleSelect");
+        });
+
+        it('the "only" button should be disabled', function() {
+          _.each([true, false], function(v) {
+            filterComponent.componentDefinition.showButtonOnlyThis = v;
+
+            configuration = filterComponent.getConfiguration();
+
+            _.each(["Root", "Group", "Item"], function(viewType) {
+              expect(configuration.component[viewType].options.showButtonOnlyThis).toBe(false);
+            });
+          });
+        });
+
+        it("the apply/cancel buttons should be disabled", function() {
+          expect(configuration.component.Root.options.showCommitButtons).toBe(false);
+        });
+
+      })
+
+    });
+
+    fdescribe("interaction", function() {
       it("sorts children according to an array of custom sorting functions", function(done) {
         dashboard.addDataSource("selectionDataSource", {
           dataAccessId: "testId",
           path: "/test.cda"
         });
+
         var filterComponent = getNewFilterComponent({
           queryDefinition: {dataSource: "selectionDataSource"},
           componentInput: {valuesArray: []},
@@ -317,79 +311,88 @@ define([
                 }
               },
               component: {
-                search: {serverSide: true},
-                Root: {view: {scrollbar: {engine: "fake_engine"}}}
+                Item: {
+                  options: {
+                    showValue: true
+                  }
+                },
+                search: {serverSide: true}
               }
             };
           },
           addIns: {sortItem: ["sortByValue", "sortByLabel"]}
         });
-        dashboard.addComponent(filterComponent);
+
 
         filterComponent.setAddInOptions('sortItem', 'sortByValue', {ascending: true});
         filterComponent.setAddInOptions('sortItem', 'sortByLabel', {ascending: true});
 
         spyOn($, 'ajax').and.callFake(function(params) {
           params.success(getCdaJson(
-            [["One", "label1", null, null, 60],
+            [
+              ["One", "label1", null, null, 60],
               ["Two", "label2", null, null, 7],
-              ["Three", "label1", null, null, 7]],
+              ["Three", "label1", null, null, 7]
+            ],
             [{colIndex: 0, colType: "String", colName: "id"},
               {colIndex: 1, colType: "String", colName: "name"},
               {colIndex: 4, colType: "Numeric", colName: "value"}]));
         });
 
-        filterComponent.once("getData:success", function() {
-          spyOn(filterComponent.manager, "renderSortedChildren").and.callFake(function() {
-            var orderedChildren = this._detachChildren();
-            expect(orderedChildren[0].item.get('model').get('value')).toEqual(60);
-            expect(orderedChildren[0].item.get('model').get('label')).toEqual("label1");
-            expect(orderedChildren[1].item.get('model').get('value')).toEqual(7);
-            expect(orderedChildren[1].item.get('model').get('label')).toEqual("label2");
-            expect(orderedChildren[2].item.get('model').get('value')).toEqual(7);
-            expect(orderedChildren[2].item.get('model').get('label')).toEqual("label1");
-            orderedChildren = this.sortChildren(orderedChildren);
-            expect(orderedChildren[0].item.get('model').get('value')).toEqual(7);
-            expect(orderedChildren[0].item.get('model').get('label')).toEqual("label1");
-            expect(orderedChildren[1].item.get('model').get('value')).toEqual(7);
-            expect(orderedChildren[1].item.get('model').get('label')).toEqual("label2");
-            expect(orderedChildren[2].item.get('model').get('value')).toEqual(60);
-            expect(orderedChildren[2].item.get('model').get('label')).toEqual("label1");
-            done();
+        uponInit(filterComponent, dashboard, function(filterComponent) {
+          var view = filterComponent.manager.get('view');
+
+          var labels = [];
+          view.$('.filter-item-label').each(function(idx, el){
+            labels.push($(el).html());
           });
+
+          var values = [];
+          view.$('.filter-item-value').each(function(idx, el){
+            values.push($(el).html());
+          });
+
+          expect(labels).toEqual(["label1", "label2", "label1"]);
+          expect(values).toEqual(["7", "7", "60"]);
+
+          done();
         });
 
-        dashboard.update(filterComponent);
       });
-    });
 
-    describe("RootCtrl controller #", function() {
+      xit("clears search input if no match is found and component is being expanded", function(done) {
+        uponInit(filterComponent, dashboard,  function() {
 
-      /**
-       * ## The Filter Component # RootCtrl controller # clears search input if no match is found and component is being expanded
-       */
-      it("clears search input if no match is found and component is being expanded", function(done) {
-        dashboard.addComponent(filterComponent);
-
-        filterComponent.once("cdf:postExecution", function() {
           // simulate a search term that doesn't have any matches
-          expect(filterComponent.model.get('isCollapsed')).toEqual(true);
+          filterComponent.placeholder('.filter-filter-input:eq(0)')
+            .val("fake_search_text")
+            .trigger("change");
 
-          filterComponent.placeholder('.filter-filter-input:eq(0)').val("fake_search_text");
+          expect(filterComponent.model.get('isCollapsed')).toBe(true);
 
-          filterComponent.model.on('change:searchPattern', function(){
-            // We are relying on the fact that this listener is handled last
-            var text = filterComponent.placeholder('.filter-filter-input:eq(0)').val();
+          // filterComponent.model.on('change:isCollapsed', function(){
+          //   // We are relying on the fact that this listener is handled last
+          //   setTimeout(function() {
+          //   var text = filterComponent.placeholder('.filter-filter-input:eq(0)').val();
+          //   expect(text).toBe("");
+          //   done();
+          //   }, 0);
+          // });
+
+          var view = filterComponent.manager.get("view");
+          spyOn(view, 'updateFilter').and.callFake(function(){
+            var text = this.model.root().get('searchPattern');
             expect(text).toBe("");
             done();
           });
 
-          var strategy = filterComponent.manager.get("configuration").component.selectionStrategy.strategy;
+          var strategy = filterComponent.manager.get("configuration").selectionStrategy.strategy;
           strategy.toggleCollapse(filterComponent.model);
+          //expect(filterComponent.model.get('searchPattern')).toBe("");
 
+          expect(view.updateFilter).toHaveBeenCalled();
         });
 
-        dashboard.update(filterComponent);
       });
 
       it("updates the count of selected items when triggering onOnlyThis", function(done) {
@@ -401,40 +404,34 @@ define([
           }
         });
 
-        dashboard.addComponent(filterComponent);
-
-        filterComponent.once("cdf:postExecution", function() {
-          var strategy = filterComponent.manager.get('configuration').component.selectionStrategy.strategy;
+        uponInit(filterComponent, dashboard, function() {
           var rootModel = filterComponent.model;
-          expect(rootModel.get('numberOfSelectedItems')).toEqual(0);
+          expect(rootModel.get('numberOfSelectedItems')).toBe(0);
 
-          var childrenModels = rootModel.children().models;
+          var view = filterComponent.manager.get('view');
+          var items = view.$('.filter-item-body');
           for (var i = 0; i < selectionLimit; i++) {
-            strategy.changeSelection(childrenModels[i]);
+            items[i].click();
           }
           expect(rootModel.get('numberOfSelectedItems')).toBe(selectionLimit);
 
-          strategy.selectOnlyThis(childrenModels[0]);
-          expect(rootModel.get('numberOfSelectedItems')).toEqual(1);
-          done();
-        });
+          view.$('.filter-item-only-this:eq(0)').click();
+          expect(rootModel.get('numberOfSelectedItems')).toBe(1);
 
-        dashboard.update(filterComponent);
+          done();
+        }, done);
+
       });
     });
 
     describe("Get Page Mechanism #", function() {
 
-      var defaultCdaJson = getCdaJson([[1.1, "Default1", ""], [1.2, "Default2", ""]], testMetadata);
-      var onFilterChangeCdaJson = getCdaJson([[1.3, "ServerSide", ""], [1.4, "PageSize", ""]], testMetadata);
-      var testPageSize = 10;
-
       it("works with searchServerSide = true and pageSize > 0", function(done) {
-        runGetPageMechanismTest(true, testPageSize, done);
+        runGetPageMechanismTest(true, 10, done);
       });
 
       it("works with searchServerSide = false and pageSize > 0", function(done) {
-        runGetPageMechanismTest(false, testPageSize, done);
+        runGetPageMechanismTest(false, 10, done);
       });
 
       it("works with searchServerSide = true and pageSize = 0", function(done) {
@@ -458,18 +455,15 @@ define([
 
         makeAjaxSpy();
 
-        dashboard.addComponent(testFilterComponent);
-
-        testFilterComponent.once("getData:success", function() {
+        uponInit(testFilterComponent, dashboard, function() {
           if (serverSide) {
             addEvaluateExpectationsAfterGetPage(testFilterComponent, serverSide, pageSize, done);
           } else {
             addEvaluateExpectationsInsteadOfFilter(testFilterComponent, serverSide, pageSize, done);
           }
-          testFilterComponent.manager.onFilterChange('unique_search_pattern_' + (count++));
+          testFilterComponent.manager.get('view').trigger('filter', testFilterComponent.model, 'unique_search_pattern_' + (count++));
         });
 
-        dashboard.update(testFilterComponent);
       }
 
       function getTestFilterComponent(serverSide, pageSize) {
@@ -485,15 +479,15 @@ define([
           options: function() {
             return {
               component: {
-                search: {
-                  serverSide: serverSide
-                },
-                Root: {
-                  view: { // preventing the scrollbar from being rendered, due to its implementation, it will sometimes break this test
+                Root:{
+                  view: {
                     scrollbar: {
-                      engine: "fake_engine"
+                      engine: 'fake' //disable scrollbar
                     }
                   }
+                },
+                search: {
+                  serverSide: serverSide
                 }
               }
             };
@@ -505,10 +499,16 @@ define([
         var firstCallToServer = true;
         spyOn($, 'ajax').and.callFake(function(params) {
           if (firstCallToServer) {
-            params.success(defaultCdaJson);
+            params.success(getCdaJson([
+              [1.1, "Default1"],
+              [1.2, "Default2"]
+            ], testData.metadata));
             firstCallToServer = false;
           } else {
-            params.success(onFilterChangeCdaJson);
+            params.success(getCdaJson([
+              [1.3, "ServerSide"],
+              [1.4, "PageSize"]
+            ], testData.metadata));
           }
         });
       }
@@ -536,44 +536,46 @@ define([
       }
 
       function evaluateExpectations(serverSide, pageSize, models, configuration) {
-        expect(models[0].get("label")).toEqual("Default1");
-        expect(models[1].get("label")).toEqual("Default2");
-        expect(configuration.search.serverSide).toEqual(serverSide);
-        expect(configuration.pagination.pageSize).toEqual((pageSize > 0) ? pageSize : Infinity);
+        expect(models[0].get("label")).toBe("Default1");
+        expect(models[1].get("label")).toBe("Default2");
+        expect(configuration.search.serverSide).toBe(serverSide);
+        expect(configuration.pagination.pageSize).toBe((pageSize > 0) ? pageSize : Infinity);
         if (serverSide) {
-          expect(models.length).toEqual(4);
+          expect(models.length).toBe(4);
           expect(models[2].get("label")).toEqual("ServerSide");
           expect(models[3].get("label")).toEqual("PageSize");
         } else {
-          expect(models.length).toEqual(2);
+          expect(models.length).toBe(2);
         }
       }
     });
 
     describe("Search Mechanism #", function() {
-      var _Defer = _.defer;
 
-      beforeEach(function() {
-        // the component will use defer before the actual filtering
-        // bypassing this behaviour when testing
-        _.defer = function(func) {
-          func.apply(null, []);
-        };
-      });
-
-      afterEach(function() {
-        _.defer = _Defer;
-      });
-
-      var getTestSearchFilterComponent = function(matcher) {
+      function getFilterWithMatcher(matcher) {
         return getNewFilterComponent({
           componentInput: {
-            valuesArray: [[0, "Twenty-One", "Twenties"], [1, "Twenty-Two", "Twenties"], [2, "Twenty-Three", "Twenties"], [3, "Twenty-Four", "Twenties"],
-              [4, "Fourty-Seven", "Fourties"], [5, "Fourty-Nine", "Fourties"], [6, "Fourty-Five", "Fourties"], [7, "Fourty-One", "Fourties"]]
+            valuesArray: [
+              [0, "Twenty-One", "Twenties"],
+              [1, "Twenty-Two", "Twenties"],
+              [2, "Twenty-Three", "Twenties"],
+              [3, "Twenty-Four", "Twenties"],
+              [4, "Fourty-Seven", "Fourties"],
+              [5, "Fourty-Nine", "Fourties"],
+              [6, "Fourty-Five", "Fourties"],
+              [7, "Fourty-One", "Fourties"]
+            ]
           },
           options: function() {
             return {
               component: {
+                input: {
+                  indexes: {
+                    id: 0,
+                    label: 1,
+                    parentId: 2
+                  }
+                },
                 search: {
                   matcher: matcher
                 }
@@ -583,81 +585,146 @@ define([
         });
       };
 
-      var testSearch = function(filterComponent, searchTerm, matchCount) {
-        filterComponent.manager.onFilterChange(searchTerm);
-        expect(_.filter(filterComponent.model.children().models, function(model) {
-          return model.getVisibility();
-        }).length).toEqual(matchCount);
-      };
+      describe("sets the visibility based on matches", function() {
+        var searchTerms;
 
-      var searchTerms = ["ve", "went", "our", "twenty-one"];
-
-      it("works correctly", function(done) {
-        var filterComponent = getTestSearchFilterComponent();
-        dashboard.addComponent(filterComponent);
-        var searchCount = [2, 4, 5, 1];
-        filterComponent.once('getData:success', function() {
-          // need to make sure the manager is already fully initialized
-          for (var i = 0; i < searchTerms.length; i++) {
-            testSearch(filterComponent, searchTerms[i], searchCount[i]);
-          }
-          done();
+        beforeEach(function() {
+          searchTerms = ["ve", "went", "our", "twenty-one"];
         });
-        dashboard.update(filterComponent);
+
+        it("hides the items that don't match", function(done) {
+          var filterComponent = getFilterWithMatcher();
+          uponInit(filterComponent, dashboard, function() {
+            var searchCount = [2, 4, 5, 1];
+            // need to make sure the component is already fully initialized
+            for (var i = 0; i < searchTerms.length; i++) {
+              expectMatchCount(filterComponent, searchTerms[i], searchCount[i]);
+            }
+            done();
+          });
+
+        });
+
+        it("allows defining a specific matcher", function(done) {
+          // overriding the matcher, will filter the opposite of what is typed:
+          // ex. "a"  yields ["b", "c"] in ["a", "b", "c"]
+          var filterComponent = getFilterWithMatcher(function(m, fragment) {
+            return m.get('label').toLowerCase().indexOf(fragment.toLowerCase()) == -1;
+          });
+          uponInit(filterComponent, dashboard, function() {
+            var searchCount = [6, 4, 3, 7];
+            for (var i = 0; i < searchTerms.length; i++) {
+              expectMatchCount(filterComponent, searchTerms[i], searchCount[i]);
+            }
+            done();
+          });
+
+        });
+
+        function expectMatchCount(filterComponent, searchTerm, expectedMatchCount) {
+          filterComponent.model.filterBy(searchTerm);
+
+          var n = filterComponent.model.leafs()
+            .filter(function(model) {
+              return model.getVisibility();
+            })
+            .size()
+            .value();
+
+          expect(n).toBe(expectedMatchCount);
+        }
       });
 
-      it("allows defining a specific matcher", function(done) {
-        // overriding the matcher, will filter the opposite of what is typed:
-        // ex. "a"  yields ["b", "c"] in ["a", "b", "c"]
-        var filterComponent = getTestSearchFilterComponent(function(entry, fragment) {
-          return entry.toLowerCase().indexOf(fragment.toLowerCase()) == -1;
-        });
-        dashboard.addComponent(filterComponent);
-        var searchCount = [6, 4, 3, 7];
-        filterComponent.once('getData:success', function() {
-          for (var i = 0; i < searchTerms.length; i++) {
-            testSearch(filterComponent, searchTerms[i], searchCount[i]);
-          }
-          done();
-        });
-        dashboard.update(filterComponent);
-      });
+      describe("respects user input", function() {
 
-      it("respects user input", function(done) {
-        var filterComponent = getTestSearchFilterComponent();
-        dashboard.addComponent(filterComponent);
-        filterComponent.once('getData:success', function() {
+        var expectSearchFor = function(searchText) {
+          return function(done) {
+            var filterComponent = getFilterWithMatcher();
 
-          spyOn(filterComponent.manager.get('model').root(), 'set').and.callThrough();
+            uponInit(filterComponent, dashboard, function() {
+              var rootModel = filterComponent.model;
+              var view = filterComponent.manager.get('view');
 
-          var userInput;
-          filterComponent.manager.filter = function(text) {
-            expect(this.get('model').root().set).toHaveBeenCalledWith('searchPattern', userInput);
-            expect(this.get('model').root().get('searchPattern')).toEqual(userInput);
-            expect(text).toEqual(userInput);
+              spyOn(rootModel, 'filterBy').and.callThrough();
+              rootModel.on('change:searchPattern', function() {
+                expect(rootModel.filterBy).toHaveBeenCalledWith(searchText);
+                done();
+              });
+
+              view.$('input.filter-filter-input:eq(0)')
+                .val(searchText)
+                .trigger( "change" );
+            });
           };
+        };
 
-          userInput = "lowercase";
-          filterComponent.manager.onFilterChange(userInput);
-          userInput = "UPPERCASE";
-          filterComponent.manager.onFilterChange(userInput);
-          userInput = "mixedCase";
-          filterComponent.manager.onFilterChange(userInput);
-          userInput = "special \"#$%& Characters";
-          filterComponent.manager.onFilterChange(userInput);
-
-          done();
-        });
-        dashboard.update(filterComponent);
+        it("in lowercase", expectSearchFor("lowercase"));
+        it("in uppercase", expectSearchFor("UPPERCASE"));
+        it("in mixed case", expectSearchFor("mixedCase"));
+        it("numeric", expectSearchFor("12345"));
+        it("with non-alphanumeric characters", expectSearchFor("special \"#$%& Characters"));
       });
+
     });
 
     describe("Selection Mechanism #", function() {
 
       var rootId = "TestRoot";
 
-      var getSelectionFilterComponent = function(options) {
-        return getNewFilterComponent($.extend(true, {
+      var expectSelection = function(filterComponent, dashboard, options, done) {
+        options = options || {};
+
+
+        var witness = {};
+        dashboard.on('selectionParam:fireChange', function(obj) {
+          var selection = obj.value;
+          expect(selection.length).toBe(
+            (options.root || options.single) ? 1 : witness._items.length
+          );
+
+          if (options.root) {
+            expect(selection).toEqual([rootId]);
+          }
+          done();
+        });
+
+        uponInit(filterComponent, dashboard, function(filterComponent) {
+
+          var view = filterComponent.manager.get('view');
+
+          var items = view.$('.filter-item-body');
+          witness._items = items;
+          items.click(); //click all items (leafs)
+
+          if (options.single !== true) {
+            view.$('.filter-btn-apply')
+              .removeAttr('disabled') // force the click event to be triggered
+              .click();
+          }
+        });
+
+      };
+
+      it("works as intended in single select mode", function(done) {
+        var filterComponent = getNewFilterComponent({
+          componentDefinition: {
+            multiselect: false
+          }
+        });
+        expectSelection(filterComponent, dashboard, {single: true}, done);
+      });
+
+      it("works as intended in multi select mode", function(done) {
+        var filterComponent = getNewFilterComponent({
+          componentDefinition: {
+            multiselect: true
+          }
+        });
+        expectSelection(filterComponent, dashboard, {}, done);
+      });
+
+      it("works with valuesArray and a root.id defined", function(done) {
+        var filterComponent = getNewFilterComponent({
           componentDefinition: {
             multiselect: true
           },
@@ -673,100 +740,46 @@ define([
               }
             };
           }
-        }, options));
-      };
-
-      var getSelectedModels = function(models) {
-        return _.filter(models, function(model) {
-          return model.getSelection();
-        });
-      };
-
-      var expectSelections = function(controller, models, single) {
-        for (var i = 0; i < models.length; i++) {
-          controller.onSelection(models[i]);
-          expect(getSelectedModels(models).length).toEqual(single ? 1 : (i + 1));
-        }
-      };
-
-      var doSelectionTest = function(filterComponent, dashboard, options) {
-        options = options || {};
-        var childrenModels = filterComponent.model.children().models;
-        expectSelections(filterComponent.manager.get("controller"), childrenModels, options.single);
-        filterComponent.model.updateSelectedItems();
-        expect(dashboard.getParameterValue(filterComponent.parameter).length).toEqual(
-          (options.root || options.single) ? 1 : childrenModels.length);
-        if (options.root) {
-          expect(dashboard.getParameterValue(filterComponent.parameter)).toEqual([rootId]);
-        }
-      };
-
-      it("works as intended in single select mode", function(done) {
-        var filterComponent = getNewFilterComponent();
-        dashboard.addComponent(filterComponent);
-
-        filterComponent.once('getData:success', function() {
-          doSelectionTest(filterComponent, dashboard, {single: true});
-          done();
         });
 
-        dashboard.update(filterComponent);
-      });
-
-      it("works as intended in multi select mode", function(done) {
-        var filterComponent = getNewFilterComponent({
-          componentDefinition: {
-            multiselect: true
-          }
-        });
-        dashboard.addComponent(filterComponent);
-
-        filterComponent.once('getData:success', function() {
-          doSelectionTest(filterComponent, dashboard);
-          done();
-        });
-
-        dashboard.update(filterComponent);
-      });
-
-      it("works with valuesArray and a root.id defined", function(done) {
-        var filterComponent = getSelectionFilterComponent();
-        dashboard.addComponent(filterComponent);
-
-        filterComponent.once('getData:success', function() {
-          doSelectionTest(filterComponent, dashboard, {root: true});
-          done();
-        });
-
-        dashboard.update(filterComponent);
+        expectSelection(filterComponent, dashboard, {root: true}, done);
       });
 
       it("works with dataSource and a root.id defined", function(done) {
-        var filterComponent = getSelectionFilterComponent({
+        var filterComponent = getNewFilterComponent({
+          componentDefinition: {
+            multiselect: true
+          },
           queryDefinition: {
             dataSource: "selectionDataSource"
           },
           componentInput: {
             valuesArray: []
+          },
+          componentOutput: {
+            outputFormat: "highestID"
+          },
+          options: function() {
+            return {
+              input: {
+                root: {
+                  id: rootId
+                }
+              }
+            };
           }
         });
 
-        dashboard.addComponent(filterComponent);
         dashboard.addDataSource("selectionDataSource", {
           dataAccessId: "testId",
           path: "/test.cda"
         });
 
         spyOn($, 'ajax').and.callFake(function(params) {
-          params.success(getCdaJson(testFilterDefaults.componentInput.valuesArray, testMetadata));
+          params.success(testData);
         });
 
-        filterComponent.once('getData:success', function() {
-          doSelectionTest(filterComponent, dashboard, {root: true});
-          done();
-        });
-
-        dashboard.update(filterComponent);
+        expectSelection(filterComponent, dashboard, {root: true}, done);
       });
     });
 

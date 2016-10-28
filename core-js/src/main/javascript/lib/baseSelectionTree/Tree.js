@@ -25,8 +25,8 @@ define([
      *
      *
      *     function combineCallback(array, model){
-         *         return _.all(array);
-         *     }
+     *         return _.all(array);
+     *     }
      *
      * @method walkDown
      * @param {function} itemCallback
@@ -69,17 +69,17 @@ define([
      * @return {Underscore} Returns a wrapped Underscore object using _.chain()
      */
     flatten: function() {
-      return _.chain([this])
-        .map(function(m) {
-          return m._walkDown(_.identity, _.identity);
+      return _.chain(
+        this._walkDown(_.identity, function(children, parent) {
+          children.push(parent);
+          return children;
         })
-        .flatten()
-        .union([this]);
+      ).flatten()
     },
 
     /**
      * Returns just the leaf-level descendants of a given node
-     * @returns {Underscore} Returns a wrapped Underscore object using _.chain()
+     * @return {Underscore} Returns a wrapped Underscore object using _.chain()
      */
     leafs: function(){
       return this.flatten().filter(function(m){

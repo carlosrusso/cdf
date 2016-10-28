@@ -61,12 +61,12 @@ define([
     },
 
     /**
-     * Bets the isBusy parameter value.
+     * Gets the isBusy parameter value.
      *
      * @return {boolean} The `isBusy` parameter value.
      */
     isBusy: function() {
-      return this.root().get('isBusy');
+      return this.root().get('isBusy') || false;
     }
   }, {
     SelectionStates: BaseSelectionTree.SelectionStates

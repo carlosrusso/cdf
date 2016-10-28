@@ -28,53 +28,7 @@ define([
     ALL: true
   };
 
-  var BaseSelectionTree = Tree.extend({
-
-    /**
-     * Default values for each node in the selection tree.
-     *
-     * @type     {Object}
-     * @property {string}  id                    - The default id.
-     * @property {string}  label                 - The default label.
-     * @property {boolean} isSelected            - The default selection state.
-     * @property {boolean} isVisible             - The default visibility state.
-     * @property {number}  numberOfSelectedItems - The default number of selected items.
-     * @property {number}  numberOfItems         - The default number of items.
-     */
-    defaults: {
-      id: void 0,
-      label: '',
-      isSelected: SelectionStates.NONE,
-      isVisible: true,
-      numberOfSelectedItems: 0,
-      numberOfItems: 0
-    },
-
-    initialize: function(attributes, options) {
-      this.base.apply(this, arguments);
-
-      if (this.isRoot()) {
-        // Initializations specific to root node
-        this.set('matcher', getOwn(options, 'matcher') || defaultMatcher);
-        this.on('change:searchPattern', function(model, value){
-          model.filterBy(value);
-        });
-      }
-    },
-
-
-    load: function(data) {
-      this.add(data);
-
-      this._inheritSelectionFromParent();
-
-      // If there's a searchPattern defined, adjust the visibility of this node
-      var root = this.root();
-      var filterText = root.get('searchPattern');
-      this._filter(filterText, root.get('matcher'));
-
-      this.update();
-    },
+  var ISelection = {
 
     /**
      * Gets the selection state of the model.
@@ -124,18 +78,6 @@ define([
       this.trigger('selection', this);
     },
 
-    setVisibility: function(newState) {
-      var isVisible = this.get('isVisible');
-      if (isVisible !== newState) {
-        return this.set('isVisible', newState);
-      }
-      //Logger.debug("No need to set visibility of ", this.get('id'), " to ", newState);
-    },
-
-    getVisibility: function() {
-      return this.get('isVisible');
-    },
-
     getSelectedItems: function(field) {
       var isSelected = this.getSelection();
 
@@ -178,6 +120,7 @@ define([
       function getSelection(m) {
         return m.getSelection();
       }
+
       function setSelection(model, state) {
         if (model.children()) {
           model.setSelection(state);
@@ -188,16 +131,6 @@ define([
       return this.walkDown(getSelection, reduceSelectionStates, setSelection);
     },
 
-    _updateCount: function(property, countItemCallback) {
-      function setPropertyIfParent(model, count) {
-        if (model.children()) {
-          model.set(property, count);
-        }
-        return count;
-      }
-
-      return this.walkDown(countItemCallback, sum, setPropertyIfParent);
-    },
 
     hasChanged: function(attr) {
       if (attr && attr !== 'isSelected') {
@@ -237,24 +170,24 @@ define([
       // Let's see if any of the new items are selected.
       // We must take into account if the parent item was previously stored as ALL or NONE
       function item(m) {
-        if(m.getSelection() === SelectionStates.ALL) { // is selected
+        if (m.getSelection() === SelectionStates.ALL) { // is selected
           var isNotNew = _.contains(previousSelection.all, m);
-          if(isNotNew){
+          if (isNotNew) {
             return false;
           }
           // is new
           var parent = m.parent();
-          if(parent){
+          if (parent) {
             // if the parent was previously unselected, and the child is selected, then
             // something has changed
             return _.contains(previousSelection.none, parent);
-              //&& parent.getSelection() !== SelectionStates.ALL;
+            //&& parent.getSelection() !== SelectionStates.ALL;
           }
         }
         return false;
       }
 
-      function aggregate(results, m){
+      function aggregate(results, m) {
         return _.some(results);
       }
 
@@ -315,7 +248,6 @@ define([
 
     restoreSelectedItems: function() {
       var _selectedItems = this.root().get('selectedItems');
-
       if (_selectedItems == null) {
         return;
       }
@@ -324,12 +256,9 @@ define([
       root.setSelection(SelectionStates.NONE);
 
       var selectedItems = _selectedItems.value();
-      _.each(selectedItems.none, function(m) {
-        return m.setSelection(SelectionStates.NONE);
-      });
 
       _.each(selectedItems.all, function(m) {
-        return m.setSelection(SelectionStates.ALL);
+        m.setSelection(SelectionStates.ALL);
       });
 
       this.update();
@@ -353,6 +282,30 @@ define([
       return selectionSnapshot;
     },
 
+    _inheritSelectionFromParent: function() {
+      var parent = this.parent();
+      if (!parent) {
+        return;
+      }
+      var parentSelectionState = parent.getSelection();
+      if (parentSelectionState !== SelectionStates.SOME) {
+        this.setSelection(parentSelectionState);
+      }
+    }
+  };
+
+  var IVisibility = {
+    getVisibility: function() {
+      return this.get('isVisible');
+    },
+
+    setVisibility: function(newState) {
+      var isVisible = this.get('isVisible');
+      if (isVisible !== newState) {
+        return this.set('isVisible', newState);
+      }
+      //Logger.debug("No need to set visibility of ", this.get('id'), " to ", newState);
+    },
 
     filterBy: function(text) {
       var root = this.root();
@@ -389,17 +342,68 @@ define([
 
       this.setVisibility(isMatch);
       return isMatch;
+    }
+  };
+
+  var Mixins = _.extend({}, ISelection, IVisibility);
+
+  var BaseSelectionTree = Tree.extend(Mixins).extend({
+
+    /**
+     * Default values for each node in the selection tree.
+     *
+     * @type     {Object}
+     * @property {string}  id                    - The default id.
+     * @property {string}  label                 - The default label.
+     * @property {boolean} isSelected            - The default selection state.
+     * @property {boolean} isVisible             - The default visibility state.
+     * @property {number}  numberOfSelectedItems - The default number of selected items.
+     * @property {number}  numberOfItems         - The default number of items.
+     */
+    defaults: {
+      id: void 0,
+      label: '',
+      isSelected: SelectionStates.NONE,
+      isVisible: true,
+      numberOfSelectedItems: 0,
+      numberOfItems: 0
     },
 
-    _inheritSelectionFromParent: function() {
-      var parent = this.parent();
-      if(!parent){
-        return;
+    initialize: function(attributes, options) {
+      this.base.apply(this, arguments);
+
+      if (this.isRoot()) {
+        // Initializations specific to root node
+        this.set('matcher', getOwn(options, 'matcher') || defaultMatcher);
+        this.on('change:searchPattern', function(model, value) {
+          model.filterBy(value);
+        });
       }
-      var parentSelectionState = parent.getSelection();
-      if (parentSelectionState !== SelectionStates.SOME) {
-        this.setSelection(parentSelectionState);
+    },
+
+
+    load: function(data) {
+      this.add(data);
+
+      this._inheritSelectionFromParent();
+
+      // If there's a searchPattern defined, adjust the visibility of this node
+      var root = this.root();
+      var filterText = root.get('searchPattern');
+      this._filter(filterText, root.get('matcher'));
+
+      this.update();
+    },
+
+    _updateCount: function(property, countItemCallback) {
+      function setPropertyIfParent(model, count) {
+        if (model.children()) {
+          model.set(property, count);
+        }
+        return count;
       }
+
+      return this.walkDown(countItemCallback, sum, setPropertyIfParent);
     }
 
   }, {

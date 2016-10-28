@@ -142,7 +142,7 @@ define([
 
       var data;
       if(_.has(hierarchy[0], 'parentId')){
-        data = flatGroupBy(rows, hierarchy[0], options, pageData)
+        data = unflatten(rows, hierarchy[0], options, pageData)
       } else {
         data = nestedGroupBy(rows, hierarchy, options, pageData);
       }
@@ -208,8 +208,8 @@ define([
 
         var isValidIdx = _.isNumber(k) && k >= 0 && k < N;
         if (isValidIdx) {
-          var normalizer = options.normalizers[field];
-          memo[field] = normalizer ? normalizer(row[k]) : row[k];
+          var normalizer = options.normalizers[field] || sanitizeInput;
+          memo[field] = normalizer(row[k]);
         }
 
         return memo;
@@ -221,7 +221,7 @@ define([
       if (nodes) {
         node.nodes = nodes;
       }
-      node.label = node.label || node.id;
+      //node.label = node.label || node.id;
       _.extend(node, payload);
 
       return node;
@@ -229,21 +229,21 @@ define([
   }
 
 
-  function flatGroupBy(rows, indexes, options, pageData) {
+  function unflatten(rows, indexes, options, pageData) {
 
-    var groupedRows = _.groupBy(rows, function(row) {
+    var groups = _.groupBy(rows, function(row) {
       return row[indexes.parentId];
     });
 
     // Generate a flat map of groups
-    var root = {};
     var createGroup = groupGenerator(indexes, options, pageData);
-    
-    _.each(groupedRows, function(rows, groupId) {
+
+    var root = {};
+    _.each(groups, function(rows, groupId) {
       root[groupId] = createGroup(rows, groupId);
     });
 
-    // Assemble the tree by placing the groups in the correct place
+    // Assemble the tree by moving the groups into the correct place
     _.each(_.values(root), function(group) {
       _.each(group.nodes, function(node) {
         var id = node.id;
@@ -258,31 +258,11 @@ define([
 
     return _.values(root);
 
-    function itemGenerator(idx, options, pageData) {
+    function groupGenerator(idx, options, pageData) {
       if (!_.isObject(pageData)) {
         pageData = {};
       }
-      return function createItems(rows) {
-        return _.map(rows, function(row) {
 
-          var N = row.length;
-          var itemData = _.reduce(idx, function(memo, k, field) {
-
-            var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
-            if (isValidIdx && !_.contains(['parentId', 'parentLabel'], field)) {
-              var normalizer = options.normalizers[field];
-              memo[field] = normalizer ? normalizer(row[k]) : row[k];
-            }
-
-            return memo;
-          }, {});
-
-          return $.extend(true, itemData, pageData);
-        });
-      };
-    }
-
-    function groupGenerator(idx, options, pageData) {
       return function createGroup(rows, group) {
 
         var label = _.chain(rows)
@@ -297,15 +277,40 @@ define([
           id = label;
         } else {
           id = group != null ? rows[0][idx.parentId] : undefined;
-          label = label || id;
+          //label = label || id;
         }
 
         return {
           id: id,
-          label: label,
+          label: options.normalizers['label'](label),
           nodes: itemGenerator(idx, options, pageData)(rows)
         };
       };
+    }
+
+
+    function itemGenerator(idx, options, pageData) {
+
+      return function createItems(rows) {
+        return _.map(rows, function(row) {
+          var itemData = getFields(row, idx, options);
+          return $.extend(true, itemData, pageData);
+        });
+      };
+    }
+
+    function getFields(row, idx, options) {
+      var N = row.length;
+      return _.reduce(_.omit(idx, ['parentId', 'parentLabel']), function(memo, k, field) {
+
+        var isValidIdx = _.isFinite(k) && k >= 0 && k < N;
+        if (isValidIdx) {
+          var normalizer = options.normalizers[field];
+          memo[field] = normalizer ? normalizer(row[k]) : row[k];
+        }
+
+        return memo;
+      }, {});
     }
 
   }
