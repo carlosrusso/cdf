@@ -33,7 +33,7 @@ define([
     /**
      * Updates the selection state of the filter.
      *
-     * @param {Array.<any>} value List of strings containing the IDs of the selected items,
+     * @param {Array.<any>} value List of strings containing the identifiers of the selected items,
      *                      which will be written to the parameter.
      */
     setValue: function (value) {

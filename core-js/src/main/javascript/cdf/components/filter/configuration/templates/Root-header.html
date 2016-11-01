@@ -4,18 +4,18 @@
               {{#isSelected}} all-selected{{/isSelected}}
               {{^isSelected}} none-selected{{/isSelected}}
             {{/isPartiallySelected}}">
-  <div class="filter-root-header-label"
-       {{#showTooltip}}
+    <div class="filter-root-header-label"
+         {{#showTooltip}}
          title="{{#header}}{{{header}}}{{/header}}{{^header}}{{#selectedItems}} {{{.}}}{{/selectedItems}}{{/header}}"
-       {{/showTooltip}}>
+         {{/showTooltip}}>
 
     {{#isDisabled}}
-      {{strings.isDisabled}}
+    {{strings.isDisabled}}
     {{/isDisabled}}
 
     {{^isDisabled}}
-      {{#showSelectedItems}}
-        <span class="filter-root-info-selected-items">
+    {{#showSelectedItems}}
+    <span class="filter-root-info-selected-items">
           {{^noItemsSelected}}
             <span class="filter-root-info-selected-item"
                   title="{{#selectedItems}}{{{.}}} {{/selectedItems}}">
@@ -28,27 +28,27 @@
             <span class="filter-root-info-selected-item">{{strings.noItems}}</span>
           {{/noItemsSelected}}
         </span>
-      {{/showSelectedItems}}
+    {{/showSelectedItems}}
 
-      {{#showNumberOfSelectedItems}}
-        {{#allItemsSelected}}
-          <span class="filter-root-info-selected-items">{{strings.allItems}}</span>
-        {{/allItemsSelected}}
-        {{#noItemsSelected}}
-          <span class="filter-root-info-selected-items">{{strings.noItems}}</span>
-        {{/noItemsSelected}}
-        {{^allItemsSelected}}
-          {{^noItemsSelected}}
-            <span class="filter-root-info-selected-items">
+    {{#showNumberOfSelectedItems}}
+    {{#allItemsSelected}}
+    <span class="filter-root-info-selected-items">{{strings.allItems}}</span>
+    {{/allItemsSelected}}
+    {{#noItemsSelected}}
+    <span class="filter-root-info-selected-items">{{strings.noItems}}</span>
+    {{/noItemsSelected}}
+    {{^allItemsSelected}}
+    {{^noItemsSelected}}
+    <span class="filter-root-info-selected-items">
               <span class="filter-root-info-number-selected-items">{{numberOfSelectedItems}}</span>
               <span class="filter-root-info-number-items">&nbsp;/&nbsp;{{numberOfItems}}</span>
             </span>
-          {{/noItemsSelected}}
-        {{/allItemsSelected}}
-      {{/showNumberOfSelectedItems}}
+    {{/noItemsSelected}}
+    {{/allItemsSelected}}
+    {{/showNumberOfSelectedItems}}
 
     {{/isDisabled}}
-  </div>
+</div>
 <div class="filter-collapse-icon
             {{^isDisabled}}
             {{^alwaysExpanded}}
@@ -57,5 +57,5 @@
             {{/alwaysExpanded}}
             {{#alwaysExpanded}} always-expanded{{/alwaysExpanded}}
             {{/isDisabled}}
-            {{#isDisabled}} disabled{{/isDisabled}}" />
+            {{#isDisabled}} disabled{{/isDisabled}}"/>
 </div>

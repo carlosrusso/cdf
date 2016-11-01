@@ -31,6 +31,7 @@ define([
     defaults: {
       group: 'filters'
     },
+
     implementation: function($tgt, st, options) {
       st.model.on('change:isCollapsed', function(model, newState) {
         if (newState === false) {
@@ -48,8 +49,7 @@ define([
       });
     }
   };
+
   Dashboard.registerGlobalAddIn('FilterComponent', 'postUpdate', new AddIn(accordion));
-
   return accordion;
-
 });
