@@ -21,13 +21,6 @@ define([
 
   return Tree.extend(/** @lends cdf.components.filter.controllers.Manager# */{
     /**
-     * Class identifier.
-     *
-     * @const
-     * @type {string}
-     */
-    ID: 'BaseFilter.Controllers.Manager',
-    /**
      * Default values.
      *
      * @type {{model: object, view: object, configuration: object}}
@@ -47,95 +40,26 @@ define([
      * @param {object} node
      * @ignore
      */
-    constructor: function(node) {
+
+    constructor: function() {
       this.base.apply(this, arguments);
       this.updateChildren();
     },
 
-    initialize: function(options) {
+    // region initialization
+    initialize: function() {
       if (this.get('view') == null) {
-        this.addView(this.get('model'));
+        this.createView(this.get('model'));
       }
       this.applyBindings();
     },
 
-
-    applyBindings: function() {
-      var view = this.get('view');
-      var configuration = this.get('configuration');
-      var strategy = this.get('configuration').selectionStrategy.strategy;
-
-      var throttleScroll = function(f) {
-        var delayInMilliseconds = configuration.pagination.throttleTimeMilliseconds;
-        return _.throttle(f, delayInMilliseconds || 0, {
-          trailing: false
-        });
-      };
-      var debounce = function(f) {
-        var delayInMilliseconds = view.config.view.throttleTimeMilliseconds;
-        return _.debounce(f, delayInMilliseconds);
-      };
-
-      /*
-       * Declare bindings to model and view.
-       */
-
-      var bindings = {
-        model: {
-          'add': this.onNewData,
-          'selection': this.sortSiblings
-        },
-        view: {
-          'filter': debounce(this.onFilterChange),
-          'scroll:reached:top': throttleScroll(this.getPreviousPage),
-          'scroll:reached:bottom': throttleScroll(this.getNextPage)
-        }
-      };
-
-      //map viewEvent: strategyMethod
-      var viewBindings = {
-        'toggleCollapse': 'toggleCollapse',
-        'mouseover': 'mouseOver',
-        'mouseout': 'mouseOut',
-        'selected': 'changeSelection',
-        'control:apply': 'applySelection',
-        'control:cancel': 'cancelSelection',
-        'control:only-this': 'selectOnlyThis',
-        'click:outside': 'clickOutside'
-      };
-
-
-      _.each(viewBindings, function(strategyMethod, viewEvent) {
-        this.listenTo(view, viewEvent, function() {
-          strategy[strategyMethod].apply(strategy, arguments);
-        });
-      }, this);
-
-
-      /*
-       * Create listeners
-       */
-
-      _.each(bindings, function(bindingList, object) {
-        var obj = this.get(object);
-        _.each(bindingList, function(method, event) {
-
-          this.listenTo(obj, event, _.bind(method, this));
-
-        }, this);
-      }, this);
-
-
-      this.on('post:child:selection request:child:sort', debounce(this.renderSortedChildren));
-      this.on('post:child:add', debounce(this.onAddChildren));
-      return this;
-    },
-
-    addView: function(newModel) {
-
-      /*
-       * Decide which view to use
-       */
+    /**
+     * Creates a new view for this node
+     *
+     * @param {cdf.components.filter.core.Model} newModel
+     */
+    createView: function(newModel) {
       var viewConfig, configuration, target;
       if (this.isRoot()) {
         /*
@@ -151,18 +75,17 @@ define([
          * Use the parent's configuration
          */
         var parent = this.parent();
-        var parentView = parent.get('view');
-
         configuration = parent.get('configuration');
-        var childConfig = configuration[parentView.type].view.childConfig;
 
+        var parentView = parent.get('view');
+        target = parentView.createChildNode();
+
+        var childConfig = configuration[parentView.type].view.childConfig;
         if (newModel.children()) {
           viewConfig = configuration[childConfig.withChildrenPrototype];
         } else {
           viewConfig = configuration[childConfig.withoutChildrenPrototype];
         }
-
-        target = parentView.createChildNode();
       }
 
       /*
@@ -177,76 +100,141 @@ define([
       this.set('view', newView);
     },
 
-    onNewData: function(item, collection, obj) {
-      var itemParent = this.where({
-        model: item.parent()
-      });
-      if (itemParent.length === 1) {
-        itemParent[0].trigger("post:child:add");
-      }
-    },
-
-    onUpdateChildren: function() {
-      this.updateChildren();
-      this.restoreScroll();
-      this.trigger('post:update:children', this);
-    },
-
-    restoreScroll: function() {
+    applyBindings: function() {
       var view = this.get('view');
-      if (view._scrollBar != null) {
-        if (this.previousPosition != null) {
-          view.setScrollBarAt(this.previousPosition);
-          this.previousPosition = null;
+      var configuration = this.get('configuration');
+
+      var throttleScroll = function(f) {
+        var delayInMilliseconds = configuration.pagination.throttleTimeMilliseconds;
+        return _.throttle(f, delayInMilliseconds || 0, {
+          trailing: false
+        });
+      };
+      var debounce = function(f) {
+        var delayInMilliseconds = view.config.view.throttleTimeMilliseconds;
+        return _.debounce(f, delayInMilliseconds);
+      };
+
+      /*
+       * Bind to model and view.
+       */
+
+      var bindings = {
+        model: {
+          'add': this.onAdd,
+          'remove': this.onRemove,
+          'update': this.onUpdate,
+          'sort': debounce(this.onSort)
+          //'selected': this.sortSiblings
+        },
+        view: {
+          'filter': debounce(this.onFilterChange),
+          'scroll:reached:top': throttleScroll(this.getPreviousPage),
+          'scroll:reached:bottom': throttleScroll(this.getNextPage)
         }
-      }
+      };
+      _.each(bindings, function(bindingList, object) {
+        var obj = this.get(object);
+        _.each(bindingList, function(method, event) {
+
+          this.listenTo(obj, event, _.bind(method, this));
+
+        }, this);
+      }, this);
+
+      /*
+       * Bind view events to the strategy
+       */
+      var viewBindings = {
+        //viewEvent: strategyMethod
+        'toggleCollapse': 'toggleCollapse',
+        'mouseover': 'mouseOver',
+        'mouseout': 'mouseOut',
+        'selected': 'changeSelection',
+        'control:apply': 'applySelection',
+        'control:cancel': 'cancelSelection',
+        'control:only-this': 'selectOnlyThis',
+        'click:outside': 'clickOutside'
+      };
+
+      var strategy = configuration.selectionStrategy.strategy;
+
+      _.each(viewBindings, function(strategyMethod, viewEvent) {
+        this.listenTo(view, viewEvent, function() {
+          strategy[strategyMethod].apply(strategy, arguments);
+        });
+      }, this);
+
     },
 
-    /*
-     * Pagination
-     */
-    getNextPage: function(model, event) {
-      var listOfChildren = listNodes(this.children());
-      var sortedChildren = this.sortChildren(listOfChildren);
-      var penultimateChild = _.last(sortedChildren, 2)[0];
-      this.previousPosition = penultimateChild != null ? penultimateChild.target : undefined;
-      return this.getPage('next', model, event);
-    },
-    getPreviousPage: function(model, event) {
-      var listOfChildren = listNodes(this.children());
-      var sortedChildren = this.sortChildren(listOfChildren);
-      var secondChild = _.first(sortedChildren, 2)[1];
-      this.previousPosition = secondChild != null ? secondChild.target : undefined;
-      return this.getPage('previous', model, event);
-    },
+    // endregion
 
-    getPage: function(page, model, event) {
-      Logger.debug("Item " + (model.get('label')) + " requested page " + page);
-      var searchPattern = "";
-      if (this.get('configuration').search.serverSide === true) {
-        searchPattern = model.root().get('searchPattern')
-      }
-      return this.requestPage(page, searchPattern);
-    },
+    // region model events
+    onAdd: function(model, collection, options) {
 
-    requestPage: function(page, searchPattern) {
-      var getPage = this.get('configuration').pagination.getPage;
-      if (!_.isFunction(getPage)) {
-        return this;
-      }
-
-      return getPage(page, searchPattern).then(function(json) {
-        if (json.resultset != null) {
-          Logger.debug("getPage: got " + json.resultset.length + " more items");
-        } else {
-          Logger.debug("getPage: no more items");
-        }
+      var parentManager = this.findWhere({
+        model: model.parent()
       });
+
+      var greatParentManager = parentManager.parent();
+      if (greatParentManager) {
+        var parentViewType = greatParentManager.get('view')
+          .config.view.childConfig.withChildrenPrototype;
+        var parentView = parentManager.get('view');
+        if (parentView.type !== parentViewType) {
+          parentView.close();
+          parentManager.createView(model.parent());
+        }
+      }
+      parentManager.addChild(model);
     },
 
-    /*
-     * Child management
+    onRemove: function(model, collection, options) {
+      if(model !== this.get('model')){
+        return;
+      }
+
+      this.get('view').close();
+      this.remove();
+    },
+
+    onUpdate: function(collection, options) {
+      //console.log('Update received by ', this.get('model').get('label'), collection.parent.get('label'), options);
+
+      var updatedNode = this.findWhere({
+        model: collection.parent
+      });
+      var view = updatedNode.get('view');
+      //view.updateScrollBar();
+    },
+
+    onSort: function(model, options) {
+      // Compute nodes of (parent) view now that they have been sorted
+      // We are currently not bothering to sort the Manager tree
+      // to match the order defined in the model
+      var children = this.children();
+      var childViews = this.get('model').children().map(function(m){
+        return children.findWhere({'model': m}).get('view');
+      });
+
+      this.get('view').setChildren(childViews)
+    },
+
+    // endregion
+
+    // region children management
+    /**
+     * Creates a new manager for this MVC tuple.
      */
+    addChild: function(newModel) {
+      var newManager = {
+        model: newModel,
+        configuration: this.get('configuration')
+      };
+      this.add(newManager);
+      return this;
+    },
+
     updateChildren: function() {
       var models = this.get('model').children();
       if (models == null) {
@@ -270,111 +258,44 @@ define([
       modelsToAdd.each(function(m) {
         this.addChild(m);
       }, this);
-
-      this.renderSortedChildren();
-      this.get('view').updateScrollBar();
     },
 
-    onAddChildren: function() {
-      this.updateChildren();
+    // endregion
+
+    // region pagination
+    getNextPage: function(model, event) {
+      return this.getPage('next', model, event);
     },
 
-    /**
-     * Create a new manager for this MVC tuple.
-     */
-    addChild: function(newModel) {
-      var newManager = {
-        model: newModel,
-        configuration: this.get('configuration')
-      };
-      this.add(newManager);
-      return this;
+    getPreviousPage: function(model, event) {
+      return this.getPage('previous', model, event);
     },
-    removeChild: function(model) {
-      throw new Error("NotImplemented");
+
+    getPage: function(page, model, event) {
+      Logger.debug("Item " + (model.get('label')) + " requested page " + page);
+
+      var searchPattern = "";
+      if (this.get('configuration').search.serverSide === true) {
+        searchPattern = model.root().get('searchPattern')
+      }
+      return this.requestPage(page, searchPattern);
     },
-    sortSiblings: function(model) {
-      if (this.get('model') !== model) {
+
+    requestPage: function(page, searchPattern) {
+      var getPage = this.get('configuration').pagination.getPage;
+      if (!_.isFunction(getPage)) {
         return this;
       }
-      if (this.parent()) {
-        return this.parent().trigger('request:child:sort');
-      }
-    },
-    /**
-     * Gets an array containing the sorter functions. The most significant
-     * sorter function should be placed at the beginning of the array.
-     *
-     * @return {function[]} An array with the available sorter functions.
-     */
-    getSorters: function() {
-      var type = this.children().first().get('view').type;
-      var customSorters = this.get('configuration')[type].sorters;
 
-      if (_.isFunction(customSorters)) {
-        return [customSorters];
-      } else if (_.isArray(customSorters)) {
-        return customSorters;
-      }
-
-      return [];
-    },
-    /**
-     * Sorts a collection according to one or more custom sorter functions.
-     * This function uses underscore's sortBy function. In order to
-     * support multiple sorter functions we need to apply them in reverse order,
-     * starting with the least significant and ending with the most significant.
-     * The most significant should be placed at the beginning of the custom sorter
-     * functions array.
-     *
-     * @param {object[]} children The array to be sorted.
-     * @return {object[]} The sorted array.
-     */
-    sortChildren: function(children) {
-      var customSorters = this.getSorters();
-      if (_.isEmpty(customSorters)) {
-        return children;
-      }
-
-      var sorterIdx = customSorters.length;
-      var configuration = this.get('configuration');
-      var orderedChildren = _.chain(children);
-
-      // apply sorters in reverse order, from least to most important sorter
-      while (sorterIdx--) {
-        orderedChildren = orderedChildren.sortBy(function(child, idx) {
-          return customSorters[sorterIdx](null, child.item.get('model'), configuration);
-        });
-      }
-      return orderedChildren.value();
-    },
-
-    /**
-     * Renders an array of sorted children.
-     *
-     * return {object} The current manager instance.
-     */
-    renderSortedChildren: function() {
-      if (!this.children()) {
-        return;
-      }
-
-      var $nursery = this.get('view').getChildrenContainer();
-      $nursery.hide();
-      this._appendChildren(this.sortChildren(detachNodes(this.children())));
-      $nursery.show();
-    },
-
-    _appendChildren: function(children) {
-      if (!children) {
-        return;
-      }
-
-      var view = this.get('view');
-      _.each(children, function(child) {
-        view.appendChildNode(child.target);
+      return getPage(page, searchPattern).then(function(json) {
+        if (json.resultset != null) {
+          Logger.debug("getPage: got " + json.resultset.length + " more items");
+        } else {
+          Logger.debug("getPage: no more items");
+        }
       });
     },
+    // endregion
 
     /**
      * React to the user typing in the search box.
@@ -410,40 +331,13 @@ define([
      * @description Closes and removes the children from the tree.
      */
     empty: function() {
-      if (!this.children()) {
-        return;
+      var children = this.children();
+      if (children) {
+        children.each(function(child) {
+          child.close();
+        });
       }
-      this.children().each(function(child) {
-        child.close();
-      });
-      this.base();
     }
-
   });
-
-
-  function detachNodes(children) {
-    if (!children) {
-      return null;
-    }
-    var nodes = listNodes(children);
-    _.each(nodes, function(child) {
-      child.target.detach();
-    });
-    return nodes;
-  }
-
-  function listNodes(children) {
-    if (!children) {
-      return null;
-    }
-    return children.map(function(child) {
-      var $el = child.get('view').$el;
-      return {
-        item: child,
-        target: $el
-      };
-    });
-  }
 
 });

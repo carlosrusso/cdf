@@ -15,20 +15,21 @@
  * @submodule factory to be used to create the proper scrollbar implementation
  */
 define([
-  './OptiScrollBarEngine',
-  './MCustomScrollBarEngine'
-], function(OptiScrollBarEngine, MCustomScrollBarEngine) {
+  'require',
+  '../../../../lib/jquery'
+], function(require, $) {
 
   "use strict";
 
   return {
     createScrollBar: function(engine, view) {
-      switch (engine) {
-        case 'optiscroll':
-          return new OptiScrollBarEngine(view);
-        case 'mCustomScrollbar':
-          return new MCustomScrollBarEngine(view);
-      }
+      var deferred = $.Deferred();
+      require(['./' + engine], function(Ctor){
+        deferred.resolve(new Ctor(view));
+      });
+
+      return deferred.promise();
+
     }
   }
 });

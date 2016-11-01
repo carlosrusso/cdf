@@ -22,6 +22,8 @@ define([
 
   return AbstractScrollBarHandler.extend({
     constructor: function(view) {
+      this.base(view);
+
       this.scrollbar = view.$(view.config.view.slots.children)
         .addClass('optiscroll-content')
         .parent()
@@ -38,8 +40,8 @@ define([
         .data('optiscroll');
     },
 
-    scrollToPosition: function(position) {
-      this.scrollbar.scrollIntoView(position);
+    setPosition: function($element) {
+      this.scrollbar.scrollIntoView($element);
     }
   });
 });

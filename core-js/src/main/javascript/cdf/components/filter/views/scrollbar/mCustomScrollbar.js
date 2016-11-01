@@ -18,14 +18,16 @@ define([
   './AbstractScrollBarHandler',
   '../../../../lib/jquery',
   'amd!../../../../lib/jquery.mCustomScrollbar',
-  'css!./MCustomScrollBar'
+  'css!./mCustomScrollbar'
 ],function(AbstractScrollBarHandler, $){
 
   "use strict";
 
   return AbstractScrollBarHandler.extend({
     constructor: function (view) {
-      var options = $.extend(true, {}, view.config.view.scrollbar.options, {
+      this.base(view);
+
+      var options = $.extend(true, {
         callbacks: {
           onTotalScroll: function () {
             view.trigger('scroll:reached:bottom', view.model);
@@ -34,13 +36,15 @@ define([
             view.trigger('scroll:reached:top', view.model);
           }
         }
-      });
+      }, view.config.view.scrollbar.options);
 
-      this.scrollbar = view.$(view.config.view.slots.children).parent().mCustomScrollbar(options);
+      this.scrollbar = view.$(view.config.view.slots.children)
+        .parent()
+        .mCustomScrollbar(options);
     },
 
-    scrollToPosition: function(position) {
-      this.scrollbar.mCustomScrollbar("scrollTo", position, { callbacks: false });
+    setPosition: function($element) {
+      this.scrollbar.mCustomScrollbar("scrollTo", $element, { callbacks: false });
     }
   });
 });

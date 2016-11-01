@@ -17,9 +17,30 @@
 define([
  '../../../../lib/Base'
 ],function(Base) {
+
+  "use strict";
+
   return Base.extend({
-    scrollbar: null,
-    scrollToPosition: function(position) {}
-  })
+    constructor: function(view) {
+      this.view = view;
+      this._position = null;
+    },
+
+    setPosition: function($element) {
+
+    },
+
+    savePosition: function(position){
+      this._position = this.view.getChildren().eq(position);
+      return this._position;
+    },
+
+    restorePosition: function() {
+      if (this._position) {
+        this.setPosition(this._position);
+        this._position = null;
+      }
+    }
+  });
  }
 );

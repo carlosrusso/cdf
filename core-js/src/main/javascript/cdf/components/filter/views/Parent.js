@@ -55,6 +55,29 @@ define([
 
   return AbstractView.extend(/** @lends cdf.components.filter.views.Abstract# */{
 
+    initialize: function(options) {
+      this.base(options);
+
+      var that = this;
+      this.on('scroll:reached:top', function(){
+        that.saveScrollBar(1);
+      });
+      this.on('scroll:reached:bottom', function(){
+        that.saveScrollBar(-1);
+      });
+
+      this.updateScrollBar();
+    },
+
+    bindToModel: function(model) {
+      this.base(model);
+
+      var that = this;
+      this.listenTo(model, 'update', function() {
+        that.updateScrollBar();
+      });
+    },
+
     /*
      * View methods
      */
@@ -83,6 +106,19 @@ define([
       this.renderCollapse(viewModel);
     },
 
+    renderSkeleton: function(viewModel) {
+      this.base(viewModel);
+
+      if (this.config.options.isResizable) {
+        var $container = this.$(this.config.view.slots.children).parent();
+        if (_.isFunction($container.resizable)) {
+          $container.resizable({
+            handles: 's'
+          });
+        }
+      }
+    },
+
     updateFilter: function() {
       var text = this.model.root().get('searchPattern');
       this.$(this.config.view.slots.filter).val(text);
@@ -91,17 +127,36 @@ define([
     /*
      * Children management
      */
-    getChildrenContainer: function () {
-      return this.$(this.config.view.slots.children);
+    getChildren: function() {
+      return this.$(this.config.view.slots.children).children();
+    },
+
+    /**
+     * Renders a list of (child) views using the specified order
+     *
+     * @param {Array.<cdf.components.filter.views.Abstract>} childViews
+     */
+    setChildren: function(childViews) {
+      var currentNodes = this.getChildren();
+      var futureNodes = childViews.map(function(view) {
+        return view.$el.get(0);
+      });
+
+      if( _.isEqual(currentNodes.toArray(), futureNodes)) {
+        return;
+      }
+
+      var $nursery = this.$(this.config.view.slots.children);
+      $nursery.hide();
+      currentNodes.detach();
+      $nursery.append(childViews.map(function(view) {
+        return view.$el;
+      }));
+      $nursery.show();
     },
 
     createChildNode: function () {
       var $child = $(this.getHtml(this.config.view.templates.child, {}));
-      this.appendChildNode($child);
-      return $child;
-    },
-
-    appendChildNode: function ($child) {
       var $target = this.$(this.config.view.slots.children);
       $child.appendTo($target);
       return $child;
@@ -115,11 +170,12 @@ define([
       var isOverThreshold = this.model.flatten().size().value() > this.config.options.scrollThreshold;
 
       if (isPaginated || isOverThreshold) {
-        this.addScrollBar();
+        this._addScrollBar();
       }
+      this.restoreScrollBar();
     },
 
-    addScrollBar: function () {
+    _addScrollBar: function () {
       if (this._scrollBar != null) {
         return;
       }
@@ -128,23 +184,26 @@ define([
         return;
       }
 
-      this._scrollBar = ScrollBarFactory.createScrollBar(this.config.view.scrollbar.engine, this);
+      var that = this;
+      ScrollBarFactory
+        .createScrollBar(this.config.view.scrollbar.engine, this)
+        .then(function(scrollBar) {
+          that._scrollBar = scrollBar;
+        });
+    },
 
-      if (this.config.options.isResizable) {
-        var $container = this.$(this.config.view.slots.children).parent();
-        if (_.isFunction($container.resizable)) {
-          $container.resizable({
-            handles: 's'
-          });
-        }
+    restoreScrollBar: function() {
+      if (this._scrollBar) {
+        this._scrollBar.restorePosition();
       }
     },
 
-    setScrollBarAt: function ($tgt) {
-      if (this._scrollBar != null) {
-        this._scrollBar.scrollToPosition($tgt);
+    saveScrollBar: function(position) {
+      if (this._scrollBar) {
+        this._scrollBar.savePosition(position);
       }
     },
+
     /*
      * Events triggered by the user
      */
