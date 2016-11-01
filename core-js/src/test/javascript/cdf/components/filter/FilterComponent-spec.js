@@ -24,7 +24,7 @@ define([
    * Although the major parts of the component have its unit tests,
    * the following tests focus on their integration as a whole.
    */
-  describe("The Filter Component #", function() {
+  describe("FilterComponent", function() {
 
     var dashboard, filterComponent, $htmlObject, testFilterDefaults;
     var testData ;
@@ -144,7 +144,7 @@ define([
 
     });
 
-    describe("lifecycle", function() {
+    describe("obeys the CDF lifecycle", function() {
 
       it("allows a dashboard to execute update", function(done) {
 
@@ -223,7 +223,7 @@ define([
       });
     });
 
-    describe("configuration defaults", function() {
+    describe("generates the correct configuration based on high-level options", function() {
 
       describe('when "multiselect" is true', function() {
         var configuration;
@@ -289,7 +289,7 @@ define([
 
     });
 
-    fdescribe("interaction", function() {
+    describe("user interaction", function() {
       it("sorts children according to an array of custom sorting functions", function(done) {
         dashboard.addDataSource("selectionDataSource", {
           dataAccessId: "testId",
@@ -340,15 +340,14 @@ define([
         });
 
         uponInit(filterComponent, dashboard, function(filterComponent) {
-          var view = filterComponent.manager.get('view');
 
           var labels = [];
-          view.$('.filter-item-label').each(function(idx, el){
+          filterComponent.placeholder('.filter-item-label').each(function(idx, el){
             labels.push($(el).html());
           });
 
           var values = [];
-          view.$('.filter-item-value').each(function(idx, el){
+          filterComponent.placeholder('.filter-item-value').each(function(idx, el){
             values.push($(el).html());
           });
 
@@ -408,14 +407,13 @@ define([
           var rootModel = filterComponent.model;
           expect(rootModel.get('numberOfSelectedItems')).toBe(0);
 
-          var view = filterComponent.manager.get('view');
-          var items = view.$('.filter-item-body');
+          var items = filterComponent.placeholder('.filter-item-body');
           for (var i = 0; i < selectionLimit; i++) {
             items[i].click();
           }
           expect(rootModel.get('numberOfSelectedItems')).toBe(selectionLimit);
 
-          view.$('.filter-item-only-this:eq(0)').click();
+          filterComponent.placeholder('.filter-item-only-this:eq(0)').click();
           expect(rootModel.get('numberOfSelectedItems')).toBe(1);
 
           done();
@@ -424,54 +422,23 @@ define([
       });
     });
 
-    describe("Get Page Mechanism #", function() {
+    describe("server interaction", function() {
+      itSearches("search works with searchServerSide = true and pageSize > 0", true, 10);
+      itSearches("search works with searchServerSide = false and pageSize > 0", false, 10);
+      itSearches("search works with searchServerSide = true and pageSize = 0", true, 0);
+      itSearches("search works with searchServerSide = false and pageSize = 0", false, 0);
 
-      it("works with searchServerSide = true and pageSize > 0", function(done) {
-        runGetPageMechanismTest(true, 10, done);
-      });
-
-      it("works with searchServerSide = false and pageSize > 0", function(done) {
-        runGetPageMechanismTest(false, 10, done);
-      });
-
-      it("works with searchServerSide = true and pageSize = 0", function(done) {
-        runGetPageMechanismTest(true, 0, done);
-      });
-
-      it("works with searchServerSide = false and pageSize = 0", function(done) {
-        runGetPageMechanismTest(false, 0, done);
-      });
-
-      var count = 0;
-
-      function runGetPageMechanismTest(serverSide, pageSize, done) {
+      it("pagination: infinite scrolling", function(done) {
         var dashboard = getNewDashboard();
-        dashboard.addDataSource("testFilterComponentDataSource", {
+        dashboard.addDataSource("mockDataSource", {
           dataAccessId: "testId",
           path: "/test.cda"
         });
 
-        var testFilterComponent = getTestFilterComponent(serverSide, pageSize);
-
-        makeAjaxSpy();
-
-        uponInit(testFilterComponent, dashboard, function() {
-          if (serverSide) {
-            addEvaluateExpectationsAfterGetPage(testFilterComponent, serverSide, pageSize, done);
-          } else {
-            addEvaluateExpectationsInsteadOfFilter(testFilterComponent, serverSide, pageSize, done);
-          }
-          testFilterComponent.manager.get('view').trigger('filter', testFilterComponent.model, 'unique_search_pattern_' + (count++));
-        });
-
-      }
-
-      function getTestFilterComponent(serverSide, pageSize) {
-        return getNewFilterComponent({
+        var filterComponent = getNewFilterComponent({
           queryDefinition: {
-            dataSource: "testFilterComponentDataSource",
-            // BaseQuery will not accept pageSize <= 0, it will default to it though
-            pageSize: ((pageSize > 0) ? pageSize : null)
+            dataSource: "mockDataSource",
+            pageSize: 10
           },
           componentInput: {
             valuesArray: []
@@ -479,75 +446,156 @@ define([
           options: function() {
             return {
               component: {
-                Root:{
+                Root: {
                   view: {
                     scrollbar: {
                       engine: 'fake' //disable scrollbar
                     }
                   }
-                },
-                search: {
-                  serverSide: serverSide
                 }
               }
             };
           }
         });
+
+        mockServerData();
+
+        uponInit(filterComponent, dashboard, function() {
+          // confirm that the first page was loaded correctly
+          var rootModel = filterComponent.model;
+          expect(getLabels(rootModel)).toEqual(["Default1", "Default2"]);
+
+          filterComponent.inputDataHandler.on('postUpdate', function(model) {
+            // confirm new data was added
+            expect(getLabels(rootModel)).toEqual([
+              "Default1",
+              "Default2",
+              "Default3",
+              "Default4"
+            ]);
+
+            done();
+          });
+
+          // force loading the next page
+          var view = filterComponent.manager.get('view');
+          view.trigger('scroll:reached:bottom', rootModel);
+        });
+      });
+
+      function itSearches(caption, serverSide, pageSize) {
+        it(caption, function(done) {
+          var dashboard = getNewDashboard();
+          dashboard.addDataSource("mockDataSource", {
+            dataAccessId: "testId",
+            path: "/test.cda"
+          });
+
+          var filterComponent = getNewFilterComponent({
+            queryDefinition: {
+              dataSource: "mockDataSource",
+              // BaseQuery will not accept pageSize <= 0, it will default to it though
+              pageSize: ((pageSize > 0) ? pageSize : null)
+            },
+            componentInput: {
+              valuesArray: []
+            },
+            options: function() {
+              return {
+                component: {
+                  Root:{
+                    view: {
+                      scrollbar: {
+                        engine: 'fake' //disable scrollbar
+                      }
+                    }
+                  },
+                  search: {
+                    serverSide: serverSide
+                  }
+                }
+              };
+            }
+          });
+
+          mockServerData();
+
+          uponInit(filterComponent, dashboard, function() {
+
+            // confirm that the advanced options were generated correctly
+            var configuration = filterComponent.manager.get('configuration');
+            expect(configuration.search.serverSide).toBe(serverSide);
+            expect(configuration.pagination.pageSize).toBe((pageSize > 0) ? pageSize : Infinity);
+
+            // confirm that the first page was loaded correctly
+            var rootModel = filterComponent.model;
+            expect(getLabels(rootModel)).toEqual(["Default1", "Default2"]);
+
+            if (serverSide) {
+              filterComponent.inputDataHandler.on('postUpdate', function(model) {
+                // new data was added
+                expect(getLabels(rootModel)).toEqual(["Default1", "Default2", "Default3", "Default4"]);
+
+                var visibility = rootModel.leafs()
+                  .map(function(m){
+                    return m.getVisibility();
+                  })
+                  .value();
+                expect(visibility).toEqual([false, false, false, false]);
+                done();
+              });
+
+            } else {
+              // there should be no second ajax request
+              filterComponent.inputDataHandler.on('postUpdate', function(model) {
+                done.fail();
+              });
+
+              rootModel._filter = function(){
+                expect(getLabels(rootModel)).toEqual(["Default1", "Default2"]);
+                done(); //
+              };
+            }
+
+            // populate the search box
+            filterComponent.placeholder('.filter-filter-input')
+              .val(_.uniqueId('unique_search_pattern_'))
+              .trigger("change");
+          });
+
+        });
       }
 
-      function makeAjaxSpy() {
+      function getLabels(model) {
+        return model.children().map(function(m) {
+          return m.get('label');
+        });
+      }
+
+      function mockServerData() {
         var firstCallToServer = true;
         spyOn($, 'ajax').and.callFake(function(params) {
           if (firstCallToServer) {
+
+            firstCallToServer = false;
+
             params.success(getCdaJson([
               [1.1, "Default1"],
               [1.2, "Default2"]
             ], testData.metadata));
-            firstCallToServer = false;
+
+
           } else {
+
             params.success(getCdaJson([
-              [1.3, "ServerSide"],
-              [1.4, "PageSize"]
+              [1.3, "Default3"],
+              [1.4, "Default4"]
             ], testData.metadata));
+
           }
         });
       }
 
-      function addEvaluateExpectationsAfterGetPage(component, serverSide, pageSize, done) {
-        component.manager.get('configuration').pagination.getPage =
-          (function(originalGetPage) {
-            return function() {
-              return originalGetPage.apply(component, arguments).then(function(json) {
-                evaluateExpectations(serverSide, pageSize, component.model.children().models,
-                  component.manager.get('configuration'));
-                done();
-                return json;
-              });
-            };
-          })(component.manager.get('configuration').pagination.getPage);
-      }
-
-      function addEvaluateExpectationsInsteadOfFilter(component, serverSide, pageSize, done) {
-        component.model._filter = function() {
-          evaluateExpectations(serverSide, pageSize, component.model.children().models,
-            component.manager.get('configuration'));
-          done();
-        };
-      }
-
-      function evaluateExpectations(serverSide, pageSize, models, configuration) {
-        expect(models[0].get("label")).toBe("Default1");
-        expect(models[1].get("label")).toBe("Default2");
-        expect(configuration.search.serverSide).toBe(serverSide);
-        expect(configuration.pagination.pageSize).toBe((pageSize > 0) ? pageSize : Infinity);
-        if (serverSide) {
-          expect(models.length).toBe(4);
-          expect(models[2].get("label")).toEqual("ServerSide");
-          expect(models[3].get("label")).toEqual("PageSize");
-        } else {
-          expect(models.length).toBe(2);
-        }
-      }
     });
 
     describe("Search Mechanism #", function() {
@@ -643,7 +691,6 @@ define([
 
             uponInit(filterComponent, dashboard, function() {
               var rootModel = filterComponent.model;
-              var view = filterComponent.manager.get('view');
 
               spyOn(rootModel, 'filterBy').and.callThrough();
               rootModel.on('change:searchPattern', function() {
@@ -651,9 +698,9 @@ define([
                 done();
               });
 
-              view.$('input.filter-filter-input:eq(0)')
+              filterComponent.placeholder('.filter-filter-input')
                 .val(searchText)
-                .trigger( "change" );
+                .trigger("change");
             });
           };
         };
@@ -690,14 +737,12 @@ define([
 
         uponInit(filterComponent, dashboard, function(filterComponent) {
 
-          var view = filterComponent.manager.get('view');
-
-          var items = view.$('.filter-item-body');
+          var items = filterComponent.placeholder('.filter-item-body');
           witness._items = items;
           items.click(); //click all items (leafs)
 
           if (options.single !== true) {
-            view.$('.filter-btn-apply')
+            filterComponent.placeholder('.filter-btn-apply')
               .removeAttr('disabled') // force the click event to be triggered
               .click();
           }
