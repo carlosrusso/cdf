@@ -12,35 +12,35 @@
  */
 
 define([
+  '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../Dashboard.Clean',
-  '../../../AddIn'
-], function(_, Dashboard, AddIn) {
+  '../../../AddIn',
+  './sortByProperty'
+], function($, _, Dashboard, AddIn, sortByProperty) {
 
   'use strict';
 
   /*
    * Sorts items/groups by value
    */
-  var sortByValue = {
+  var sortByValue = $.extend(true, {}, sortByProperty, {
     name: 'sortByValue',
     label: 'Sort items by value',
     defaults: {
-      ascending: false
-    },
-    implementation: function($tgt, st, options) {
-      var result = st.model.get('value');
-      if (!_.isNumber(result)) {
-        return 0;
-      }
-
-      if (options.ascending) {
-        return result;
-      } else {
-        return -1 * result;
+      ascending: false,
+      property: 'value',
+      comparer: function(left, right){
+        var l = Number(left);
+        var r = Number(right);
+        if (l === r) {
+          return 0;
+        }
+        return l < r ? -1 : 1;
       }
     }
-  };
+  });
+
   Dashboard.registerGlobalAddIn('FilterComponent', 'sortItem', new AddIn(sortByValue));
   Dashboard.registerGlobalAddIn('FilterComponent', 'sortGroup', new AddIn(sortByValue));
 

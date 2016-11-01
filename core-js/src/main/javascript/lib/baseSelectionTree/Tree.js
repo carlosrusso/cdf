@@ -12,8 +12,26 @@ define([
   'amd!cdf/lib/backbone.treemodel',
   'cdf/lib/BaseEvents'
 ], function (_, Backbone, BaseEvents) {
+  var TreeModel = BaseEvents.toBase(Backbone.TreeModel);
 
-  var Tree = BaseEvents.extendWithEvents(Backbone.TreeModel).extend({
+  var Tree = TreeModel.extend({
+
+    initialize: function(attrs, options) {
+      this.base.apply(this, arguments);
+
+      var parent = this.parent();
+      if (parent) {
+        this.setComparator(parent.comparator);
+      }
+      if(options.comparator){
+        this.setComparator(options.comparator);
+      }
+    },
+
+    setComparator: function(comparator) {
+      this.comparator = comparator;
+    },
+
     children: function () {
       return this.nodes.apply(this, arguments);
     },
@@ -85,7 +103,51 @@ define([
       return this.flatten().filter(function(m){
         return m.children() === null;
       });
-    }
+    },
+
+    sort: function(options) {
+      var children = this.children();
+      if(!children) {
+        return;
+      }
+
+      options || (options = {});
+      children.sort(options);
+
+      if (!options.silent) {
+        this.trigger('sort', this, options);
+      }
+    },
+
+    Collection:  BaseEvents.toBase(TreeModel.prototype.Collection).extend({
+      comparator: {}, // we must fool Backbone.Collection#add into sorting models
+
+      sort: function(options){
+        var comparator = this.parent.comparator;
+        if(!comparator) return;
+        options || (options = {});
+
+        var deepSort = function(left, right) {
+          var result = 0;
+
+          var sorters = left.children() ? comparator.group : comparator.item;
+          var N = sorters.length;
+          for (var k = 0; k < N; k++) {
+            result = sorters[k](left, right);
+            if (result) {
+              return result;
+            }
+          }
+        };
+        this.models.sort(deepSort);
+
+        if (!options.silent) {
+          this.trigger('sort', this, options);
+        }
+        return this;
+      }
+
+    })
   });
 
   return Tree;

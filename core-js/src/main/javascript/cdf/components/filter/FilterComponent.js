@@ -1,5 +1,5 @@
 /*!
- * Copyright 2002 - 2015 Webdetails, a Pentaho company. All rights reserved.
+ * Copyright 2002 - 2016 Webdetails, a Pentaho company. All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -109,11 +109,31 @@ define([
        * Initialize the model
        */
 
+
+
       this.model = new Model(configuration.input.root, {
         // TODO: deprecate configuration.component.search.matcher in favour of configuration.input.root.matcher
         // and remove this option
         matcher: configuration.component.search.matcher
       });
+
+      var itemSorters = configuration.component.Item.sorters;
+      var nItemSorters = itemSorters.length;
+      var groupSorters = configuration.component.Group.sorters;
+      var nGroupSorters = groupSorters.length;
+
+      if(nItemSorters || nGroupSorters) {
+        var model = this.model;
+        var comparator = {
+          group: _.map(_.compact(groupSorters), function(f) {
+            return f(null, model, configuration);
+          }),
+          item: _.map(_.compact(itemSorters), function(f) {
+            return f(null, model, configuration);
+          })
+        };
+        model.setComparator(comparator);
+      }
 
       /*
        * Initialize the CDF interface

@@ -12,25 +12,34 @@
  */
 
 define([
+  '../../../lib/jquery',
   '../../../Dashboard.Clean',
-  '../../../AddIn'
-], function(Dashboard, AddIn) {
+  '../../../AddIn',
+  './sortByProperty'
+], function($, Dashboard, AddIn, sortByProperty) {
 
   'use strict';
 
   /*
    * Sorts items/groups by label
    */
-  var sortByLabel = {
+  var sortByLabel = $.extend(true, {}, sortByProperty, {
     name: 'sortByLabel',
     label: 'Sort items by label, alphabetically',
     defaults: {
-      ascending: true
-    },
-    implementation: function($tgt, st, options) {
-      return st.model.get('label');
+      ascending: true,
+      locales: undefined,
+      options: undefined,
+      comparer: function(left, right, options) {
+        var l = String(left);
+        var r = String(right);
+        if (l === r) {
+          return 0;
+        }
+        return l.localeCompare(r, options.locales, options.options);
+      }
     }
-  };
+  });
   Dashboard.registerGlobalAddIn('FilterComponent', 'sortItem', new AddIn(sortByLabel));
   Dashboard.registerGlobalAddIn('FilterComponent', 'sortGroup', new AddIn(sortByLabel));
 

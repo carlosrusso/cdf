@@ -22,8 +22,12 @@ define([
     return extendClass(TargetClass, Backbone.Events);
   }
 
-  function convertClass(TargetClass) {
-    return extendClass(addEvents(addSelfExtend(TargetClass)), arguments[1], arguments[2]);
+  function toBase(TargetClass) {
+    return extendClass(addSelfExtend(TargetClass), arguments[1], arguments[2]);
+  }
+
+  function convertClass(TargetClass){
+    return addEvents(toBase(TargetClass));
   }
 
   // BaseEvents: returns Base.js modification that includes Backbone.Events.
@@ -32,6 +36,8 @@ define([
   var BaseEvents = convertClass(Base);
 
   BaseEvents.extendClass = extendClass;
+  BaseEvents.toBase = toBase;
+
   BaseEvents.convertClass = convertClass;
   BaseEvents.extendWithEvents = convertClass;
 

@@ -19,33 +19,38 @@ define([
   'use strict';
 
   /*
-   * Sorts items, by keeping the insertion order
+   * Sorts items/groups by property value
    */
-  var insertionOrder = {
-    name: 'insertionOrder',
-    label: 'Keep insertion order',
+  var sortByProperty = {
+    name: 'sortByProperty',
+    label: 'Sort models by the value of a property',
     defaults: {
-      ascending: true
-    },
-    implementation: function($tgt, st, options) {
-      return function(left, right) {
-        var l = left.cid;
-        var r = right.cid;
-
-        if (l=== r) {
+      ascending: true,
+      property: 'id',
+      comparer: function(left, right, options) {
+        if (left === right) {
           return 0;
         }
-        if(!options.ascending){
-          return l < r ? 1 : -1
+        return left < right ? -1 : 1;
+      }
+    },
+
+    implementation: function($tgt, st, options) {
+      return function(left, right){
+        var l = left.get(options.property);
+        var r = right.get(options.property);
+
+        var comparison = options.comparer(l, r, options);
+        if (options.ascending) {
+          return comparison;
         }
-        return l < r ? -1 : 1
+        return -comparison;
+
       }
     }
   };
+  Dashboard.registerGlobalAddIn('FilterComponent', 'sortItem', new AddIn(sortByProperty));
+  Dashboard.registerGlobalAddIn('FilterComponent', 'sortGroup', new AddIn(sortByProperty));
 
-  Dashboard.registerGlobalAddIn('FilterComponent', 'sortItem', new AddIn(insertionOrder));
-  Dashboard.registerGlobalAddIn('FilterComponent', 'sortGroup', new AddIn(insertionOrder));
-
-  return insertionOrder;
-
+  return sortByProperty;
 });

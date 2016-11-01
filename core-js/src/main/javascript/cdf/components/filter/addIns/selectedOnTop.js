@@ -18,7 +18,6 @@ define([
 
   'use strict';
 
-  var MIN_SAFE_INTEGER = -9007199254740991;
   /*
    * Sorts items, by keeping the selected items on top
    */
@@ -26,10 +25,29 @@ define([
     name: 'selectedOnTop',
     label: 'Keep selected items on top ',
     implementation: function($tgt, st, options) {
-      if (st.model.getSelection()) {
-        return MIN_SAFE_INTEGER + st.model.index();
-      }
-      return st.model.index();
+
+      // setup listener
+      st.model.on('all', function(event, model, value){
+        if (event === 'change:isSelected') {
+          var parent = model.parent();
+          if (parent) {
+            // postpone sorting until the event 'change:isSelected' is processed
+            setTimeout(function() {
+              parent.sort();
+            }, 0)
+          }
+        }
+      });
+
+      return function(left, right) {
+        var l = left.getSelection();
+        var r = right.getSelection();
+        if (l === r) {
+          return 0;
+        }
+
+        return (l === true) ? -1 : 1;
+      };
     }
   };
   Dashboard.registerGlobalAddIn('FilterComponent', 'sortItem', new AddIn(selectedOnTop));

@@ -17,6 +17,7 @@ define([
   "./addIns/notificationSelectionLimit",
   "./addIns/randomColor",
   "./addIns/selectedOnTop",
+  "./addIns/sortByProperty",
   "./addIns/sortByLabel",
   "./addIns/sortByValue",
   "./addIns/sumSelected",

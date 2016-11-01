@@ -407,7 +407,8 @@ define([
     }
 
   }, {
-    SelectionStates: SelectionStates
+    SelectionStates: SelectionStates,
+    Collection: Tree.Collection
   });
 
   return BaseSelectionTree;
