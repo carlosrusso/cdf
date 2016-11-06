@@ -128,7 +128,7 @@ define([
         return state;
       }
 
-      return this.walkDown(getSelection, reduceSelectionStates, setSelection);
+      return this._walkDown(getSelection, reduceSelectionStates, setSelection);
     },
 
 
@@ -191,7 +191,7 @@ define([
         return _.some(results);
       }
 
-      return this.walkDown(item, aggregate);
+      return this._walkDown(item, aggregate);
     },
 
     /**
@@ -347,7 +347,7 @@ define([
 
   var Mixins = _.extend({}, ISelection, IVisibility);
 
-  var BaseSelectionTree = Tree.extend(Mixins).extend({
+  var BaseSelectionTree = Tree.extend(Mixins).extend(/** @lends cdf.lib.BaseSelectionTree */{
 
     /**
      * Default values for each node in the selection tree.
@@ -381,7 +381,11 @@ define([
       }
     },
 
-
+    /**
+     * Loads a model specification.
+     *
+     * @param {modelSpec} data - A tree model specification
+     */
     load: function(data) {
       this.add(data);
 
