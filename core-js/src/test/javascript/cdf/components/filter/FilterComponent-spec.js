@@ -449,7 +449,7 @@ define([
                 Root: {
                   view: {
                     scrollbar: {
-                      engine: 'fake' //disable scrollbar
+                      engine: 'AbstractScroll' //disable scrollbar
                     }
                   }
                 }
@@ -506,7 +506,7 @@ define([
                   Root:{
                     view: {
                       scrollbar: {
-                        engine: 'fake' //disable scrollbar
+                        engine: 'AbstractScroll' //disable scrollbar
                       }
                     }
                   },
