@@ -15,12 +15,12 @@
  * @description OptiScrollBar implementation of ScrollBarHandler
  */
 define([
-  './AbstractScrollBarHandler'
-], function(AbstractScrollBarHandler) {
+  './AbstractScroll'
+], function(AbstractScroll) {
 
   "use strict";
 
-  return AbstractScrollBarHandler.extend({
+  return AbstractScroll.extend({
     constructor: function(view) {
       this.base(view);
 

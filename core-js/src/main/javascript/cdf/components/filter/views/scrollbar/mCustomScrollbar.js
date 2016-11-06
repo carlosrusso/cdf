@@ -15,15 +15,15 @@
  * @description MCustomScrollBarEngineImplementation implementation of ScrollBarHandler
  */
 define([
-  './AbstractScrollBarHandler',
+  './AbstractScroll',
   '../../../../lib/jquery',
   'amd!../../../../lib/jquery.mCustomScrollbar',
   'css!./mCustomScrollbar'
-],function(AbstractScrollBarHandler, $){
+],function(AbstractScroll, $){
 
   "use strict";
 
-  return AbstractScrollBarHandler.extend({
+  return AbstractScroll.extend({
     constructor: function (view) {
       this.base(view);
 
