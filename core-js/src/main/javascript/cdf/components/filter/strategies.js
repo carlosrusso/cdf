@@ -17,6 +17,8 @@ define([
   './strategies/LimitedSelect'
 ], function (SingleSelect, MultiSelect, LimitedSelect) {
 
+  'use strict';
+
   return {
     SingleSelect: SingleSelect,
     MultiSelect: MultiSelect,

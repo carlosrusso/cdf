@@ -16,6 +16,8 @@ define([
   '../../../lib/BaseEvents'
 ], function(_, BaseEvents) {
 
+  'use strict';
+
   /**
    * @class cdf.components.filter.core.OutputDataHandler
    * @amd cdf/components/filter/core/OutputDataHandler

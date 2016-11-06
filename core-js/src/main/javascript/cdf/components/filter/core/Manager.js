@@ -20,8 +20,6 @@ define([
 
   "use strict";
 
-
-
   return Tree.extend(/** @lends cdf.components.filter.controllers.Manager# */{
     /**
      * Default values.

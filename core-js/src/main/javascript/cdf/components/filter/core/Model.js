@@ -16,6 +16,8 @@ define([
   '../../../lib/BaseSelectionTree'
 ], function( _, BaseSelectionTree ) {
 
+  'use strict';
+
   /**
    * @class cdf.components.filter.core.Model
    * @amd cdf/components/filter/core/Model
@@ -49,7 +51,6 @@ define([
       var root = this.root();
       root.set('isDisabled', root.children() === null);
     },
-
 
     /**
      * Sets the isBusy parameter.

@@ -15,6 +15,8 @@ define([
   'amd!../../lib/underscore'
 ], function (_) {
 
+  'use strict';
+
   /*
    * Interface Mixin for a filter
    */

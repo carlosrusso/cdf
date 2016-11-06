@@ -32,6 +32,8 @@ define([
             Model, Manager, InputDataHandler, OutputDataHandler,
             IFilter, IConfiguration) {
 
+  'use strict';
+
   /*
    * Über-filter: one filter to rule them all
    * Schmiede, mein Hammer, ein hartes Schwert!

@@ -17,6 +17,8 @@ define([
   '../core/Model'
 ], function (_, AbstractSelect, Model) {
 
+  'use strict';
+
   var SelectionStates = Model.SelectionStates;
   /**
    * @class cdf.components.filter.strategies.SingleSelect

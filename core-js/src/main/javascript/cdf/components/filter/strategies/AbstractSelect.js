@@ -18,6 +18,8 @@ define([
   '../core/Model'
 ], function ($, _, Base, Model) {
 
+  'use strict';
+
   var SelectionStates = Model.SelectionStates;
 
   /**

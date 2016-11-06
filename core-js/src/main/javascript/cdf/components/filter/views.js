@@ -17,6 +17,8 @@ define([
   './views/Item'
 ], function (Root, Group, Item) {
 
+  'use strict';
+
   return {
     Root: Root,
     Group: Group,

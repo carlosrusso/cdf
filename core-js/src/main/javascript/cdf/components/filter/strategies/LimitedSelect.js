@@ -18,6 +18,8 @@ define([
   '../../../Logger'
 ], function (_, Model, MultiSelect, Logger) {
 
+  'use strict';
+
   var SelectionStates = Model.SelectionStates;
 
   return MultiSelect.extend(/** @lends cdf.components.filter.strategies.LimitedSelect# */{

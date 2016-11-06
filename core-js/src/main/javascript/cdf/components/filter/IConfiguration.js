@@ -20,6 +20,8 @@ define([
   './configuration/presets'
 ], function ($, _, Logger, strategies, defaults, presets) {
 
+  'use strict';
+
   /*
    * Interface mixin for the configuration
    *

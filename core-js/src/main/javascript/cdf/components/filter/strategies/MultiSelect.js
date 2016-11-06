@@ -16,6 +16,8 @@ define([
   './AbstractSelect'
 ], function (_, AbstractSelect) {
 
+  'use strict';
+
   /**
    * @class cdf.components.filter.strategies.MultiSelect
    * @amd cdf/components/filter/strategies/MultiSelect
