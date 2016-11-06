@@ -18,6 +18,8 @@ define([
   '../../../Logger'
 ], function (_, Model, MultiSelect, Logger) {
 
+  var SelectionStates = Model.SelectionStates;
+
   return MultiSelect.extend(/** @lends cdf.components.filter.strategies.LimitedSelect# */{
     /**
      * @constructs
@@ -38,14 +40,11 @@ define([
      *
      * @param {string} newState The new state to set.
      * @param {object} model The target model.
-     * @return {string} The new selection state.
      */
     setSelection: function (newState, model) {
 
       var allow = true;
-      var oldState = model.getSelection();
-      newState = this.getNewState(oldState);
-      if (newState !== Model.SelectionStates.NONE) {
+      if (newState !== SelectionStates.NONE) {
 
         var nSelected = model.root().get('numberOfSelectedItems');
         if (!_.isFinite(nSelected)) {
@@ -57,10 +56,10 @@ define([
           Logger.warn("Cannot allow the selection of  \"" + (model.get('label')) + "\". Selection limit of " + this.selectionLimit + " has been reached.");
           allow = false;
         } else {
-          if (model.children() && (newState === Model.SelectionStates.ALL)) {
+          if (model.children() && (newState === SelectionStates.ALL)) {
             var nCandidates = model.leafs()
               .filter(function(m) {
-                return m.getSelection() !== Model.SelectionStates.ALL;
+                return m.getSelection() !== SelectionStates.ALL;
               })
               .size()
               .value();
@@ -75,11 +74,7 @@ define([
       if (allow) {
         model.setAndUpdateSelection(newState);
         this._updateReachedSelectionLimit(model);
-      } else {
-        newState = oldState;
       }
-
-      return newState;
     },
 
     _updateReachedSelectionLimit: function(model){

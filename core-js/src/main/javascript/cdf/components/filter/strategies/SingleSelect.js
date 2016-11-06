@@ -31,7 +31,6 @@ define([
      *
      * @param {string} newState The new selection state.
      * @param {object} model    The target model.
-     * @return {string} The new selection state.
      */
     setSelection: function (newState, model) {
       if (model.children()) {
@@ -41,18 +40,16 @@ define([
 
       model.root().setSelection(SelectionStates.NONE);
       model.setAndUpdateSelection(SelectionStates.ALL);
-      return newState;
     },
 
     /**
      * Changes the selection state.
      *
      * @param {object} model The target model.
-     * @return {*} The value returned by {@link cdf.components.filter.strategies.AbstractSelect#applySelection|applySelection}.
      */
     changeSelection: function (model) {
       this.base(model);
-      return this.applySelection(model);
+      this.applySelection(model);
     }
 
   });

@@ -29,11 +29,9 @@ define([
      *
      * @param {string} newState The new selection state.
      * @param {object} model    The target model.
-     * @return {string} The new selection state.
      */
     setSelection: function (newState, model) {
       model.setAndUpdateSelection(newState);
-      return newState;
     }
   });
 
