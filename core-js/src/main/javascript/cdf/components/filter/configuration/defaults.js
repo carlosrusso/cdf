@@ -24,12 +24,13 @@ define([
    */
   var privateDefaults = /** @lends cdf.components.filter.configuration.defaults */ {
     Root: {
-      renderers: [],
+      renderers: {},
       sorters: [],
       view: {
         constructor: views.Root,
         patchViewModel: null,
-        throttleTimeMilliseconds: 0,
+        modelDebounceTimeMilliseconds: 1,
+        throttleTimeMilliseconds: 3,
         slots: {
           container: '.filter-root-container',
           selection: '.filter-root-selection',
@@ -48,12 +49,13 @@ define([
       }
     },
     Group: {
-      renderers: [],
+      renderers: {},
       sorters: [],
       view: {
         constructor: views.Group,
         patchViewModel: null,
-        throttleTimeMilliseconds: 0,
+        modelDebounceTimeMilliseconds: 1,
+        throttleTimeMilliseconds: 3,
         slots: {
           selection: '.filter-group-header:eq(0)', // There can be nested groups
           filter: '.filter-filter-input:eq(0)',
@@ -66,11 +68,12 @@ define([
       }
     },
     Item: {
-      renderers: [],
+      renderers: {},
       sorters: [],
       view: {
         constructor: views.Item,
         patchViewModel: null,
+        modelDebounceTimeMilliseconds: -1,
         throttleTimeMilliseconds: 0,
         slots: {
           selection: '.filter-item-container'
@@ -172,6 +175,7 @@ define([
     Group: {
       options: {
         className: '',
+        styles: [],
         showFilter: false,
         showCommitButtons: false,
         showGroupSelection: false,
@@ -204,6 +208,7 @@ define([
     Item: {
       options: {
         className: '',
+        styles: [],
         showButtonOnlyThis: false,
         showValue: false,
         showIcons: true

@@ -55,28 +55,17 @@ define([
     },
 
     /**
-     */
-    updateCollapse: function () {
-      var viewModel = this.getViewModel();
-      this.renderCollapse(viewModel);
-    },
-
-    /**
      * @param {object} viewModel
      */
     renderCollapse: function (viewModel) {
-      var $collapsible = this.$('.filter-group-body, .filter-group-footer');
       var isCollapsed = viewModel.isCollapsed;
 
       this.$('.filter-collapse-icon')
         .toggleClass('collapsed', isCollapsed)
         .toggleClass('expanded', !isCollapsed);
 
-      if (isCollapsed) {
-        $collapsible.hide();
-      } else {
-        $collapsible.show();
-      }
+      var $collapsible = this.$('.filter-group-body, .filter-group-footer');
+      $collapsible.toggleClass('hidden', isCollapsed);
     }
   });
 

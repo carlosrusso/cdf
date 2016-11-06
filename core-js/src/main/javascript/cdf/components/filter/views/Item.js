@@ -62,6 +62,12 @@ define([
       event.stopPropagation();
       this.trigger('control:only-this', this.model);
     }
+
+    // renderSelection: function (viewModel) {
+    //   this.$(this.config.view.slots.selection)
+    //     .toggleClass('none-selected', !viewModel.isSelected)
+    //     .toggleClass('all-selected', viewModel.isSelected);
+    // }
   });
 
 });

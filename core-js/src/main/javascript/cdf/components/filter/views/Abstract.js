@@ -70,6 +70,8 @@ define([
 
       this.bindToModel(this.model);
       this.setElement(options.target);
+
+      this.updateViewModel();
       this.render();
     },
 
@@ -80,16 +82,17 @@ define([
      */
 
     bindToModel: function (model) {
+      this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
       this.onChange(model, 'isVisible', this.updateVisibility);
     },
 
-    onChange: function (model, properties, callback) {
+    onChange: function (model, properties, callback, delayOverride) {
       var props = properties.split(' ');
       var events = _.map(props, function (prop) {
-        return 'change:' + prop;
+        return prop ? 'change:' + prop : 'change';
       }).join(' ');
 
-      var delay = this.config.view.throttleTimeMilliseconds;
+      var delay = delayOverride ? delayOverride : this.config.view.throttleTimeMilliseconds;
       var c = _.bind(callback, this);
       var f = (delay >= 0) ? _.debounce(c, delay) : c;
       this.listenTo(model, events, f);
@@ -99,16 +102,22 @@ define([
      * View methods
      */
     getViewModel: function () {
-      var children = this.model.children();
-
-      return _.extend(
-        this.model.toJSON(),
+      var model = this.model.toJSON();
+      var viewModel = _.extend(
+        model,
         this.config.options,
         {
+          tooltip: model.tooltip || model.label,
           strings: this.config.strings,
           selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy')
         }
       );
+      return viewModel;
+    },
+
+    updateViewModel: function() {
+      //console.log('Calculating viewModel', this.model.get('label'));
+      this.viewModel = this.getViewModel();
     },
 
     /**
@@ -138,18 +147,16 @@ define([
         viewModel = patchViewModel(viewModel, this.model, this.configuration);
       }
 
+      //console.log("rendering stuff", viewModel.label);
+
       var html = Mustache.render(template, viewModel, this.config.view.templates.partials);
       return HtmlUtils.sanitizeHtml(html);
     },
 
     injectContent: function (slot) {
-      var ref, ref1;
-      var renderers = (ref = this.config) != null ? (ref1 = ref.renderers) != null ? ref1[slot] : void 0 : void 0;
-      if (renderers == null) {
+      var renderers = this.config.renderers[slot];
+      if (!renderers) {
         return;
-      }
-      if (!_.isArray(renderers)) {
-        renderers = [renderers];
       }
 
       _.each(renderers, function (renderer) {
@@ -157,14 +164,13 @@ define([
           return renderer.call(this, this.$el, this.model, this.configuration);
         }
       }, this);
-      return this;
     },
 
     /**
      * Fully renders the view.
      */
     render: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderSkeleton(viewModel);
       this.renderSelection(viewModel);
       this.updateVisibility(viewModel);
@@ -174,11 +180,10 @@ define([
     renderSkeleton: function (viewModel) {
       var html = this.getHtml(this.templates.skeleton, viewModel);
       this.$el.html(html);
-      return viewModel;
     },
 
     updateSelection: function() {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderSelection(viewModel);
     },
 
@@ -186,17 +191,10 @@ define([
       var html = this.getHtml(this.templates.selection, viewModel);
       this.$(this.config.view.slots.selection).replaceWith(html);
       this.injectContent('selection');
-
-      window.countRenders[this.type] = (window.countRenders[this.type] || 0) + 1;
-      return this;
     },
 
     updateVisibility: function () {
-      if (this.model.getVisibility()) {
-        this.$el.show();
-      } else {
-        this.$el.hide();
-      }
+      this.$el.toggleClass('hidden', !this.viewModel.isVisible);
     },
 
     /*

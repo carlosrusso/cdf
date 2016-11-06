@@ -70,18 +70,24 @@ define([
       this.onChange(model, 'isSelected selectedItems', this.updateControls);
       this.onChange(model, 'numberOfSelectedItems isBusy', this.updateFooter);
       this.onChange(model, 'isDisabled', this.updateAvailability);
-      this.onChange(model, 'searchPattern', this.updateFilter);
+      this.onChange(model, 'searchPattern', this.updateFilter, -1);
     },
 
     getViewModel: function () {
       var viewModel = this.base();
+
+      var model = this.model;
+      var hasChanged = _.memoize(function() {
+        return model.hasChanged();
+      });
+
       return _.extend(viewModel, {
-        hasChanged: this.model.hasChanged()
+        hasChanged: hasChanged
       });
     },
 
     render: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderSkeleton(viewModel);
       this.renderOverlay(viewModel);
       this.renderHeader(viewModel);
@@ -93,27 +99,30 @@ define([
     },
 
     updateHeader: function () {
-      var viewModel = this.getViewModel();
-      this.renderHeader(viewModel);
+      var viewModel = this.viewModel;
+      this.renderHeader(this.viewModel);
+      return viewModel;
     },
 
     updateFooter: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderFooter(viewModel);
+      return viewModel;
     },
 
 
     updateControls: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderControls(viewModel);
+      return viewModel;
     },
 
 
     updateCollapse: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.base();
       this.renderHeader(viewModel);
       this.renderOverlay(viewModel);
-      this.renderCollapse(viewModel);
+      return viewModel;
     },
 
     renderCollapse: function (viewModel) {
@@ -140,7 +149,7 @@ define([
     },
 
     updateAvailability: function () {
-      var viewModel = this.getViewModel();
+      var viewModel = this.viewModel;
       this.renderAvailability(viewModel);
     },
 

@@ -32,8 +32,6 @@ define([
    * @ignore
    */
 
-  window.countRenders = {};
-
   /**
    * Map the handlers that are directly relayed to view events,
    * which will be processed by the view's controller.
@@ -84,17 +82,22 @@ define([
     getViewModel: function () {
       var viewModel = this.base();
 
-      var selectedItems = this.configuration
-        .selectionStrategy
-        .strategy
-        .getSelectedItems(this.model, 'label');
+      // lazy evaluation of viewModel properties
+      var that = this;
+      var selectedItems = _.memoize(function(){
+        return that.configuration
+          .selectionStrategy
+          .strategy
+          .getSelectedItems(that.model, 'label');
+      });
 
       var children = this.model.children();
+      var modelSelection = this.model.getSelection();
       _.extend(viewModel, {
         selectedItems: selectedItems,
-        allItemsSelected: this.model.getSelection() === SelectionStates.ALL,
-        isPartiallySelected: this.model.getSelection() === SelectionStates.SOME,
-        noItemsSelected: this.model.getSelection() === SelectionStates.NONE,
+        allItemsSelected: modelSelection === SelectionStates.ALL,
+        isPartiallySelected: modelSelection === SelectionStates.SOME,
+        noItemsSelected: modelSelection === SelectionStates.NONE,
         numberOfChildren: children ? children.length : 0
       });
 
@@ -104,6 +107,7 @@ define([
     render: function(){
       var viewModel = this.base();
       this.renderCollapse(viewModel);
+      return viewModel;
     },
 
     renderSkeleton: function(viewModel) {
@@ -117,11 +121,26 @@ define([
           });
         }
       }
+      return viewModel;
     },
 
+    renderCollapse: _.noop,
+    /**
+     */
+    updateCollapse: function () {
+      var viewModel = this.viewModel;
+      this.renderCollapse(viewModel);
+      return viewModel;
+    },
+
+
     updateFilter: function() {
+      var $filter = this.$(this.config.view.slots.filter);
+      var v = $filter.val();
       var text = this.model.root().get('searchPattern');
-      this.$(this.config.view.slots.filter).val(text);
+      if(v !== text){
+        $filter.val(text);
+      }
     },
 
     /*
@@ -138,20 +157,22 @@ define([
      */
     setChildren: function(childViews) {
       var currentNodes = this.getChildren();
+
+      var elems = [];
       var futureNodes = childViews.map(function(view) {
-        return view.$el.get(0);
+        var $el = view.$el;
+        elems.push($el.get(0));
+        return $el;
       });
 
-      if( _.isEqual(currentNodes.toArray(), futureNodes)) {
+      if( _.isEqual(currentNodes.toArray(), elems)) {
         return;
       }
 
       var $nursery = this.$(this.config.view.slots.children);
       $nursery.hide();
       currentNodes.detach();
-      $nursery.append(childViews.map(function(view) {
-        return view.$el;
-      }));
+      $nursery.append(futureNodes);
       $nursery.show();
     },
 
