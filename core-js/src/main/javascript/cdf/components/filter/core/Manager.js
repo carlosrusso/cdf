@@ -12,12 +12,15 @@
  */
 
 define([
+  '../../../lib/jquery',
   'amd!../../../lib/underscore',
   '../../../lib/Tree',
   '../../../Logger'
-], function(_, Tree, Logger) {
+], function($, _, Tree, Logger) {
 
   "use strict";
+
+
 
   return Tree.extend(/** @lends cdf.components.filter.controllers.Manager# */{
     /**
@@ -30,17 +33,18 @@ define([
       view: null,
       configuration: null
     },
+
     /**
      * @constructs
      * @amd cdf/components/filter/controllers/Manager
      * @extends cdf.lib.baseSelectionTree.Tree
-     * @classdesc Controller responsible for managing the hierarchy of views and
-     *   controllers. When data is added to the model, the Manager reacts by
-     *   creating the appropriate views and respective controllers.
+     * @classdesc Controller responsible for managing the hierarchy of views.
+     * When data is added to the model, the Manager reacts by
+     * creating the appropriate views.
+     *
      * @param {object} node
      * @ignore
      */
-
     constructor: function() {
       this.base.apply(this, arguments);
       this.updateChildren();
@@ -52,6 +56,14 @@ define([
         this.createView(this.get('model'));
       }
       this.applyBindings();
+    },
+
+    /**
+     * Keep the manager in sync with the model
+     */
+    comparator: {
+      group: [sortByModel],
+      item: [sortByModel]
     },
 
     /**
@@ -125,7 +137,6 @@ define([
           'remove': this.onRemove,
           'update': this.onUpdate,
           'sort': debounce(this.onSort)
-          //'selected': this.sortSiblings
         },
         view: {
           'filter': debounce(this.onFilterChange),
@@ -176,9 +187,9 @@ define([
         model: model.parent()
       });
 
-      var greatParentManager = parentManager.parent();
-      if (greatParentManager) {
-        var parentViewType = greatParentManager.get('view')
+      var grandParentManager = parentManager.parent();
+      if (grandParentManager) {
+        var parentViewType = grandParentManager.get('view')
           .config.view.childConfig.withChildrenPrototype;
         var parentView = parentManager.get('view');
         if (parentView.type !== parentViewType) {
@@ -205,18 +216,18 @@ define([
         model: collection.parent
       });
       var view = updatedNode.get('view');
-      //view.updateScrollBar();
     },
 
     onSort: function(model, options) {
-      // Compute nodes of (parent) view now that they have been sorted
-      // We are currently not bothering to sort the Manager tree
-      // to match the order defined in the model
-      var children = this.children();
-      var childViews = this.get('model').children().map(function(m){
-        return children.findWhere({'model': m}).get('view');
-      });
+      // Ensure the manager nodes are in the same order as the model
+      this.sort();
 
+      var children = this.children();
+      if(!children){
+        return;
+      }
+
+      var childViews = children.pluck('view');
       this.get('view').setChildren(childViews)
     },
 
@@ -284,7 +295,7 @@ define([
     requestPage: function(page, searchPattern) {
       var getPage = this.get('configuration').pagination.getPage;
       if (!_.isFunction(getPage)) {
-        return this;
+        return $.when(null);
       }
 
       return getPage(page, searchPattern).then(function(json) {
@@ -306,7 +317,8 @@ define([
       var configuration = this.get('configuration');
       configuration.selectionStrategy.strategy.filter(model, text);
 
-      if (configuration.search.serverSide === true) {
+      if (text && configuration.search.serverSide === true) {
+        //this.get('model').empty();
         this.requestPage(0, text)
       }
     },
@@ -339,5 +351,17 @@ define([
       }
     }
   });
+
+  /**
+   * Follow the order by which the models are defined
+   * @param left
+   * @param right
+   * @returns {number}
+   */
+  function sortByModel(left, right) {
+    var l = left.get('model').index();
+    var r = right.get('model').index();
+    return l - r;
+  }
 
 });
