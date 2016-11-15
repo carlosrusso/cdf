@@ -228,7 +228,8 @@ define([
         }
       }
 
-      return $.extend(true, configuration, this._mapAddInsToConfiguration(), _.result(this, 'options'));
+      this._mapAddInsToConfiguration(configuration);
+      return $.extend(true, configuration, _.result(this, 'options'));
     },
 
     /**
@@ -261,7 +262,7 @@ define([
      *                   or the array of slot-addIns pair values.
      * @private
      */
-    _mapAddInsToConfiguration: function () {
+    _mapAddInsToConfiguration: function (configuration) {
       /*
        * Traverse the list of declared addIns,
        * Get the addIns, the user-defined options, wrap this into a function
@@ -279,8 +280,9 @@ define([
               }
 
               var addInOptions = that.getAddInOptions(slot, addInName);
-              return function($tgt, model, configuration) {
+              return function($tgt, model, viewModel, configuration) {
                 var st = {
+                  viewModel: viewModel,
                   model: model,
                   configuration: configuration,
                   dashboard: that.dashboard
@@ -301,17 +303,16 @@ define([
        */
       var addInHash = {
         postUpdate: 'input.hooks.postUpdate',
-        renderRootHeader: 'component.Root.renderers.header',
-        renderRootSelection: 'component.Root.renderers.selection',
-        renderRootFooter: 'component.Root.renderers.footer',
-        renderGroupSelection: 'component.Group.renderers.selection',
-        renderItemSelection: 'component.Item.renderers.selection',
+        renderRootHeader: 'component.Root.view.renderers.header',
+        renderRootSelection: 'component.Root.view.renderers.selection',
+        renderRootFooter: 'component.Root.view.renderers.footer',
+        renderGroupSelection: 'component.Group.view.renderers.selection',
+        renderItemSelection: 'component.Item.view.renderers.selection',
         sortItem: 'component.Item.sorters',
         sortGroup: 'component.Group.sorters',
         outputFormat: 'output.outputFormat'
       };
 
-      var configuration = {};
       _.each(addInList, function (functionList, addInSlot) {
         if (!_.isEmpty(functionList)) {
           setProperty(configuration, addInHash[addInSlot], addInList[addInSlot]);
@@ -327,7 +328,13 @@ define([
     var parentAddress = _.initial(address);
     var childKey = _.last(address);
     var parent = _.reduce(parentAddress, getOrCreateEntry, obj);
-    parent[childKey] = value;
+
+    var existingValue = parent[childKey];
+    if(_.isArray(value) && _.isArray(existingValue)){
+      Array.prototype.push.apply(parent[childKey], value)
+    } else {
+      parent[childKey] = value;
+    }
 
     function getOrCreateEntry(memo, key) {
       if (memo[key] == null) {

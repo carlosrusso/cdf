@@ -31,42 +31,7 @@ define([
      * @const
      * @type {string}
      */
-    type: 'Group',
-
-    /**
-     * Default event mappings.
-     *
-     * @type {object}
-     */
-    events: {
-      'change    .filter-filter:eq(0)': 'onFilterChange',
-      'keyup     .filter-filter:eq(0)': 'onFilterChange',
-      'click     .filter-filter-clear:eq(0)': 'onFilterClear',
-      'click     .filter-group-selection': 'onSelection',
-      'click     .filter-collapse-icon:eq(0)': 'onToggleCollapse',
-      'mouseover .filter-group-container': 'onMouseOver',
-      'mouseout  .filter-group-container': 'onMouseOut'
-    },
-
-    bindToModel: function (model) {
-      this.base(model);
-      this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems', this.updateSelection);
-      this.onChange(model, 'isCollapsed', this.updateCollapse);
-    },
-
-    /**
-     * @param {object} viewModel
-     */
-    renderCollapse: function (viewModel) {
-      var isCollapsed = viewModel.isCollapsed;
-
-      this.$('.filter-collapse-icon')
-        .toggleClass('collapsed', isCollapsed)
-        .toggleClass('expanded', !isCollapsed);
-
-      var $collapsible = this.$('.filter-group-body, .filter-group-footer');
-      $collapsible.toggleClass('hidden', isCollapsed);
-    }
+    type: 'Group'
   });
 
 });

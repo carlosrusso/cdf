@@ -14,8 +14,9 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  './Parent'
-], function ($, _, ParentView) {
+  './Parent',
+  './renderSlot'
+], function ($, _, ParentView, renderSlot) {
 
   "use strict";
 
@@ -36,40 +37,8 @@ define([
      */
     type: 'Root',
 
-    /**
-     * Default event mappings.
-     *
-     * @type {object}
-     */
-    events: {
-      'click     .filter-root-header:eq(0)': 'onToggleCollapse',
-      'click     .filter-root-selection:eq(0)': 'onSelection',
-      'click     .filter-btn-apply:eq(0)': 'onApply',
-      'click     .filter-btn-cancel:eq(0)': 'onCancel',
-      'mouseover .filter-root-header': 'onMouseOver',
-      'mouseout  .filter-root-header': 'onMouseOut',
-      'keyup   .filter-filter:eq(0)': 'onFilterChange',
-      'change  .filter-filter:eq(0)': 'onFilterChange',
-      'click  .filter-filter-clear:eq(0)': 'onFilterClear',
-      'click  .filter-overlay': 'onOverlayClick'
-    },
-
-    initialize: function (options) {
-      this.renderOverlay = this._renderSlot('overlay');
-      this.renderHeader = this._renderSlot('header');
-      this.renderFooter = this._renderSlot('footer');
-      this.renderControls = this._renderSlot('controls');
-      this.base(options);
-    },
-
     bindToModel: function (model) {
       this.base(model);
-      this.onChange(model, 'isCollapsed', this.updateCollapse);
-      this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems', this.updateHeader);
-      this.onChange(model, 'isSelected numberOfSelectedItems numberOfItems selectedItems', this.updateSelection);
-      this.onChange(model, 'isSelected selectedItems', this.updateControls);
-      this.onChange(model, 'numberOfSelectedItems isBusy', this.updateFooter);
-      this.onChange(model, 'isDisabled', this.updateAvailability);
       this.onChange(model, 'searchPattern', this.updateFilter, -1);
     },
 
@@ -86,89 +55,20 @@ define([
       });
     },
 
-    render: function () {
-      var viewModel = this.viewModel;
-      this.renderSkeleton(viewModel);
-      this.renderOverlay(viewModel);
-      this.renderHeader(viewModel);
-      this.renderCollapse(viewModel);
-      this.renderSelection(viewModel);
-      this.renderControls(viewModel);
-      this.renderFooter(viewModel);
-      this.renderAvailability(viewModel);
-    },
-
-    updateHeader: function () {
-      var viewModel = this.viewModel;
-      this.renderHeader(this.viewModel);
-      return viewModel;
-    },
-
-    updateFooter: function () {
-      var viewModel = this.viewModel;
-      this.renderFooter(viewModel);
-      return viewModel;
-    },
-
-
-    updateControls: function () {
-      var viewModel = this.viewModel;
-      this.renderControls(viewModel);
-      return viewModel;
-    },
-
-
-    updateCollapse: function () {
-      var viewModel = this.base();
-      this.renderHeader(viewModel);
-      this.renderOverlay(viewModel);
-      return viewModel;
-    },
-
-    renderCollapse: function (viewModel) {
-      var $tgt = this.$(this.config.view.slots.container);
-
-      if (viewModel.isDisabled === true) {
-        var isAlwaysExpand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
-        $tgt
-          .toggleClass('expanded', false)
-          .toggleClass('collapsed', !isAlwaysExpand)
-          .toggleClass('always-expanded', isAlwaysExpand);
-      } else if (viewModel.alwaysExpanded === true) {
-        $tgt
-          .toggleClass('expanded', false)
-          .toggleClass('collapsed', false)
-          .toggleClass('always-expanded', true);
-      } else {
-        var isCollapsed = viewModel.isCollapsed;
-        $tgt
-          .toggleClass('expanded', !isCollapsed)
-          .toggleClass('collapsed', isCollapsed)
-          .toggleClass('always-expanded', false);
-      }
-    },
-
-    updateAvailability: function () {
-      var viewModel = this.viewModel;
-      this.renderAvailability(viewModel);
-    },
-
-    renderAvailability: function (viewModel) {
-      this.$(this.config.view.slots.container).toggleClass('disabled', viewModel.isDisabled === true);
-    },
-
     onOverlayClick: function (event) {
       this.trigger("click:outside", this.model);
+      var configView = this.config.view;
 
-      if (this.config.view.overlaySimulateClick === true) {
-        this.$(this.config.view.slots.overlay)
+      if (configView.overlaySimulateClick === true) {
+
+        this.$slots.container
           .toggleClass('expanded', false)
           .toggleClass('collapsed', true);
 
         _.delay(function () {
           var $element = $(document.elementFromPoint(event.clientX, event.clientY));
 
-          $element.closest('.filter-root-header').click();
+          $element.closest(configView.slots.header).click();
         }, 0);
       }
     }

@@ -10,9 +10,16 @@
 .filter-root-container.expanded > .filter-root-body {
   transition: max-height 0.3s cubic-bezier(0.42, 0, 0.58, 1);
 }
+
+
 /*
  * Layout, positioning
  */
+
+.filter-hidden {
+  display: none;
+}
+
 .filter-root-container {
   position: relative;
   z-index: 10;
@@ -21,7 +28,7 @@
 .filter-root-container.expanded {
   z-index: 1000;
 }
-.filter-overlay.expanded {
+.filter-root-container.expanded > .filter-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -30,7 +37,7 @@
   background: #fff;
   opacity: 0.5;
 }
-.filter-overlay.collapsed {
+.filter-root-container.collapsed > .filter-overlay{
   display: none;
 }
 .filter-title {
@@ -73,9 +80,7 @@
   width: 10px;
   height: 10px;
 }
-.no-svg .filter-collapse-icon {
-  background: url("images/filter-arrow.png") no-repeat left center;
-}
+
 .filter-collapse-icon.collapsed {
   background-position: left center;
 }
@@ -207,9 +212,7 @@
   left: 10px;
   background: url("images/search-icon.svg") no-repeat center center;
 }
-.filter-controls .filter-filter .no-svg .filter-filter-icon {
-  background: url("images/search-icon.png") no-repeat center center;
-}
+
 .filter-controls .filter-filter .filter-filter-clear {
   width: 10px;
   height: 10px;
@@ -222,9 +225,7 @@
 .filter-controls .filter-filter .filter-filter-clear:hover {
   background-position: right center;
 }
-.filter-controls .filter-filter .no-svg .filter-filter-clear {
-  background: url("images/close-icon.png");
-}
+
 .filter-root-selection {
   position: relative;
 }
@@ -281,9 +282,10 @@
   user-select: none;
   cursor: pointer;
 }
-.single-select .filter-item-container.all-selected .filter-item-body {
+.filter-root-container.single-select .filter-item-container.all-selected .filter-item-body {
   cursor: default;
 }
+
 .filter-root-selection-label,
 .filter-group-label,
 .filter-item-label {
@@ -394,8 +396,9 @@
 .filter-item-container:hover .filter-item-selection-icon {
   border-color: #005ca7;
 }
-.filter-root-selection-icon.all-selected,
-.filter-group-selection-icon.all-selected,
+
+.filter-root-selection.all-selected .filter-root-selection-icon,
+.filter-group-container.all-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon,
 .filter-item-container.all-selected .filter-item-selection-icon {
   border-color: #005ca7;
 }
@@ -410,22 +413,20 @@
   background-repeat: no-repeat;
   background-position: left center;
 }
-.filter-root-container.multi-select .filter-root-selection-icon.all-selected,
-.filter-root-container.multi-select .filter-group-selection-icon.all-selected,
+
+
+.filter-root-container.multi-select.all-selected .filter-root-selection-icon,
+.filter-root-container.multi-select .filter-group-container.all-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon,
 .filter-root-container.multi-select .filter-item-container.all-selected .filter-item-selection-icon {
   background-color: #005ca7;
   background-position: center center;
 }
-.filter-root-container.multi-select .filter-root-selection-icon.some-selected,
-.filter-root-container.multi-select .filter-group-selection-icon.some-selected,
+.filter-root-container.multi-select.some-selected .filter-root-selection-icon,
+.filter-root-container.multi-select .filter-group-container.some-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon,
 .filter-root-container.multi-select .filter-item-container.some-selected .filter-item-selection-icon {
   background-position: right center;
 }
-.no-svg .filter-root-container.multi-select .filter-root-selection-icon,
-.no-svg .filter-root-container.multi-select .filter-group-selection-icon,
-.no-svg .filter-root-container.multi-select .filter-item-selection-icon {
-  background-image: url("images/checkbox-sprite.png");
-}
+
 .filter-root-container.single-select .filter-root-selection-icon,
 .filter-root-container.single-select .filter-group-selection-icon,
 .filter-root-container.single-select .filter-item-container .filter-item-selection-icon {
@@ -438,15 +439,15 @@
   border: 1px solid #005ca7;
 }
 .filter-root-container.single-select .filter-item-container.all-selected .filter-item-selection-icon {
-  border: 1px solid #c6c6c6 !important;
+  border: 1px solid #c6c6c6;
 }
-.filter-root-container.single-select .filter-root-selection-icon.none-selected,
-.filter-root-container.single-select .filter-group-selection-icon.none-selected,
+.filter-root-container.single-select.none-selected .filter-root-selection-icon,
+.filter-root-container.single-select .filter-group-container.none-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon,
 .filter-root-container.single-select .filter-item-container.none-selected .filter-item-selection-icon {
   background: #fff;
 }
-.filter-root-container.single-select .filter-root-selection-icon.all-selected > div,
-.filter-root-container.single-select .filter-group-selection-icon.all-selected > div,
+.filter-root-container.single-select.all-selected .filter-root-selection-icon > div,
+.filter-root-container.single-select .filter-group-container.all-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon > div,
 .filter-root-container.single-select .filter-item-container.all-selected .filter-item-selection-icon > div {
   width: 6px;
   height: 6px;
@@ -461,8 +462,8 @@
   border-radius: 100%;
   background: #005ca7;
 }
-.filter-root-container.single-select .filter-root-selection-icon.some-selected,
-.filter-root-container.single-select .filter-group-selection-icon.some-selected,
+.filter-root-container.single-select.some-selected .filter-root-selection-icon,
+.filter-root-container.single-select .filter-group-container.some-selected > .filter-group-header > .filter-group-selection > .filter-group-selection-icon,
 .filter-root-container.single-select .filter-item-container.some-selected .filter-item-selection-icon {
   background: url("images/collapse.png") no-repeat 50% 50%;
   background-position: -24px 50%;

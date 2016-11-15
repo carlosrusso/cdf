@@ -12,58 +12,53 @@
  */
 
 define([
-  'text!./templates/Root-skeleton.html',
-  'text!./templates/Root-overlay.html',
-  'text!./templates/Root-header.html',
-  'text!./templates/Root-controls.html',
-  'text!./templates/Root-selection.html',
-  'text!./templates/Root-footer.html',
-  'text!./templates/Group-skeleton.html',
-  'text!./templates/Group-selection.html',
-  'text!./templates/Item-template.html',
+  'text!./templates/Root/Root-skeleton.html',
+  'text!./templates/Root/Root-header.html',
+  'text!./templates/Root/Root-controls.html',
+  'text!./templates/Root/Root-footer.html',
+  'text!./templates/Group/Group-skeleton.html',
+  'text!./templates/Item/Item-template.html',
   'text!./templates/partial-filter.html'
 ], function(
-  RootSkeleton,
-  RootOverlay,
+  Root,
   RootHeader,
   RootControls,
-  RootSelection,
   RootFooter,
-  GroupSkeleton,
-  GroupSelection,
-  ItemTemplate,
+  Group,
+  Item,
   filter
 ) {
 
   "use strict";
 
-  var item = f(ItemTemplate);
+  var item = f(Item);
   var partials = {
     filter: f(filter)
   };
 
+  var value = '{{{value}}}';
+
   return {
     Root: {
-      skeleton: f(RootSkeleton),
-      overlay: f(RootOverlay),
+      container: f(Root),
       header: f(RootHeader),
       controls: f(RootControls),
-      selection: f(RootSelection),
+      value: value,
       footer: f(RootFooter),
       child: '<div class="filter-root-child"/>',
       partials: partials
     },
 
     Group: {
-      skeleton: f(GroupSkeleton),
-      selection: f(GroupSelection),
+      container: f(Group),
+      value: value,
       child: '<div class="filter-group-child"/>',
       partials: partials
     },
 
     Item: {
-      skeleton: item,
-      selection: item,
+      container: item,
+      value: value,
       partials: partials
     }
   };

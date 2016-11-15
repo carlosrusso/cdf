@@ -1,10 +1,6 @@
 <div class="filter-item-container
             {{#styles}} {{.}} {{/styles}}
-            {{#isPartiallySelected}} some-selected{{/isPartiallySelected}}
-            {{^isPartiallySelected}}
-              {{#isSelected}} all-selected{{/isSelected}}
-              {{^isSelected}} none-selected{{/isSelected}}
-            {{/isPartiallySelected}}">
+            {{selectionState}}">
     {{#header}}
     <div class="filter-item-header"> {{{header}}}</div>
     {{/header}}
@@ -21,7 +17,10 @@
         <span class="filter-item-only-this">{{strings.btnOnlyThis}}</span>
         {{/showButtonOnlyThis}}
 
-        <div class="filter-item-label" title="{{{tooltip}}}">{{{label}}}</div>
+        <div class="filter-item-label"
+             title="{{#tooltip}}{{tooltip}}{{/tooltip}}{{^tooltip}}{{{label}}}{{/tooltip}}">
+            {{{label}}}
+        </div>
 
         {{#showValue}}
         <div class="filter-item-value">{{{value}}}</div>

@@ -38,18 +38,6 @@ define([
    *
    * @type {object}
    */
-  var relayEvents = {
-    onToggleCollapse : 'toggleCollapse',
-    onApply: 'control:apply',
-    onCancel:'control:cancel'
-  };
-
-  var EventsMixin = {};
-  _.each(relayEvents, function(viewEvent, viewHandler) {
-    this[viewHandler] = function(event) {
-      this.trigger(viewEvent, this.model, event);
-    };
-  }, EventsMixin);
 
   return AbstractView.extend(/** @lends cdf.components.filter.views.Abstract# */{
 
@@ -91,51 +79,34 @@ define([
           .getSelectedItems(that.model, 'label');
       });
 
-      var children = this.model.children();
       var modelSelection = this.model.getSelection();
+      var isPartiallySelected = (modelSelection === SelectionStates.SOME);
+      var allItemsSelected = (modelSelection === SelectionStates.ALL);
+      var noItemsSelected = (modelSelection === SelectionStates.NONE);
+
+      var selectionState = "none-selected";
+      if(allItemsSelected) {
+        selectionState = "all-selected"
+      } else if(isPartiallySelected){
+        selectionState = "some-selected"
+      }
+
+      var children = this.model.children();
       _.extend(viewModel, {
         selectedItems: selectedItems,
-        allItemsSelected: modelSelection === SelectionStates.ALL,
-        isPartiallySelected: modelSelection === SelectionStates.SOME,
-        noItemsSelected: modelSelection === SelectionStates.NONE,
-        numberOfChildren: children ? children.length : 0
+        numberOfChildren: children ? children.length : 0,
+        selectionState: selectionState,
+
+        isPartiallySelected: isPartiallySelected,
+        allItemsSelected: allItemsSelected,
+        noItemsSelected: noItemsSelected
       });
 
       return viewModel;
     },
 
-    render: function(){
-      var viewModel = this.base();
-      this.renderCollapse(viewModel);
-      return viewModel;
-    },
-
-    renderSkeleton: function(viewModel) {
-      this.base(viewModel);
-
-      if (this.config.options.isResizable) {
-        var $container = this.$(this.config.view.slots.children).parent();
-        if (_.isFunction($container.resizable)) {
-          $container.resizable({
-            handles: 's'
-          });
-        }
-      }
-      return viewModel;
-    },
-
-    renderCollapse: _.noop,
-    /**
-     */
-    updateCollapse: function () {
-      var viewModel = this.viewModel;
-      this.renderCollapse(viewModel);
-      return viewModel;
-    },
-
-
     updateFilter: function() {
-      var $filter = this.$(this.config.view.slots.filter);
+      var $filter = this.$slots.filter;
       var v = $filter.val();
       var text = this.model.root().get('searchPattern');
       if(v !== text){
@@ -147,7 +118,7 @@ define([
      * Children management
      */
     getChildren: function() {
-      return this.$(this.config.view.slots.children).children();
+      return this.$slots.children.children();
     },
 
     /**
@@ -169,29 +140,53 @@ define([
         return;
       }
 
-      var $nursery = this.$(this.config.view.slots.children);
-      $nursery.hide();
+      var $nursery = this.$slots.children;
+      //$nursery.hide();
+      $nursery.toggleClass('filter-hidden', true);
       currentNodes.detach();
       $nursery.append(futureNodes);
-      $nursery.show();
+      //$nursery.show();
+      $nursery.toggleClass('filter-hidden', false);
     },
 
     createChildNode: function () {
       var $child = $(this.getHtml(this.config.view.templates.child, {}));
-      var $target = this.$(this.config.view.slots.children);
-      $child.appendTo($target);
+      $child.appendTo(this.$slots.children);
       return $child;
     },
+
+    hide: function(){
+      if(this._hiddenChildren){
+        return;
+      }
+      this._hiddenChildren = this.getChildren().detach();
+      this.isHidden = true;
+    },
+
+    show: function() {
+      if(!this._hiddenChildren){
+        return;
+      }
+      this.$slots.children.append(this._hiddenChildren);
+      this._hiddenChildren = null;
+      this.isHidden = false;
+    },
+
 
     /*
      * Scrollbar methods
      */
     updateScrollBar: function () {
-      var isPaginated = _.isFinite(this.configuration.pagination.pageSize) && this.configuration.pagination.pageSize > 0;
-      var isOverThreshold = this.model.flatten().size().value() > this.config.options.scrollThreshold;
+      var pageSize = this.configuration.pagination.pageSize;
+      var isPaginated = _.isFinite(pageSize) && pageSize > 0;
 
-      if (isPaginated || isOverThreshold) {
+      if (isPaginated) {
         this._addScrollBar();
+      } else {
+        var isOverThreshold = this.model.count() > this.config.options.scrollThreshold;
+        if(isOverThreshold){
+          this._addScrollBar();
+        }
       }
       this.restoreScrollBar();
     },
@@ -242,6 +237,6 @@ define([
       this.trigger('filter', this.model, '');
     }
 
-  }).extend(EventsMixin);
+  });
 
 });

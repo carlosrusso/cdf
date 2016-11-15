@@ -12,13 +12,14 @@
  */
 
 define([
+  '../../../lib/jquery',
   'amd!../../../lib/underscore',
   'amd!../../../lib/backbone',
   '../../../lib/mustache',
   '../../../lib/BaseEvents',
   './scrollbar/ScrollBarFactory',
   '../HtmlUtils'
-], function (_, Backbone, Mustache, BaseEvents, ScrollBarFactory, HtmlUtils) {
+], function ($, _, Backbone, Mustache, BaseEvents, ScrollBarFactory, HtmlUtils) {
 
   "use strict";
 
@@ -31,7 +32,6 @@ define([
    * @ignore
    */
 
-  window.countRenders = {};
 
   /**
    * Map the handlers that are directly relayed to view events,
@@ -39,21 +39,6 @@ define([
    *
    * @type {object}
    */
-  var relayEvents = {
-    onToggleCollapse : 'toggleCollapse',
-    onMouseOver: 'mouseover',
-    onMouseOut: 'mouseout',
-    onSelection:'selected',
-    onApply: 'control:apply',
-    onCancel:'control:cancel'
-  };
-
-  var EventsMixin = {};
-  _.each(relayEvents, function(viewEvent, viewHandler) {
-    this[viewHandler] = function(event) {
-      this.trigger(viewEvent, this.model, event);
-    };
-  }, EventsMixin);
 
   return BaseEvents.convertClass(Backbone.View).extend(/** @lends cdf.components.filter.views.Abstract# */{
     type: null,
@@ -62,11 +47,28 @@ define([
     initialize: function (options) {
       this.configuration = options.configuration;
       this.config = this.configuration[this.type];
+
+      this._staticViewModel = _.extend({
+        strings: this.config.strings,
+        selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy')
+      }, this.config.options);
+
+      this.$slots = {};
+
       this.templates = this.config.view.templates;
 
-      if(this.config.view.events){
-        this.events = this.config.view.events
+      if(!this.events) this.events = {};
+      if (this.config.view.events) {
+        this.events = $.extend(true, this.events, {}, this.config.view.events);
       }
+
+      _.each(this.config.view.relayEvents, function(viewEvent, key) {
+        this.events[key] = function(event) {
+          this.trigger(viewEvent, this.model, event);
+          return false;
+        };
+      }, this);
+
 
       this.bindToModel(this.model);
       this.setElement(options.target);
@@ -82,42 +84,26 @@ define([
      */
 
     bindToModel: function (model) {
-      this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
-      this.onChange(model, 'isVisible', this.updateVisibility);
+      //this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
+
+      _.each(this.config.view.onModelChange, function(slots, property) {
+        this.onChange(model, property, this.updateSlots(slots));
+      }, this);
     },
 
-    onChange: function (model, properties, callback, delayOverride) {
-      var props = properties.split(' ');
-      var events = _.map(props, function (prop) {
-        return prop ? 'change:' + prop : 'change';
-      }).join(' ');
-
-      var delay = delayOverride ? delayOverride : this.config.view.throttleTimeMilliseconds;
-      var c = _.bind(callback, this);
-      var f = (delay >= 0) ? _.debounce(c, delay) : c;
-      this.listenTo(model, events, f);
+    updateViewModel: function() {
+      //console.log('Calculating viewModel', this.model.get('label'));
+      this.viewModel = this.getViewModel();
     },
 
     /*
      * View methods
      */
     getViewModel: function () {
-      var model = this.model.toJSON();
-      var viewModel = _.extend(
-        model,
-        this.config.options,
-        {
-          tooltip: model.tooltip || model.label,
-          strings: this.config.strings,
-          selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy')
-        }
-      );
-      return viewModel;
-    },
+      var model = this.model.toJSON(true);
 
-    updateViewModel: function() {
-      //console.log('Calculating viewModel', this.model.get('label'));
-      this.viewModel = this.getViewModel();
+      var viewModel = _.extend(model, this._staticViewModel);
+      return viewModel;
     },
 
     /**
@@ -153,15 +139,15 @@ define([
       return HtmlUtils.sanitizeHtml(html);
     },
 
-    injectContent: function (slot) {
-      var renderers = this.config.renderers[slot];
+    injectContent: function (slot, viewModel) {
+      var renderers = this.config.view.renderers[slot];
       if (!renderers) {
         return;
       }
 
       _.each(renderers, function (renderer) {
         if (_.isFunction(renderer)) {
-          return renderer.call(this, this.$el, this.model, this.configuration);
+          return renderer.call(this, this.$el, this.model, viewModel, this.configuration);
         }
       }, this);
     },
@@ -169,32 +155,21 @@ define([
     /**
      * Fully renders the view.
      */
-    render: function () {
-      var viewModel = this.viewModel;
-      this.renderSkeleton(viewModel);
-      this.renderSelection(viewModel);
-      this.updateVisibility(viewModel);
+
+    render: function() {
+      var viewModel = this.getViewModel();
+      this.renderContainer(viewModel);
+      this._cacheSlots();
+
+      var slots = this.config.view.fullRender;
+      this.updateSlots(slots).call(this, viewModel);
+
       return viewModel;
     },
 
-    renderSkeleton: function (viewModel) {
-      var html = this.getHtml(this.templates.skeleton, viewModel);
+    renderContainer: function(viewModel) {
+      var html = this.getHtml(this.templates.container, viewModel);
       this.$el.html(html);
-    },
-
-    updateSelection: function() {
-      var viewModel = this.viewModel;
-      this.renderSelection(viewModel);
-    },
-
-    renderSelection: function (viewModel) {
-      var html = this.getHtml(this.templates.selection, viewModel);
-      this.$(this.config.view.slots.selection).replaceWith(html);
-      this.injectContent('selection');
-    },
-
-    updateVisibility: function () {
-      this.$el.toggleClass('hidden', !this.viewModel.isVisible);
     },
 
     /*
@@ -209,16 +184,44 @@ define([
      * internal machinery
      */
 
-    _renderSlot: function(slot) {
-      return _.bind(function(viewModel) {
-        if (this.templates[slot]) {
-          var html = this.getHtml(this.templates[slot], viewModel);
-          this.$(this.config.view.slots[slot]).replaceWith(html);
-        }
-        this.injectContent(slot);
-      }, this);
-    }
 
-  }).extend(EventsMixin);
+    onChange: function (model, properties, callback, delayOverride) {
+      var props = properties.split(' ');
+      var events = _.map(props, function (prop) {
+        return prop ? 'change:' + prop : 'change';
+      }).join(' ');
+
+      var delay = delayOverride ? delayOverride : this.config.view.throttleTimeMilliseconds;
+      var f = (delay >= 0) ? _.debounce(callback, delay) : callback;
+      this.listenTo(model, events, f);
+    },
+
+    _cacheSlots: function() {
+      _.each(this.config.view.slots, function(selector, slot) {
+        this.$slots[slot] = this.$(selector);
+      }, this);
+    },
+
+    updateSlots: function(slots) {
+      return function() {
+
+        var viewModel = this.getViewModel();
+
+        _.each(slots, function(slot) {
+
+          var template = this.templates[slot];
+          if (template) {
+            var html = this.getHtml(template, viewModel);
+            this.$slots[slot].html(html);
+          }
+
+          this.injectContent(slot, viewModel);
+
+        }, this);
+
+      };
+    }
+  });
+
 
 });

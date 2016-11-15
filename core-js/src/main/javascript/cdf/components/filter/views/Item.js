@@ -31,43 +31,7 @@ define([
      * @const
      * @type {string}
      */
-    type: 'Item',
-
-    /**
-     * Default event mappings.
-     *
-     * @type {object}
-     */
-    events: {
-      'mouseover .filter-item-body': 'onMouseOver',
-      'mouseout  .filter-item-body': 'onMouseOut',
-      'click     .filter-item-body': 'onSelection',
-      'click     .filter-item-only-this': 'onClickOnlyThis'
-    },
-
-    /**
-     * @param {object} model
-     */
-    bindToModel: function (model) {
-      this.base(model);
-      this.onChange(model, 'isSelected', this.updateSelection);
-      this.onChange(model, 'isVisible', this.updateVisibility);
-    },
-    /**
-     * Callback for click events on the _only-this_ button.
-     *
-     * @param {Event} event
-     */
-    onClickOnlyThis: function (event) {
-      event.stopPropagation();
-      this.trigger('control:only-this', this.model);
-    }
-
-    // renderSelection: function (viewModel) {
-    //   this.$(this.config.view.slots.selection)
-    //     .toggleClass('none-selected', !viewModel.isSelected)
-    //     .toggleClass('all-selected', viewModel.isSelected);
-    // }
+    type: 'Item'
   });
 
 });

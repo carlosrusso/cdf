@@ -27,6 +27,7 @@ define([
   './addIns',
   // CSS
   'css!./styles/filter',
+  'css!./styles/filter-legacy',
   'css!./styles/filter-notifications'
 ], function($, _, Backbone, UnmanagedComponent, Logger,
             Model, Manager, InputDataHandler, OutputDataHandler,
