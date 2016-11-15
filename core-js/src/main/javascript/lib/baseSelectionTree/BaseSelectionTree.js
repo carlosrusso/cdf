@@ -51,19 +51,10 @@ define([
     setSelection: function(newState) {
       if (this.getSelection() === newState) {
         //Logger.log("No need to set selection of ", this.get('id'), " to ", newState);
-        return this;
+        return;
       }
 
-      this.set('isSelected', newState);
-
-      if (newState !== SelectionStates.SOME) {
-        var children = this.children();
-        if (children) {
-          children.each(function(child) {
-            return child.setSelection(newState);
-          });
-        }
-      }
+      this._setSelection(newState);
 
       var parent = this.parent();
       if (parent) {
@@ -72,8 +63,27 @@ define([
       return this;
     },
 
+    _setSelection: function(newState) {
+      this.set('isSelected', newState);
+
+      if (newState === SelectionStates.SOME) {
+        return;
+      }
+
+      var children = this.children();
+      if (!children) {
+        return;
+      }
+
+      children.each(function(child) {
+        if (child.getSelection() !== newState) {
+          child._setSelection(newState);
+        }
+      });
+    },
+
     setAndUpdateSelection: function(newState) {
-      this.setSelection(newState);
+      this._setSelection(newState);
       this.update();
       this.trigger('selection', this);
     },
@@ -104,14 +114,15 @@ define([
       var root = this.root();
       root.updateSelection();
 
-      root._updateCount('numberOfItems', function(model) {
-        return 1; // 1 parent + 10 children === 11?
-      });
       root._updateCount('numberOfSelectedItems', countSelectedItem);
 
       var numberOfServerItems = root.get('numberOfItemsAtServer');
       if (numberOfServerItems != null) {
         root.set('numberOfItems', numberOfServerItems);
+      } else {
+        root._updateCount('numberOfItems', function(model) {
+          return 1; // 1 parent + 10 children === 11?
+        });
       }
       return this;
     },
@@ -399,6 +410,15 @@ define([
       this.update();
     },
 
+    count: function(countItemCallback) {
+      if(!countItemCallback){
+        countItemCallback = function() {
+          return 1;
+        }
+      }
+      return this._walkDown(countItemCallback, sum, null);
+    },
+
     _updateCount: function(property, countItemCallback) {
       function setPropertyIfParent(model, count) {
         if (model.children()) {
@@ -407,7 +427,7 @@ define([
         return count;
       }
 
-      return this.walkDown(countItemCallback, sum, setPropertyIfParent);
+      return this._walkDown(countItemCallback, sum, setPropertyIfParent);
     }
 
   }, {

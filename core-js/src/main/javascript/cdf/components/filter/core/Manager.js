@@ -132,6 +132,8 @@ define([
       var bindings = {
         model: {
           'add': this.onAdd,
+          'change:isSelected': function(){ this.optimizeUpdate('change:isSelected', 10); },
+          'change:isVisible': function(){ this.optimizeUpdate('change:isVisible', 10); },
           'remove': this.onRemove,
           'update': this.onUpdate,
           'sort': debounce(this.onSort)
@@ -179,7 +181,36 @@ define([
     // endregion
 
     // region model events
+    optimizeUpdate: function(event, delay){
+      var root = this.root();
+      var rootView = root.get('view');
+      if (rootView.isHidden) {
+        return;
+      }
+
+      var rootModel = root.get('model');
+      if (rootModel.get('numberOfItems') < 300) {
+        return;
+      }
+
+      rootView.hide();
+      rootModel.setBusy(true);
+      console.log('detach');
+
+      var that = this;
+      setTimeout(function() {
+        that._reattachDOM(rootView);
+      }, delay || 100);
+    },
+
+    _reattachDOM: _.debounce(function(rootView){
+      console.log('attach');
+      rootView.model.setBusy(false);
+      rootView.show();
+    }, 50),
+
     onAdd: function(model, collection, options) {
+      this.optimizeUpdate('add', 100);
 
       var parentManager = this.findWhere({
         model: model.parent()

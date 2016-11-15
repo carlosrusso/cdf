@@ -41,8 +41,7 @@ define([
      * @property {number}  page                  The default page.
      */
     defaults: _.extend({}, BaseSelectionTree.prototype.defaults, {
-      isCollapsed: false,
-      page: 0
+      isCollapsed: false
     }),
 
     load: function(data) {

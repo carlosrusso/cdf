@@ -74,8 +74,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		/**
 		 * returns JSON object representing tree, account for branch changes
 		 */
-		toJSON: function() {
+		toJSON: function(excludeChildren) {
 			var jsonObj = Backbone.Model.prototype.toJSON.apply(this, arguments);
+			if(excludeChildren) return jsonObj;
 			var children = this._nodes.toJSON();
 			if(children.length) jsonObj[this.nodesAttribute] = children;
 			return jsonObj;
