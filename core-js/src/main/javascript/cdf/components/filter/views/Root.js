@@ -14,9 +14,8 @@
 define([
   '../../../lib/jquery',
   'amd!../../../lib/underscore',
-  './Parent',
-  './renderSlot'
-], function ($, _, ParentView, renderSlot) {
+  './Parent'
+], function ($, _, ParentView) {
 
   "use strict";
 

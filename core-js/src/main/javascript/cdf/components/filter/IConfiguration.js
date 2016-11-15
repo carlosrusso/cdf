@@ -59,7 +59,7 @@ define([
      * @type {object}
      */
     defaults: {
-      component: defaults,
+      component: $.extend(true, {}, defaults),
       input: {
         valueAsId: false,
         valuesArray: null,
@@ -152,9 +152,8 @@ define([
         var isPaginated = query && query.getOption('pageSize') > 0;
         var searchServerSide = configuration.component.search.serverSide;
 
-        /*
-         * Handle empty datasets
-         */
+
+        // Handle empty datasets
         if (!searchServerSide && !isPaginated) {
           return $.when({});
         }
@@ -206,9 +205,7 @@ define([
         }
       });
 
-      /*
-       * Selection strategy
-       */
+      // Instantiate a Selection strategy
       var limit = _.isNumber(cd.selectionLimit) ? cd.selectionLimit : Infinity;
       configuration.component.selectionStrategy.limit = limit;
 
@@ -216,9 +213,7 @@ define([
       var strategy = new strategies[strategyCfg.type](strategyCfg);
       configuration.component.selectionStrategy.strategy = strategy;
 
-      /*
-       * Patches
-       */
+      // Patch configuration to respect the semantics of the option `showButtonOnlyThis`
       if (strategyCfg.type !== 'SingleSelect') {
         var onlyThis = cd.showButtonOnlyThis;
         if (_.isBoolean(onlyThis)) {
@@ -228,8 +223,14 @@ define([
         }
       }
 
+      // Augment configuration with addIns
       this._mapAddInsToConfiguration(configuration);
-      return $.extend(true, configuration, _.result(this, 'options'));
+
+      // Merge advanced options
+      var advancedOptions = this.options;
+      var overrides = _.isFunction(advancedOptions) ? advancedOptions(configuration) : advancedOptions;
+
+      return $.extend(true, configuration, overrides);
     },
 
     /**

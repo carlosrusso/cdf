@@ -50,10 +50,8 @@ define([
 
       this._staticViewModel = _.extend({
         strings: this.config.strings,
-        selectionStrategy: _.omit(this.configuration.selectionStrategy, 'strategy')
+        selectionStrategy: _.omit(options.configuration.selectionStrategy, 'strategy')
       }, this.config.options);
-
-      this.$slots = {};
 
       this.templates = this.config.view.templates;
 
@@ -62,18 +60,13 @@ define([
         this.events = $.extend(true, this.events, {}, this.config.view.events);
       }
 
-      _.each(this.config.view.relayEvents, function(viewEvent, key) {
-        this.events[key] = function(event) {
-          this.trigger(viewEvent, this.model, event);
-          return false;
-        };
-      }, this);
-
 
       this.bindToModel(this.model);
       this.setElement(options.target);
 
-      this.updateViewModel();
+      //this.updateViewModel();
+
+      this.$slots = {};
       this.render();
     },
 
@@ -84,16 +77,19 @@ define([
      */
 
     bindToModel: function (model) {
+      _.each(this.config.view.relayEvents, function(viewEvent, key) {
+        this.events[key] = function(event) {
+          this.trigger(viewEvent, model, event);
+          return false;
+        };
+      }, this);
+
+
       //this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
 
       _.each(this.config.view.onModelChange, function(slots, property) {
         this.onChange(model, property, this.updateSlots(slots));
       }, this);
-    },
-
-    updateViewModel: function() {
-      //console.log('Calculating viewModel', this.model.get('label'));
-      this.viewModel = this.getViewModel();
     },
 
     /*
@@ -104,6 +100,11 @@ define([
 
       var viewModel = _.extend(model, this._staticViewModel);
       return viewModel;
+    },
+
+    updateViewModel: function() {
+      //console.log('Calculating viewModel', this.model.get('label'));
+      this.viewModel = this.getViewModel();
     },
 
     /**
@@ -185,15 +186,34 @@ define([
      */
 
 
-    onChange: function (model, properties, callback, delayOverride) {
-      var props = properties.split(' ');
-      var events = _.map(props, function (prop) {
-        return prop ? 'change:' + prop : 'change';
-      }).join(' ');
+    /**
+     * Sets up a listener for changes on a list of properties.
+     *
+     * By default, the listeners are debounced.
+     *
+     * @param obj
+     * @param {string} properties - Space separated list of properties to observe.
+     * @param {function} eventHandler - Event handler.
+     * @param {number} [delayOverride]
+     */
+    onChange: function (obj, properties, eventHandler, delayOverride) {
+      var events;
+      var defaultDelay;
 
-      var delay = delayOverride ? delayOverride : this.config.view.throttleTimeMilliseconds;
-      var f = (delay >= 0) ? _.debounce(callback, delay) : callback;
-      this.listenTo(model, events, f);
+      if(properties){
+        defaultDelay = this.config.view.throttleTimeMilliseconds;
+        events = _.map(properties.split(' '), function(prop) {
+          return prop ? 'change:' + prop : 'change';
+        }).join(' ');
+      } else {
+        defaultDelay = this.config.view.modelDebounceTimeMilliseconds;
+        events = 'change';
+      }
+
+      var delay = delayOverride ? delayOverride : defaultDelay;
+      var f = (delay >= 0) ? _.debounce(eventHandler, delay) : eventHandler;
+
+      this.listenTo(obj, events, f);
     },
 
     _cacheSlots: function() {
