@@ -197,7 +197,7 @@ define([
 
     // region model events
     renderDetached: function(event){
-      console.log('evaluating offline rendering for ', this.get('model').get('label'));
+      //console.log('evaluating offline rendering for ', this.get('model').get('label'));
 
       if( !this.children() ){
         // no optimizations for leaf nodes
