@@ -46,7 +46,18 @@ define([
           return 0;
         }
 
-        return (l === true) ? -1 : 1;
+        if (l === true) {
+          return -1;
+        }
+        if (r === true) {
+          return 1;
+        }
+
+        if (l === null) {
+          return -1;
+        }
+
+        return 1; // l === false and r === null
       };
     }
   };

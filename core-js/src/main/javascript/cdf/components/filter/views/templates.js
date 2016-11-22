@@ -15,26 +15,21 @@ define([
   'text!./templates/Root/Root-skeleton.html',
   'text!./templates/Root/Root-header.html',
   'text!./templates/Root/Root-controls.html',
+  'text!./templates/Root/Root-filter.html',
   'text!./templates/Root/Root-footer.html',
   'text!./templates/Group/Group-skeleton.html',
-  'text!./templates/Item/Item-template.html',
-  'text!./templates/partial-filter.html'
+  'text!./templates/Item/Item-template.html'
 ], function(
   Root,
   RootHeader,
   RootControls,
+  RootFilter,
   RootFooter,
   Group,
-  Item,
-  filter
+  Item
 ) {
 
   "use strict";
-
-  var item = f(Item);
-  var partials = {
-    filter: f(filter)
-  };
 
   var value = '{{{value}}}';
 
@@ -43,23 +38,21 @@ define([
       container: f(Root),
       header: f(RootHeader),
       controls: f(RootControls),
+      filter: f(RootFilter),
       value: value,
       footer: f(RootFooter),
-      child: '<div class="filter-root-child"/>',
-      partials: partials
+      child: '<div class="filter-root-child"/>'
     },
 
     Group: {
       container: f(Group),
       value: value,
-      child: '<div class="filter-group-child"/>',
-      partials: partials
+      child: '<div class="filter-group-child"/>'
     },
 
     Item: {
-      container: item,
-      value: value,
-      partials: partials
+      container: f(Item),
+      value: value
     }
   };
 

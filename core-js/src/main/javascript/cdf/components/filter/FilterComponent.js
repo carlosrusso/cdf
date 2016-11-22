@@ -24,11 +24,7 @@ define([
   './core/OutputDataHandler',
   './IFilter',
   './IConfiguration',
-  './addIns',
-  // CSS
-  'css!./styles/filter',
-  'css!./styles/filter-legacy',
-  'css!./styles/filter-notifications'
+  './addIns'
 ], function($, _, Backbone, UnmanagedComponent, Logger,
             Model, Manager, InputDataHandler, OutputDataHandler,
             IFilter, IConfiguration) {

@@ -16,8 +16,8 @@ define([
   'amd!../../lib/underscore',
   '../../Logger',
   './strategies',
-  './configuration/defaults',
-  './configuration/presets'
+  './defaults',
+  './presets'
 ], function ($, _, Logger, strategies, defaults, presets) {
 
   'use strict';
@@ -173,7 +173,7 @@ define([
 
         var pattern = _.isEmpty(searchPattern) ? '' : searchPattern;
         query.setSearchPattern(pattern);
-        this.model.setBusy(true);
+        this.model.set('isLoading', true);
         try {
           switch (page) {
             case 'previous':
@@ -192,7 +192,7 @@ define([
           deferred.reject({});
         }
         return deferred.always(_.bind(function(){
-          this.model.setBusy(false);
+          this.model.set('isLoading', false);
         }, this))
       };
 
@@ -304,11 +304,11 @@ define([
        */
       var addInHash = {
         postUpdate: 'input.hooks.postUpdate',
-        renderRootHeader: 'component.Root.view.renderers.header',
-        renderRootSelection: 'component.Root.view.renderers.selection',
-        renderRootFooter: 'component.Root.view.renderers.footer',
-        renderGroupSelection: 'component.Group.view.renderers.selection',
-        renderItemSelection: 'component.Item.view.renderers.selection',
+        renderRootHeader: 'component.Root.view.partials.header.renderers',
+        renderRootSelection: 'component.Root.view.partials.selection.renderers',
+        renderRootFooter: 'component.Root.view.partials.footer.renderers',
+        renderGroupSelection: 'component.Group.view.partials.selection.renderers',
+        renderItemSelection: 'component.Item.view.partials.selection.renderers',
         sortItem: 'component.Item.sorters',
         sortGroup: 'component.Group.sorters',
         outputFormat: 'output.outputFormat'

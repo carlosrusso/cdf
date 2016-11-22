@@ -1,6 +1,6 @@
 <div class="filter-root-footer">
-    {{#isBusy}}
-    <div class="filter-busy clearfix">
+    {{#isLoading}}
+    <div class="filter-loading clearfix">
         <div class="floatingBarsG">
             <div class="blockG rotateG_01"></div>
             <div class="blockG rotateG_02"></div>
@@ -11,9 +11,9 @@
             <div class="blockG rotateG_07"></div>
             <div class="blockG rotateG_08"></div>
         </div>
-        <div class="filter-busy-info">{{strings.busyInfo}}</div>
+        <div class="filter-loading-info">{{strings.loadingInfo}}</div>
     </div>
-    {{/isBusy}}
+    {{/isLoading}}
 
     {{#reachedSelectionLimit}}
     <div class="filter-root-notification">

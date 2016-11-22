@@ -53,7 +53,7 @@ define([
         selectionStrategy: _.omit(options.configuration.selectionStrategy, 'strategy')
       }, this.config.options);
 
-      this.templates = this.config.view.templates;
+      //this.templates = this.config.view.templates;
 
       if(!this.events) this.events = {};
       if (this.config.view.events) {
@@ -63,8 +63,7 @@ define([
 
       this.bindToModel(this.model);
       this.setElement(options.target);
-
-      //this.updateViewModel();
+      this.updateViewModel();
 
       this.$slots = {};
       this.render();
@@ -78,17 +77,33 @@ define([
 
     bindToModel: function (model) {
       _.each(this.config.view.relayEvents, function(viewEvent, key) {
-        this.events[key] = function(event) {
-          this.trigger(viewEvent, model, event);
-          return false;
-        };
+        var eventHandler = this.events[key];
+        if(!eventHandler){
+
+          this.events[key] = function(event) {
+            this.trigger(viewEvent, model, event);
+            return false;
+          };
+
+        } else if (_.isFunction(eventHandler)){
+
+          this.events[key] = function(event) {
+            eventHandler.call(this, arguments);
+            this.trigger(viewEvent, model, event);
+            return false;
+          };
+        }
       }, this);
 
 
-      //this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
+      this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
 
       _.each(this.config.view.onModelChange, function(slots, property) {
-        this.onChange(model, property, this.updateSlots(slots));
+        var r = this.renderPartials(slots);
+        this.onChange(model, property, function(){
+          var viewModel = this.getViewModel();
+          r.call(this, viewModel);
+        });
       }, this);
     },
 
@@ -110,7 +125,7 @@ define([
     /**
      * Renders a template to a string whose html is properly sanitized.
      *
-     * @param {string} template
+     * @param {string} template - A Mustache template
      * @param {object} viewModel
      * @return {string} The sanitized html
      */
@@ -136,19 +151,39 @@ define([
 
       //console.log("rendering stuff", viewModel.label);
 
-      var html = Mustache.render(template, viewModel, this.config.view.templates.partials);
+      var html = Mustache.render(template, viewModel, this.config.view.main.templatePartials);
       return HtmlUtils.sanitizeHtml(html);
     },
 
+    renderPartials: function(slots) {
+      return function(viewModel) {
+
+        _.each(slots, function(slot) {
+
+          var template = this.config.view.partials[slot].template;
+          if (template) {
+            var html = this.getHtml(template, viewModel);
+            var $element = this.getSlot(slot);
+            $element.html(html);
+          }
+
+          this.injectContent(slot, viewModel);
+
+        }, this);
+
+      };
+    },
+
     injectContent: function (slot, viewModel) {
-      var renderers = this.config.view.renderers[slot];
+      var renderers = this.config.view.partials[slot].renderers;
       if (!renderers) {
         return;
       }
 
+      var $tgt = this.getSlot(slot);
       _.each(renderers, function (renderer) {
         if (_.isFunction(renderer)) {
-          return renderer.call(this, this.$el, this.model, viewModel, this.configuration);
+          return renderer.call(this, $tgt, viewModel, this.config, this.model, this.configuration);
         }
       }, this);
     },
@@ -160,16 +195,15 @@ define([
     render: function() {
       var viewModel = this.getViewModel();
       this.renderContainer(viewModel);
-      this._cacheSlots();
 
-      var slots = this.config.view.fullRender;
-      this.updateSlots(slots).call(this, viewModel);
+      var slots = this.config.view.main.render;
+      this.renderPartials(slots).call(this, viewModel);
 
       return viewModel;
     },
 
     renderContainer: function(viewModel) {
-      var html = this.getHtml(this.templates.container, viewModel);
+      var html = this.getHtml(this.config.view.main.template, viewModel);
       this.$el.html(html);
     },
 
@@ -216,30 +250,14 @@ define([
       this.listenTo(obj, events, f);
     },
 
-    _cacheSlots: function() {
-      _.each(this.config.view.slots, function(selector, slot) {
-        this.$slots[slot] = this.$(selector);
-      }, this);
-    },
+    getSlot: function(slot) {
+      var $element = this.$slots[slot];
+      if(!$element){
+        $element = this.$(this.config.view.partials[slot].selector);
+        this.$slots[slot] = $element;
+      }
 
-    updateSlots: function(slots) {
-      return function() {
-
-        var viewModel = this.getViewModel();
-
-        _.each(slots, function(slot) {
-
-          var template = this.templates[slot];
-          if (template) {
-            var html = this.getHtml(template, viewModel);
-            this.$slots[slot].html(html);
-          }
-
-          this.injectContent(slot, viewModel);
-
-        }, this);
-
-      };
+      return $element;
     }
   });
 

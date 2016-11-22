@@ -52,6 +52,7 @@ define([
         that.saveScrollBar(-1);
       });
 
+      this.attach = _.debounce(this._attach, 1);
       this.updateScrollBar();
     },
 
@@ -106,7 +107,7 @@ define([
     },
 
     updateFilter: function() {
-      var $filter = this.$slots.filter;
+      var $filter = this.getSlot('filter').find('input');
       var v = $filter.val();
       var text = this.model.root().get('searchPattern');
       if(v !== text){
@@ -118,7 +119,7 @@ define([
      * Children management
      */
     getChildren: function() {
-      return this.$slots.children.children();
+      return this.getSlot('children').children();
     },
 
     /**
@@ -140,7 +141,7 @@ define([
         return;
       }
 
-      var $nursery = this.$slots.children;
+      var $nursery = this.getSlot('children');
       //$nursery.hide();
       $nursery.toggleClass('filter-hidden', true);
       currentNodes.detach();
@@ -150,28 +151,59 @@ define([
     },
 
     createChildNode: function () {
-      var $child = $(this.getHtml(this.config.view.templates.child, {}));
-      $child.appendTo(this.$slots.children);
+      var $child = $(this.getHtml(this.config.view.partials.child.template, {}));
+      $child.appendTo(this.getSlot('children'));
       return $child;
     },
 
-    hide: function(){
-      if(this._hiddenChildren){
+    renderOffline: function(event) {
+
+      var delays = this.config.view.delays.renderOffline;
+      var delay = delays[event] || delays["default"];
+      if (delay < 0) {
         return;
       }
-      this._hiddenChildren = this.getChildren().detach();
-      this.isHidden = true;
+
+      this._detach();
+
+      var that = this;
+      setTimeout(function() {
+        that.attach();
+      }, delay || 0);
     },
 
-    show: function() {
-      if(!this._hiddenChildren){
+    _detach: function(){
+      if(this._detachedNodes){
         return;
       }
-      this.$slots.children.append(this._hiddenChildren);
-      this._hiddenChildren = null;
-      this.isHidden = false;
+      if(this.model.get('numberOfItems') < this.config.options.detachThreshold){
+        return;
+      }
+      // console.log('Detaching', this.model.isRoot() ? "root" : this.model.get('label'));
+
+      this.areChildrenDetached = true;
+
+      var $node = this.getSlot('detach') || this.$el;
+
+      var clones = $node.children().clone(false);
+      this._detachedNodes = $node.children().detach();
+      $node.append(clones);
+
     },
 
+    _attach: function() {
+      if(!this._detachedNodes){
+        return;
+      }
+      this.areChildrenDetached = false;
+
+      var $node = this.getSlot('detach') || this.$el;
+      $node
+        .empty() // remove clones
+        .append(this._detachedNodes); // append real nodes
+
+      this._detachedNodes = null;
+    },
 
     /*
      * Scrollbar methods

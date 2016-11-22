@@ -1,12 +1,12 @@
 /************************
  *  Notifications
  */
-.filter-busy {
+.filter-loading {
     background: rgba(0, 92, 167, .1);
     padding: 10px;
 }
 
-.filter-busy-info {
+.filter-loading-info {
     float: left;
     font-size: 13px;
     line-height: 17px;

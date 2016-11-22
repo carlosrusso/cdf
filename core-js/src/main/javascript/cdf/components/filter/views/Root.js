@@ -52,24 +52,6 @@ define([
       return _.extend(viewModel, {
         hasChanged: hasChanged
       });
-    },
-
-    onOverlayClick: function (event) {
-      this.trigger("click:outside", this.model);
-      var configView = this.config.view;
-
-      if (configView.overlaySimulateClick === true) {
-
-        this.$slots.container
-          .toggleClass('expanded', false)
-          .toggleClass('collapsed', true);
-
-        _.delay(function () {
-          var $element = $(document.elementFromPoint(event.clientX, event.clientY));
-
-          $element.closest(configView.slots.header).click();
-        }, 0);
-      }
     }
   });
 

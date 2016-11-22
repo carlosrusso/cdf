@@ -38,7 +38,7 @@ define([
         }
       }, view.config.view.scrollbar.options);
 
-      this.scrollbar = view.$(view.config.view.slots.children)
+      this.scrollbar = view.$(view.config.view.partials.children.selector)
         .parent()
         .mCustomScrollbar(options);
     },

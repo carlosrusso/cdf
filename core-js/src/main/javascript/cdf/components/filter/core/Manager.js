@@ -27,9 +27,9 @@ define([
      * @type {{model: object, view: object, configuration: object}}
      */
     defaults: {
-      model: null,
-      view: null,
-      configuration: null
+        model: null,
+        view: null,
+        configuration: null
     },
 
     /**
@@ -53,7 +53,9 @@ define([
       if (this.get('view') == null) {
         this.createView(this.get('model'));
       }
-      this.applyBindings();
+      if (this.get('view') != null) {
+        this.applyBindings();
+      }
     },
 
     /**
@@ -81,27 +83,33 @@ define([
         viewConfig = configuration.Root;
       } else {
         /*
-         * This node is either a Group or an Item
+         * This node is either a branch (has children) or a leaf (has no children)
          * Use the parent's configuration
          */
         var parent = this.parent();
         configuration = parent.get('configuration');
 
         var parentView = parent.get('view');
-        target = parentView.createChildNode();
 
-        var childConfig = configuration[parentView.type].view.childConfig;
-        if (newModel.children()) {
-          viewConfig = configuration[childConfig.withChildrenPrototype];
-        } else {
-          viewConfig = configuration[childConfig.withoutChildrenPrototype];
+        var childConfig = configuration[parentView.type].type.childConfig;
+        if(!childConfig) {
+          this.set('view', null);
+          return;
         }
+
+        if (newModel.children()) {
+          viewConfig = configuration[childConfig.branch];
+        } else {
+          viewConfig = configuration[childConfig.leaf];
+        }
+
+        target = parentView.createChildNode();
       }
 
       /*
        * Create new view
        */
-      var newView = new viewConfig.view.constructor({
+      var newView = new viewConfig.type.constructor({
         model: newModel,
         configuration: configuration,
         target: target
@@ -120,8 +128,13 @@ define([
           trailing: false
         });
       };
-      var debounce = function(f) {
-        var delayInMilliseconds = view.config.view.throttleTimeMilliseconds;
+      var debounce = function(f, delayType) {
+        var delayInMilliseconds;
+        if(_.isString(delayType)){
+          delayInMilliseconds = view.config.view.delays[delayType] || view.config.view.delays["default"];
+        } else {
+          delayInMilliseconds = view.config.view.throttleTimeMilliseconds;
+        }
         return _.debounce(f, delayInMilliseconds);
       };
 
@@ -131,15 +144,15 @@ define([
 
       var bindings = {
         model: {
+          'change:isSelected': function(){ this.renderDetached('change:isSelected'); },
+          'change:isVisible': function(){ this.renderDetached('change:isVisible'); },
           'add': this.onAdd,
-          'change:isSelected': function(){ this.optimizeUpdate('change:isSelected', 10); },
-          'change:isVisible': function(){ this.optimizeUpdate('change:isVisible', 10); },
           'remove': this.onRemove,
           'update': this.onUpdate,
           'sort': debounce(this.onSort)
         },
         view: {
-          'filter': debounce(this.onFilterChange),
+          'filter': debounce(this.onFilterChange, 'filter'),
           'scroll:reached:top': throttleScroll(this.getPreviousPage),
           'scroll:reached:bottom': throttleScroll(this.getNextPage)
         }
@@ -181,45 +194,39 @@ define([
     // endregion
 
     // region model events
-    optimizeUpdate: function(event, delay){
-      var root = this.root();
-      var rootView = root.get('view');
-      if (rootView.isHidden) {
+    renderDetached: function(event){
+      console.log('evaluating offline rendering for ', this.get('model').get('label'));
+
+      if( !this.children() ){
+        // no optimizations for leaf nodes
         return;
       }
 
-      var rootModel = root.get('model');
-      if (rootModel.get('numberOfItems') < 300) {
-        return;
+      // Don't optimize this view if a parent view is already being optimized
+      var m;
+      var v;
+      for(m = this; m; m = m.parent()){
+        v = m.get('view');
+        if(!v || v.areChildrenDetached) {
+          return;
+        }
       }
 
-      rootView.hide();
-      rootModel.setBusy(true);
-      console.log('detach');
-
-      var that = this;
-      setTimeout(function() {
-        that._reattachDOM(rootView);
-      }, delay || 100);
+      this.get('view').renderOffline(event);
     },
 
-    _reattachDOM: _.debounce(function(rootView){
-      console.log('attach');
-      rootView.model.setBusy(false);
-      rootView.show();
-    }, 50),
-
     onAdd: function(model, collection, options) {
-      this.optimizeUpdate('add', 100);
 
       var parentManager = this.findWhere({
         model: model.parent()
       });
 
+      this.renderDetached('add');
+
       var grandParentManager = parentManager.parent();
       if (grandParentManager) {
         var parentViewType = grandParentManager.get('view')
-          .config.view.childConfig.withChildrenPrototype;
+          .config.type.childConfig.branch;
         var parentView = parentManager.get('view');
         if (parentView.type !== parentViewType) {
           parentView.close();
@@ -239,6 +246,7 @@ define([
     },
 
     onUpdate: function(collection, options) {
+      return;
       //console.log('Update received by ', this.get('model').get('label'), collection.parent.get('label'), options);
 
       var updatedNode = this.findWhere({
@@ -248,6 +256,8 @@ define([
     },
 
     onSort: function(model, options) {
+      this.renderDetached('sort');
+
       // Ensure the manager nodes are in the same order as the model
       this.sort();
 

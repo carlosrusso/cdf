@@ -24,7 +24,7 @@ define([
     constructor: function(view) {
       this.base(view);
 
-      this.scrollbar = view.$(view.config.view.slots.children)
+      this.scrollbar = view.$(view.config.view.partials.children.selector)
         .addClass('optiscroll-content')
         .parent()
         .addClass('optiscroll')

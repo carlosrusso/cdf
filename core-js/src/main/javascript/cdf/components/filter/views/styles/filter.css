@@ -81,24 +81,32 @@
   height: 10px;
 }
 
-.filter-collapse-icon.collapsed {
+.filter-group-container.collapsed .filter-collapse-icon,
+.filter-root-container.collapsed .filter-root-header .filter-collapse-icon {
   background-position: left center;
 }
-.filter-root-header:hover > .filter-collapse-icon.collapsed,
-.filter-collapse-icon.collapsed:hover {
+
+.filter-group-container.collapsed .filter-group-header:hover .filter-collapse-icon,
+.filter-root-container.collapsed .filter-root-header:hover .filter-collapse-icon {
   background-position: -10px center;
 }
-.filter-collapse-icon.expanded {
+.filter-group-container.expanded .filter-collapse-icon,
+.filter-root-container.expanded > .filter-root-header > .filter-collapse-icon {
   background-position: -20px center;
 }
-.filter-root-header:hover > .filter-collapse-icon.expanded,
-.filter-collapse-icon.expanded:hover {
+
+.filter-group-container.expanded > .filter-group-header:hover > .filter-collapse-icon,
+.filter-root-container.expanded > .filter-root-header:hover > .filter-collapse-icon {
   background-position: -30px center;
 }
-.filter-collapse-icon.always-expanded,
-.filter-collapse-icon.disabled {
+
+.filter-group-container.disabled .filter-collapse-icon,
+.filter-root-container.disabled .filter-root-header .filter-collapse-icon,
+.filter-group-container.always-expanded .filter-collapse-icon,
+.filter-root-container.always-expanded .filter-root-header .filter-collapse-icon {
   display: none;
 }
+
 .filter-root-body {
   position: absolute;
   -webkit-box-sizing: border-box;
@@ -229,6 +237,7 @@
 .filter-root-selection {
   position: relative;
 }
+
 .multi-select .filter-root-selection {
   padding: 7px 10px;
   margin-right: 20px;
@@ -385,6 +394,7 @@
   top: 0;
   bottom: 0;
   margin: auto 0;
+  background-color: inherit;
 }
 .no-icons .filter-root-selection-icon,
 .no-icons .filter-group-selection-icon,

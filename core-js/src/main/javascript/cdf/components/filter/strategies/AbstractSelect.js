@@ -152,10 +152,10 @@ define([
       model.set('isCollapsed', willBeCollapsed);
     },
 
-    mouseOver: function(model) {
+    mouseOver: function(model, event) {
     },
 
-    mouseOut: function(model) {
+    mouseOut: function(model, event) {
     }
   });
 

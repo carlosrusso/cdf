@@ -44,7 +44,7 @@ define([
       if (_.isFunction(options.getViewModel)) {
         viewModel = options.getViewModel(st, options);
       } else {
-        viewModel = st.model.toJSON();
+        viewModel = st.model.toJSON(true);
       }
 
       var html = Mustache.render(options.template, viewModel);

@@ -26,7 +26,7 @@ define([
     constructor: function(view) {
       this.base(view);
 
-      this.scrollbar = view.$(view.config.view.slots.children).parent().scroll(function(event){
+      this.scrollbar = view.$(view.config.view.partials.children.selector).parent().scroll(function(event){
         var $el = $(this);
 
         if($el.scrollTop() + $el.innerHeight() >= $el[0].scrollHeight){
