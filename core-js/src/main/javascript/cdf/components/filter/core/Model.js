@@ -40,9 +40,13 @@ define([
      * @property {number}  numberOfItems         The default number of items.
      * @property {number}  page                  The default page.
      */
-    defaults: _.extend({}, BaseSelectionTree.prototype.defaults, {
-      isCollapsed: false
-    }),
+    defaults: function(){
+      var defaults = this.base();
+
+      defaults.isCollapsed = false;
+
+      return defaults;
+    },
 
     load: function(data) {
       this.base(data);

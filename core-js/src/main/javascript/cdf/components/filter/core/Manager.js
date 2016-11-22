@@ -26,10 +26,12 @@ define([
      *
      * @type {{model: object, view: object, configuration: object}}
      */
-    defaults: {
+    defaults: function() {
+      return {
         model: null,
         view: null,
         configuration: null
+      }
     },
 
     /**

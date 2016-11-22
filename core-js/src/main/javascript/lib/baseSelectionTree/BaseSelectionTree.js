@@ -192,7 +192,6 @@ define([
             // if the parent was previously unselected, and the child is selected, then
             // something has changed
             return _.contains(previousSelection.none, parent);
-            //&& parent.getSelection() !== SelectionStates.ALL;
           }
         }
         return false;
@@ -371,13 +370,15 @@ define([
      * @property {number}  numberOfSelectedItems - The default number of selected items.
      * @property {number}  numberOfItems         - The default number of items.
      */
-    defaults: {
-      id: void 0,
-      label: '',
-      isSelected: SelectionStates.NONE,
-      isVisible: true,
-      numberOfSelectedItems: 0,
-      numberOfItems: 0
+    defaults: function() {
+      return {
+        id: undefined,
+        label: '',
+        isSelected: SelectionStates.NONE,
+        isVisible: true
+        // numberOfSelectedItems: 0, // no need to define this as default
+        // numberOfItems: 0  // no need to define this as default
+      }
     },
 
     initialize: function(attributes, options) {
@@ -477,8 +478,8 @@ define([
 
   function defaultMatcher(model, text) {
     var fullString = '';
-    for (var n = model; n != null; n = n.parent()) {
-      fullString = n.get('label') + ' ' + fullString;
+    for (var m = model; m != null; m = m.parent()) {
+      fullString = m.get('label') + ' ' + fullString;
     }
     return fullString.toLowerCase().indexOf(text.toLowerCase()) > -1;
   }
