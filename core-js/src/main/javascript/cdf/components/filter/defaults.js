@@ -36,7 +36,6 @@ define([
      * @type {object}
      */
     pagination: {
-      throttleTimeMilliseconds: 500, // delay between successive requests
       pageSize: Infinity
     },
     /**
@@ -46,6 +45,10 @@ define([
      */
     search: {
       serverSide: false,
+      /**
+       * Allows overriding the default search mechanism
+       * @type {function(cdf.components.filter.core.Model, string)}
+       */
       matcher: undefined // function(model, textToMatch)
     },
     /**

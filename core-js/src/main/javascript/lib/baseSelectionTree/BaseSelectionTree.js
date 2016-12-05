@@ -28,6 +28,8 @@ define([
     ALL: true
   };
 
+  var SelectionStateValues = [null, false, true];
+
   var ISelection = {
 
     /**
@@ -290,17 +292,6 @@ define([
         });
 
       return selectionSnapshot;
-    },
-
-    _inheritSelectionFromParent: function() {
-      var parent = this.parent();
-      if (!parent) {
-        return;
-      }
-      var parentSelectionState = parent.getSelection();
-      if (parentSelectionState !== SelectionStates.SOME) {
-        this.setSelection(parentSelectionState);
-      }
     }
   };
 
@@ -401,7 +392,10 @@ define([
     load: function(data) {
       this.add(data);
 
-      this._inheritSelectionFromParent();
+      var selectionState = this.getSelection();
+      if(_.includes(SelectionStateValues, selectionState)){
+        this._setSelection(selectionState);
+      }
 
       // If there's a searchPattern defined, adjust the visibility of this node
       var root = this.root();

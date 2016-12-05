@@ -17,9 +17,10 @@
 define([
   './AbstractScroll',
   '../../../../lib/jquery',
+  'amd!../../../../lib/underscore',
   'amd!../../../../lib/jquery.mCustomScrollbar',
   'css!./mCustomScrollbar'
-],function(AbstractScroll, $){
+],function(AbstractScroll, $, _){
 
   "use strict";
 
@@ -27,14 +28,16 @@ define([
     constructor: function (view) {
       this.base(view);
 
+      var scrollDelay = view.config.view.delays.scroll;
+
       var options = $.extend(true, {
         callbacks: {
-          onTotalScroll: function () {
+          onTotalScroll: debounce(function () {
             view.trigger('scroll:reached:bottom', view.model);
-          },
-          onTotalScrollBack: function () {
+          }, scrollDelay),
+          onTotalScrollBack: debounce(function () {
             view.trigger('scroll:reached:top', view.model);
-          }
+          }, scrollDelay)
         }
       }, view.config.view.scrollbar.options);
 
@@ -47,4 +50,14 @@ define([
       this.scrollbar.mCustomScrollbar("scrollTo", $element, { callbacks: false });
     }
   });
+
+  function debounce(f, t){
+    if(t >= 0) {
+      // runs immediately and block similar requests for t ms
+      return _.debounce(f, t, true);
+    }
+
+    return f;
+  }
+
 });

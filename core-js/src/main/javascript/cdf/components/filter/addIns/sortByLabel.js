@@ -30,6 +30,7 @@ define([
       ascending: true,
       locales: undefined,
       options: undefined,
+      property: "label",
       comparer: function(left, right, options) {
         var l = String(left);
         var r = String(right);

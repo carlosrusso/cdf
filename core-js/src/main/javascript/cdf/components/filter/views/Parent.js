@@ -44,25 +44,18 @@ define([
     initialize: function(options) {
       this.base(options);
 
-      var that = this;
-      this.on('scroll:reached:top', function(){
-        that.saveScrollBar(1);
-      });
-      this.on('scroll:reached:bottom', function(){
-        that.saveScrollBar(-1);
-      });
+      this.setupScrollBar();
 
-      this.attach = _.debounce(this._attach, 1);
-      this.updateScrollBar();
+      this.attach = debounce(this._attach, this.config.view.delays.renderOffline.attach);
     },
 
     bindToModel: function(model) {
       this.base(model);
 
       var that = this;
-      this.listenTo(model, 'update', function() {
+      this.listenTo(model, 'update', debounce(function() {
         that.updateScrollBar();
-      });
+      },  this.config.view.delays.modelUpdate));
     },
 
     /*
@@ -106,20 +99,11 @@ define([
       return viewModel;
     },
 
-    updateFilter: function() {
-      var $filter = this.getSlot('filter').find('input');
-      var v = $filter.val();
-      var text = this.model.root().get('searchPattern');
-      if(v !== text){
-        $filter.val(text);
-      }
-    },
-
     /*
      * Children management
      */
     getChildren: function() {
-      return this.getSlot('children').children();
+      return this.placeholder('children').children();
     },
 
     /**
@@ -141,7 +125,7 @@ define([
         return;
       }
 
-      var $nursery = this.getSlot('children');
+      var $nursery = this.placeholder('children');
       //$nursery.hide();
       $nursery.toggleClass('filter-hidden', true);
       currentNodes.detach();
@@ -151,8 +135,8 @@ define([
     },
 
     createChildNode: function () {
-      var $child = $(this.getHtml(this.config.view.partials.child.template, {}));
-      $child.appendTo(this.getSlot('children'));
+      var $child = $(this.getHtml(this.config.view.partials.child.template));
+      $child.appendTo(this.placeholder('children'));
       return $child;
     },
 
@@ -183,7 +167,7 @@ define([
 
       this.areChildrenDetached = true;
 
-      var $node = this.getSlot('detach') || this.$el;
+      var $node = this.placeholder('detach') || this.$el;
 
       var clones = $node.children().clone(false);
       this._detachedNodes = $node.children().detach();
@@ -197,17 +181,38 @@ define([
       }
       this.areChildrenDetached = false;
 
-      var $node = this.getSlot('detach') || this.$el;
+      var $node = this.placeholder('detach');
+      if (!$node.length) {
+        $node = this.$el;
+      }
       $node
         .empty() // remove clones
         .append(this._detachedNodes); // append real nodes
 
       this._detachedNodes = null;
+
+      this.restoreScrollBar();
     },
 
     /*
      * Scrollbar methods
      */
+
+    setupScrollBar: function() {
+      var that = this;
+
+      this.on('scroll:reached:top', function(){
+        that.saveScrollBar(1);
+      });
+
+      this.on('scroll:reached:bottom', function(){
+        that.saveScrollBar(-1);
+      });
+
+      this.updateScrollBar();
+    },
+
+
     updateScrollBar: function () {
       var pageSize = this.configuration.pagination.pageSize;
       var isPaginated = _.isFinite(pageSize) && pageSize > 0;
@@ -242,6 +247,13 @@ define([
 
     restoreScrollBar: function() {
       if (this._scrollBar) {
+
+        // Prevent the scrollbar to be restored if the view has been detached
+        // This is probably not the best place to do this management, this should be revised
+        // TODO: revise handling of scrollbar when the view has been detached for offline rendering
+        if (this.areChildrenDetached) {
+          return;
+        }
         this._scrollBar.restorePosition();
       }
     },
@@ -250,25 +262,17 @@ define([
       if (this._scrollBar) {
         this._scrollBar.savePosition(position);
       }
-    },
-
-    /*
-     * Events triggered by the user
-     */
-
-    onFilterChange: function (event) {
-      var text = $(event.target).val();
-      if(event.keyCode === 27){
-        this.onFilterClear();
-      } else {
-        this.trigger('filter', this.model, text);
-      }
-    },
-
-    onFilterClear: function () {
-      this.trigger('filter', this.model, '');
     }
 
   });
+
+
+  function debounce(f, t){
+    if(t >= 0) {
+      return _.debounce(f, t);
+    }
+
+    return f;
+  }
 
 });

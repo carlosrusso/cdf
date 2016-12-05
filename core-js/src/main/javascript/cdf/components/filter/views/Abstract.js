@@ -63,9 +63,8 @@ define([
 
       this.bindToModel(this.model);
       this.setElement(options.target);
-      this.updateViewModel();
 
-      this.$slots = {};
+      this._$subViews = {};
       this.render();
     },
 
@@ -76,34 +75,46 @@ define([
      */
 
     bindToModel: function (model) {
+      var delays = this.config.view.delays;
+      var debounce = function(f, type) {
+        var delay = delays[type] || delays.default;
+        if (delay >= 0) {
+          return _.debounce(f, delay);
+        }
+        return f;
+      };
+
       _.each(this.config.view.relayEvents, function(viewEvent, key) {
         var eventHandler = this.events[key];
         if(!eventHandler){
 
-          this.events[key] = function(event) {
+          this.events[key] = debounce(function(event) {
             this.trigger(viewEvent, model, event);
             return false;
-          };
+          }, viewEvent);
 
         } else if (_.isFunction(eventHandler)){
 
-          this.events[key] = function(event) {
+          this.events[key] = debounce(function(event) {
             eventHandler.call(this, arguments);
             this.trigger(viewEvent, model, event);
             return false;
-          };
+          }, viewEvent);
         }
       }, this);
 
+      var defaultDelay = this.config.view.delays.default;
+      _.each(this.config.view.onModelChange, function(reaction, property) {
 
-      this.onChange(model, '', this.updateViewModel, this.config.view.modelDebounceTimeMilliseconds);
+        var r = this.renderPartials(reaction.partials);
+        var delay = reaction.delay || defaultDelay;
 
-      _.each(this.config.view.onModelChange, function(slots, property) {
-        var r = this.renderPartials(slots);
         this.onChange(model, property, function(){
+
           var viewModel = this.getViewModel();
           r.call(this, viewModel);
-        });
+
+        }, delay);
       }, this);
     },
 
@@ -115,11 +126,6 @@ define([
 
       var viewModel = _.extend(model, this._staticViewModel);
       return viewModel;
-    },
-
-    updateViewModel: function() {
-      //console.log('Calculating viewModel', this.model.get('label'));
-      this.viewModel = this.getViewModel();
     },
 
     /**
@@ -155,35 +161,35 @@ define([
       return HtmlUtils.sanitizeHtml(html);
     },
 
-    renderPartials: function(slots) {
+    renderPartials: function(subViews) {
       return function(viewModel) {
 
-        _.each(slots, function(slot) {
+        _.each(subViews, function(subView) {
 
-          var template = this.config.view.partials[slot].template;
+          var template = this.config.view.partials[subView].template;
           if (template) {
             var html = this.getHtml(template, viewModel);
-            var $element = this.getSlot(slot);
+            var $element = this.placeholder(subView);
             $element.html(html);
           }
 
-          this.injectContent(slot, viewModel);
+          this.injectContent(subView, viewModel);
 
         }, this);
 
       };
     },
 
-    injectContent: function (slot, viewModel) {
-      var renderers = this.config.view.partials[slot].renderers;
+    injectContent: function (subView, viewModel) {
+      var renderers = this.config.view.partials[subView].renderers;
       if (!renderers) {
         return;
       }
 
-      var $tgt = this.getSlot(slot);
+      var $tgt = this.placeholder(subView);
       _.each(renderers, function (renderer) {
         if (_.isFunction(renderer)) {
-          return renderer.call(this, $tgt, viewModel, this.config, this.model, this.configuration);
+          return renderer.call(this, $tgt, this.model, this.configuration, viewModel, this.config);
         }
       }, this);
     },
@@ -196,8 +202,8 @@ define([
       var viewModel = this.getViewModel();
       this.renderContainer(viewModel);
 
-      var slots = this.config.view.main.render;
-      this.renderPartials(slots).call(this, viewModel);
+      var subViews = this.config.view.main.render;
+      this.renderPartials(subViews).call(this, viewModel);
 
       return viewModel;
     },
@@ -235,12 +241,12 @@ define([
       var defaultDelay;
 
       if(properties){
-        defaultDelay = this.config.view.throttleTimeMilliseconds;
+        defaultDelay = this.config.view.delays.changeAttribute;
         events = _.map(properties.split(' '), function(prop) {
           return prop ? 'change:' + prop : 'change';
         }).join(' ');
       } else {
-        defaultDelay = this.config.view.modelDebounceTimeMilliseconds;
+        defaultDelay = this.config.view.delays.change;
         events = 'change';
       }
 
@@ -250,11 +256,12 @@ define([
       this.listenTo(obj, events, f);
     },
 
-    getSlot: function(slot) {
-      var $element = this.$slots[slot];
+    placeholder: function(subView) {
+      var $element = this._$subViews[subView];
+
       if(!$element){
-        $element = this.$(this.config.view.partials[slot].selector);
-        this.$slots[slot] = $element;
+        $element = this.$(this.config.view.partials[subView].selector);
+        this._$subViews[subView] = $element;
       }
 
       return $element;

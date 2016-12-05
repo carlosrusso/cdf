@@ -40,6 +40,7 @@ define([
     view: {
       main: {
         template: templates.Root.container,
+        templatePartials: null,
         render: [
           'header', 'controls', 'filter', 'footer', 'resizable',
           'collapse',
@@ -80,6 +81,10 @@ define([
           selector: '.filter-filter:eq(0)',
           template: templates.Root.filter
         },
+        updateFilter: {
+          selector: '.filter-filter-input:eq(0)',
+          renderers: [updateFilter]
+        },
         header: {
           selector: '.filter-root-header:eq(0)',
           template: templates.Root.header
@@ -104,15 +109,16 @@ define([
 
       },
       onModelChange: {
-        'isDisabled': ['availability'],
-        'isVisible': ['visibility'],
-        'isCollapsed': ['collapse'],
-        'isSelected': ['selection', 'controls', 'header'],
-        'selectedItems': ['controls'],
-        'value': ['value'],
-        'isBusy': ['footer'],
-        'numberOfSelectedItems': ['header', 'footer'],
-        'numberOfItems': ['header']
+        'isDisabled': run(['availability']),
+        'isVisible': run(['visibility']),
+        'isCollapsed': run(['collapse']),
+        'isSelected': run(['selection', 'controls', 'header']),
+        'selectedItems': run(['controls']),
+        'value': run(['value']),
+        'isLoading': run(['footer']),
+        'searchPattern': run(['updateFilter'], -1),
+        'numberOfSelectedItems': run(['header', 'footer']),
+        'numberOfItems': run(['header'])
       },
       relayEvents: {
         'click     .filter-overlay:eq(0)': 'click:outside',
@@ -124,25 +130,31 @@ define([
         'click     .filter-btn-cancel:eq(0)': 'control:cancel'
       },
       events: {
-        'keyup     .filter-filter:eq(0)': 'onFilterChange',
-        'change    .filter-filter:eq(0)': 'onFilterChange',
-        'click     .filter-filter-clear:eq(0)': 'onFilterClear',
+        'keyup     .filter-filter:eq(0)': onFilterChange,
+        'change    .filter-filter:eq(0)': onFilterChange,
+        'click     .filter-filter-clear:eq(0)': onFilterClear,
         'click     .filter-overlay': onOverlayClick,
         'focusin   .filter-filter-input:eq(0)': function(){
-          this.getSlot('container').toggleClass('filtering', true)
+          this.placeholder('container').toggleClass('filtering', true);
+          return false;
         },
         'focusout   .filter-filter-input:eq(0)': function(){
-          if (this.model.get('searchPattern') === "")
-            this.getSlot('container').toggleClass('filtering', false)
+          if (this.model.get('searchPattern') === "") {
+            this.placeholder('container').toggleClass('filtering', false)
+          }
+          return false;
         }
       },
       patchViewModel: null,
-      modelDebounceTimeMilliseconds: -1,
-      throttleTimeMilliseconds: 1,
       delays: {
-        "default": 1,
+        "default": -1,
+        changeAttribute: 1,
+        change: -1,
         filter: 100,
+        scroll: 500,
+        modelUpdate: 1, // TODO: revise need
         renderOffline: {
+          attach: 1,
           "default": 0,
           "change:isVisible": 100,
           "sort": -1
@@ -150,7 +162,7 @@ define([
       },
       overlaySimulateClick: true,
       scrollbar: {
-        engine: 'native' || 'mCustomScrollbar',
+        engine: 'mCustomScrollbar',
         options: {
           theme: 'dark',
           alwaysTriggerOffsets: false,
@@ -170,12 +182,13 @@ define([
     },
     view: {
       main: {
+        template: templates.Group.container,
+        templatePartials: null,
         render: [
           'resizable',
           'collapse', 'collapsible',
           'visibility', 'selection', 'value'
-        ],
-        template: templates.Group.container
+        ]
       },
       partials: {
         selection: {
@@ -218,10 +231,10 @@ define([
       },
 
       onModelChange: {
-        'isVisible': ['visibility'],
-        'value': ['value'],
-        'isSelected': ['selection'],
-        'isCollapsed': ['collapse', 'collapsible']
+        'isSelected': run(['selection']),
+        'isVisible': run(['visibility']),
+        'isCollapsed': run(['collapse', 'collapsible']),
+        'value': run(['value'])
       },
       relayEvents: {
         'mouseover .filter-group-container:eq(0)': 'mouseover',
@@ -231,11 +244,14 @@ define([
       },
       events: {},
       patchViewModel: null,
-      modelDebounceTimeMilliseconds: 0,
-      throttleTimeMilliseconds: 1,
       delays: {
-        "default": 1,
+        "default": -1,
+        changeAttribute: 1,
+        change: -1,
+        scroll: 500,
+        modelUpdate: 1,
         renderOffline: {
+          attach: 1,
           "default": 0,
           "change:isVisible": 100,
           "sort": -1
@@ -250,8 +266,9 @@ define([
     },
     view: {
       main: {
-        render: ['visibility', 'selection', 'value'],
-        template: templates.Item.container
+        template: templates.Item.container,
+        templatePartials: null,
+        render: ['visibility', 'selection', 'value']
       },
       partials: {
         selection: {
@@ -269,9 +286,9 @@ define([
       },
 
       onModelChange: {
-        'isVisible': ['visibility'],
-        'value': ['value'],
-        'isSelected': ['selection']
+        'isSelected': run(['selection']),
+        'isVisible': run(['visibility']),
+        'value': run(['value'])
       },
       relayEvents: {
         'click     .filter-item-collapse': 'toggleCollapse',
@@ -282,10 +299,10 @@ define([
       },
       events: {},
       patchViewModel: null,
-      modelDebounceTimeMilliseconds: 0,
-      throttleTimeMilliseconds: 1,
       delays: {
-        "default": 1
+        "default": -1,
+        changeAttribute: 1,
+        change: 0
       }
     }
   };
@@ -296,196 +313,23 @@ define([
     Item: ItemConfig
   };
 
-  /*
-  return {
-    Root: {
-      type: {
-        constructor: Root,
-        childConfig: {
-          branch: 'Group',
-          leaf: 'Item'
-        }
-      },
-      view: {
-        templates: templates.Root,
-        slots: {
-          container: '.filter-root-container:eq(0)',
-          availability: '.filter-root-container:eq(0)',
-          selection: '.filter-root-selection',
-          controls: '.filter-root-control:eq(0) .filter-control-buttons',
-          filter: '.filter-filter-input:eq(0)',
-          header: '.filter-root-header',
-          value: '.filter-root-selection-value',
-          footer: '.filter-root-footer',
-          detach: '.filter-root-items-container',
-          children: '.filter-root-items'  //container where new children will be appended
-        },
-        render: [
-          'header', 'controls', 'footer', 'resizable',
-          'collapse',
-          'visibility', 'selection', 'value'
-        ],
-        renderers: {
-          selection: [updateGroupSelection],
-          visibility: [updateVisibility],
-          collapse: [updateRootCollapse],
-          resizable: [resizable],
-          availability: [updateAvailability]
-        },
-        onModelChange: {
-          'isDisabled': ['availability'],
-          'isVisible': ['visibility'],
-          'isCollapsed': ['collapse'],
-          'isSelected': ['selection', 'controls', 'header'],
-          'selectedItems': ['controls'],
-          'value': ['value'],
-          'isBusy': ['footer'],
-          'numberOfSelectedItems': ['header', 'footer'],
-          'numberOfItems': ['header']
-        },
-        relayEvents: {
-          'mouseover .filter-root-header': 'mouseover',
-          'mouseout  .filter-root-header': 'mouseout',
-          'click     .filter-root-header:eq(0)': 'toggleCollapse',
-          'click     .filter-root-selection:eq(0)': 'selected',
-          'click     .filter-btn-apply:eq(0)': 'control:apply',
-          'click     .filter-btn-cancel:eq(0)': 'control:cancel'
-        },
-        events: {
-          'keyup     .filter-filter:eq(0)': 'onFilterChange',
-          'change    .filter-filter:eq(0)': 'onFilterChange',
-          'click     .filter-filter-clear:eq(0)': 'onFilterClear',
-          'click     .filter-overlay': onOverlayClick
-        },
-        patchViewModel: null,
-        modelDebounceTimeMilliseconds: -1,
-        throttleTimeMilliseconds: 1,
-        delays: {
-          "default": 1,
-          filter: 100,
-          renderOffline: {
-            "default": 0,
-            "change:isVisible": 100,
-            "sort": -1
-          }
-        },
-        overlaySimulateClick: true,
-        scrollbar: {
-          engine: 'native' || 'mCustomScrollbar',
-          options: {
-            theme: 'dark',
-            alwaysTriggerOffsets: false,
-            onTotalScrollOffset: 100
-          }
-        }
-      }
-    },
+  function run(partials, delay) {
+    var reaction = {
+      partials: partials
+    };
 
-    Group: {
-      type: {
-        constructor: Group,
-        childConfig: {
-          branch: 'Group',
-          leaf: 'Item'
-        }
-      },
-      view: {
-        templates: templates.Group,
-        slots: {
-          container: '.filter-group-container:eq(0)', // There can be nested groups
-          selection: '.filter-group-header:eq(0)', // There can be nested groups
-          filter: '.filter-filter-input:eq(0)',
-          value: '.filter-group-selection-value',
-          children: '.filter-group-items:eq(0)',
-          detach: '.filter-group-items-container:eq(0)',
-          collapsible: '.filter-group-body:eq(0), .filter-group-footer:eq(0)'
-        },
-        render: [
-          'resizable',
-          'collapse',
-          'visibility', 'selection', 'value'
-        ],
-        renderers: {
-          selection: [updateGroupSelection],
-          visibility: [updateVisibility],
-          resizable: [resizable],
-          collapse: [updateGroupCollapse]
-        },
-        onModelChange: {
-          'isVisible': ['visibility'],
-          'value': ['value'],
-          'isSelected': ['selection'],
-          'isCollapsed': ['collapse']
-        },
-        relayEvents: {
-          'mouseover .filter-group-container:eq(0)': 'mouseover',
-          'mouseout  .filter-group-container:eq(0)': 'mouseout',
-          'click     .filter-group-selection:eq(0)': 'selected',
-          'click     .filter-collapse-icon:eq(0)': 'toggleCollapse'
-        },
-        events: {
-          'change    .filter-filter:eq(0)': 'onFilterChange',
-          'keyup     .filter-filter:eq(0)': 'onFilterChange',
-          'click     .filter-filter-clear:eq(0)': 'onFilterClear'
-        },
-        patchViewModel: null,
-        modelDebounceTimeMilliseconds: 0,
-        throttleTimeMilliseconds: 1,
-        delays: {
-          "default": 1,
-          renderOffline: {
-            "default": 0,
-            "change:isVisible": 100,
-            "sort": -1
-          }
-        }
-      }
-    },
-
-    Item: {
-      type: {
-        constructor: Item
-      },
-      view: {
-        templates: templates.Item,
-        slots: {
-          container: '.filter-item-container',
-          value: '.filter-item-value'
-        },
-        render: ['visibility', 'selection', 'value'],
-        renderers: {
-          selection: [updateItemSelection],
-          visibility: [updateVisibility]
-        },
-        onModelChange: {
-          'isVisible': ['visibility'],
-          'value': ['value'],
-          'isSelected': ['selection']
-        },
-        relayEvents: {
-          'click     .filter-item-collapse': 'toggleCollapse',
-          'mouseover .filter-item-body': 'mouseover',
-          'mouseout  .filter-item-body': 'mouseout',
-          'click     .filter-item-body': 'selected',
-          'click     .filter-item-only-this': 'control:only-this'
-        },
-        events: {},
-        patchViewModel: null,
-        modelDebounceTimeMilliseconds: 0,
-        throttleTimeMilliseconds: 1,
-        delays: {
-          "default": 1
-        }
-      }
+    if (delay != null) {
+      reaction.delay = delay;
     }
-  };
-  */
 
-  function updateAvailability($tgt, viewModel, viewConfig, model, configuration) {
+    return reaction;
+  }
+
+  function updateAvailability($tgt, model, configuration, viewModel, viewConfig) {
     $tgt.toggleClass('disabled', viewModel.isDisabled === true);
   }
 
-  function resizable($tgt, viewModel, viewConfig, model, configuration) {
+  function resizable($tgt, model, configuration, viewModel, viewConfig) {
     if (viewConfig.options.isResizable && _.isFunction($tgt.resizable)) {
       $tgt.resizable({
         handles: 's'
@@ -493,7 +337,7 @@ define([
     }
   }
 
-  function updateRootCollapse($tgt, viewModel, viewConfig, model, configuration) {
+  function updateRootCollapse($tgt, model, configuration, viewModel, viewConfig) {
 
     var isAlwaysExpand = (viewModel.alwaysExpanded === true); // we might want to start off the component as always-expanded
     if (viewModel.isDisabled === true) {
@@ -515,7 +359,7 @@ define([
     }
   }
 
-  function filtering($tgt, viewModel, config, model, configuration){
+  function filtering($tgt, model, configuration, viewModel, config){
     var isFiltering = model.get('searchPattern') !== "";
 
     $tgt.toggleClass('filtering', isFiltering);
@@ -542,7 +386,7 @@ define([
     }
   }
 
-  function updateGroupCollapse($tgt, viewModel, viewConfig, model, configuration) {
+  function updateGroupCollapse($tgt, model, configuration, viewModel, viewConfig) {
     var isCollapsed = viewModel.isCollapsed;
 
     $tgt // change to container
@@ -550,27 +394,46 @@ define([
       .toggleClass('expanded', !isCollapsed);
   }
 
-  function updateGroupCollapsible($tgt, viewModel, viewConfig, model, configuration) {
+  function updateGroupCollapsible($tgt, model, configuration, viewModel, viewConfig) {
     $tgt.toggleClass('filter-hidden', viewModel.isCollapsed);
   }
 
-  function updateGroupSelection($tgt, viewModel, viewConfig, model, configuration) {
+  function updateGroupSelection($tgt, model, configuration, viewModel, viewConfig) {
     $tgt
       .toggleClass('none-selected', viewModel.noItemsSelected)
       .toggleClass('all-selected', viewModel.allItemsSelected)
       .toggleClass('some-selected', viewModel.isPartiallySelected);
   }
 
-  function updateItemSelection($tgt, viewModel, viewConfig, model, configuration) {
+  function updateItemSelection($tgt, model, configuration, viewModel, viewConfig) {
     var isSelected = model.get('isSelected');
     $tgt
       .toggleClass('none-selected', !isSelected)
       .toggleClass('all-selected', isSelected);
   }
 
-  function updateVisibility($tgt, viewModel, viewConfig, model, configuration) {
+  function updateVisibility($tgt, model, configuration, viewModel, viewConfig) {
     $tgt.toggleClass('filter-hidden', !model.get('isVisible'));
   }
 
+  function updateFilter($tgt, model, configuration, viewModel, viewConfig) {
+    var v = $tgt.val();
+    var text = model.root().get('searchPattern');
+    if(v !== text){
+      $tgt.val(text);
+    }
+  }
+
+  function onFilterClear(event) {
+    this.trigger('filter', this.model, '');
+  }
+
+  function onFilterChange(event) {
+    var text = $(event.target).val();
+    if(event.keyCode === 27){
+      text = '';
+    }
+    this.trigger('filter', this.model, text);
+  }
 
 });

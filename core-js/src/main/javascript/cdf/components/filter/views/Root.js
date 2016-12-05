@@ -36,11 +36,6 @@ define([
      */
     type: 'Root',
 
-    bindToModel: function (model) {
-      this.base(model);
-      this.onChange(model, 'searchPattern', this.updateFilter, -1);
-    },
-
     getViewModel: function () {
       var viewModel = this.base();
 
@@ -53,6 +48,7 @@ define([
         hasChanged: hasChanged
       });
     }
+
   });
 
 });

@@ -182,15 +182,6 @@ define([
       input;
   }
 
-  function getPageData(queryInfo, pageSize) {
-    if ((queryInfo != null ? queryInfo.pageStart : void 0) != null) {
-      return {
-        page: Math.floor(parseInt(queryInfo.pageStart) / pageSize)
-      };
-    }
-    return {};
-  }
-
   function nestedGroupBy(rows, indexes, options) {
     if (!indexes.length) {
       return null;
@@ -219,8 +210,6 @@ define([
       if (nodes) {
         node.nodes = nodes;
       }
-      //node.label = node.label || node.id;
-      //_.extend(node, payload);
 
       return node;
     });

@@ -281,13 +281,14 @@ define([
               }
 
               var addInOptions = that.getAddInOptions(slot, addInName);
-              return function($tgt, model, viewModel, configuration) {
+              return function($tgt, model, configuration,  viewModel, viewConfig) {
                 var st = {
-                  viewModel: viewModel,
                   model: model,
                   configuration: configuration,
                   dashboard: that.dashboard
                 };
+                if(viewModel) st.viewModel = viewModel;
+                if(viewConfig) st.viewConfig = viewConfig;
                 return addIn.call($tgt, st, addInOptions);
               };
 

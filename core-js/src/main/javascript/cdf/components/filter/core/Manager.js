@@ -155,8 +155,8 @@ define([
         },
         view: {
           'filter': debounce(this.onFilterChange, 'filter'),
-          'scroll:reached:top': throttleScroll(this.getPreviousPage),
-          'scroll:reached:bottom': throttleScroll(this.getNextPage)
+          'scroll:reached:top': this.getPreviousPage,
+          'scroll:reached:bottom': this.getNextPage
         }
       };
       _.each(bindings, function(bindingList, object) {
@@ -359,7 +359,6 @@ define([
       configuration.selectionStrategy.strategy.filter(model, text);
 
       if (text && configuration.search.serverSide === true) {
-        //this.get('model').empty();
         this.requestPage(0, text)
       }
     },
